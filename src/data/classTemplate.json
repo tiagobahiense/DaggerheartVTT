@@ -1,0 +1,173 @@
+{
+    "bardo": {
+      "label": "Bardo",
+      "description": "Artistas carismáticos que tecem magia através de palavras e música.",
+      "colorTheme": "#f43f5e",
+      "baseStats": {
+        "agility": 0, "strength": -1, "finesse": 1,
+        "instinct": 0, "presence": 2, "knowledge": 1
+      },
+      "damageThresholds": { "minor": 5, "major": 10, "severe": 15 },
+      "armorSlots": 6,
+      "evasionBase": 8,
+      "specialTabs": ["grimoire"],
+      "startingFeatures": [
+        {
+          "title": "Inspiração de Bardo",
+          "description": "Gaste Esperança para dar +1d6 a um aliado em um teste."
+        }
+      ]
+    },
+    "druida": {
+      "label": "Druida",
+      "description": "Guardiões da natureza capazes de assumir formas bestiais.",
+      "colorTheme": "#22c55e",
+      "baseStats": {
+        "agility": 0, "strength": 0, "finesse": 0,
+        "instinct": 2, "presence": 0, "knowledge": 1
+      },
+      "damageThresholds": { "minor": 5, "major": 10, "severe": 15 },
+      "armorSlots": 6,
+      "evasionBase": 8,
+      "specialTabs": ["beastShape"],
+      "startingFeatures": [
+        {
+          "title": "Toque Selvagem",
+          "description": "Comunique-se com animais e manipule plantas leves."
+        }
+      ]
+    },
+    "guardiao": {
+      "label": "Guardião",
+      "description": "Defensores blindados imparáveis no campo de batalha.",
+      "colorTheme": "#64748b",
+      "baseStats": {
+        "agility": -1, "strength": 2, "finesse": 0,
+        "instinct": 1, "presence": 1, "knowledge": 0
+      },
+      "damageThresholds": { "minor": 5, "major": 10, "severe": 15 },
+      "armorSlots": 8, 
+      "evasionBase": 6,
+      "specialTabs": [],
+      "startingFeatures": [
+        {
+          "title": "Imparável",
+          "description": "Reduza dano recebido gastando Armadura de forma mais eficiente."
+        }
+      ]
+    },
+    "guerreiro": {
+      "label": "Guerreiro",
+      "description": "Mestres de armas táticos e combatentes versáteis.",
+      "colorTheme": "#ea580c",
+      "baseStats": {
+        "agility": 1, "strength": 2, "finesse": 0,
+        "instinct": 0, "presence": 0, "knowledge": -1
+      },
+      "damageThresholds": { "minor": 5, "major": 10, "severe": 15 },
+      "armorSlots": 6,
+      "evasionBase": 9,
+      "specialTabs": [],
+      "startingFeatures": [
+        {
+          "title": "Ataque Tático",
+          "description": "Cause dano extra ou aplique condições ao acertar golpes."
+        }
+      ]
+    },
+    "ladino": {
+      "label": "Ladino",
+      "description": "Especialistas em furtividade, sombras e ataques precisos.",
+      "colorTheme": "#171717",
+      "baseStats": {
+        "agility": 2, "strength": -1, "finesse": 2,
+        "instinct": 0, "presence": 0, "knowledge": 0
+      },
+      "damageThresholds": { "minor": 4, "major": 8, "severe": 12 },
+      "armorSlots": 5,
+      "evasionBase": 10,
+      "specialTabs": ["stealthKit"],
+      "startingFeatures": [
+        {
+          "title": "Ataque Furtivo",
+          "description": "Cause dano massivo quando tiver vantagem."
+        }
+      ]
+    },
+    "mago": {
+      "label": "Mago",
+      "description": "Estudiosos do arcano que manipulam a realidade.",
+      "colorTheme": "#3b82f6",
+      "baseStats": {
+        "agility": 0, "strength": -1, "finesse": 0,
+        "instinct": 0, "presence": 1, "knowledge": 2
+      },
+      "damageThresholds": { "minor": 3, "major": 6, "severe": 9 },
+      "armorSlots": 3,
+      "evasionBase": 7,
+      "specialTabs": ["grimoire"],
+      "startingFeatures": [
+        {
+          "title": "Lançamento de Magia",
+          "description": "Use seu Grimório para lançar feitiços poderosos."
+        }
+      ]
+    },
+    "patrulheiro": {
+      "label": "Patrulheiro",
+      "description": "Caçadores que percorrem os ermos com seus companheiros.",
+      "colorTheme": "#15803d",
+      "baseStats": {
+        "agility": 2, "strength": 0, "finesse": 1,
+        "instinct": 1, "presence": -1, "knowledge": 0
+      },
+      "damageThresholds": { "minor": 5, "major": 10, "severe": 15 },
+      "armorSlots": 5,
+      "evasionBase": 10,
+      "specialTabs": ["companion"],
+      "startingFeatures": [
+        {
+          "title": "Companheiro Animal",
+          "description": "Você tem um animal leal que age junto com você."
+        }
+      ]
+    },
+    "serafim": {
+      "label": "Serafim",
+      "description": "Mensageiros divinos com asas poderosas e magia sagrada.",
+      "colorTheme": "#fbbf24",
+      "baseStats": {
+        "agility": 0, "strength": 1, "finesse": -1,
+        "instinct": 1, "presence": 2, "knowledge": 0
+      },
+      "damageThresholds": { "minor": 5, "major": 10, "severe": 15 },
+      "armorSlots": 6,
+      "evasionBase": 8,
+      "specialTabs": ["grimoire", "flight"],
+      "startingFeatures": [
+        {
+          "title": "Asas Angelicais",
+          "description": "Você pode voar curtas distâncias durante seu turno."
+        }
+      ]
+    },
+    "feiticeiro": {
+      "label": "Feiticeiro",
+      "description": "Canalizadores de magia primal derivada do instinto.",
+      "colorTheme": "#a855f7",
+      "baseStats": {
+        "agility": 0, "strength": 0, "finesse": -1,
+        "instinct": 2, "presence": 1, "knowledge": 0
+      },
+      "damageThresholds": { "minor": 4, "major": 8, "severe": 12 },
+      "armorSlots": 4,
+      "evasionBase": 8,
+      "specialTabs": ["channeling"],
+      "startingFeatures": [
+        {
+          "title": "Canalizar Poder",
+          "description": "Receba Stress para aumentar o poder de seus feitiços."
+        }
+      ]
+    }
+  }

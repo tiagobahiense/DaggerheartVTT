@@ -13,4 +13,27 @@ export interface ICard {
     effectPayload?: Record<string, any>; 
   }
   
-  // ... restante do arquivo igual
+// Adicione/Atualize no src/types/index.ts
+
+export interface IBeastShape {
+  name: string;
+  ferocity: number;
+  traits: string[]; // Ex: ["Voo", "Anfíbio"]
+}
+
+export interface ICompanion {
+  name: string;
+  species: string;
+  hp: number;
+  attackDice: string; // Ex: "1d6"
+}
+
+export interface ICharacterSheet {
+  // ... campos básicos (id, name, attributes)...
+  
+  class: 'druida' | 'patrulheiro' | 'guardiao' | 'bardo'; // etc
+  
+  // Campos Opcionais (Só preenchidos se a classe exigir)
+  beastShape?: IBeastShape;
+  companion?: ICompanion;
+}
