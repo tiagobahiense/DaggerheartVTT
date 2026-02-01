@@ -1,33 +1,39 @@
-/* Importando as fontes direto do Google */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ... O resto do CSS que passei antes continua igual, só vamos mudar as variáveis ... */
-
-:root {
-  /* Cores base para usar se o Tailwind falhar */
-  --color-parchment: #f4e4bc;
-  --color-dark-wood: #1a120b;
-  --color-gold: #d4af37;
+/* Reset Global para evitar scroll indesejado */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden; /* Remove scroll horizontal */
+  background-color: #000;
 }
 
-body {
-  /* Mudamos a fonte padrão para Merriweather (estilo livro) */
-  font-family: 'Merriweather', serif; 
-  background-color: #0f1115; /* Um preto meio azulado profundo, melhor que preto puro */
-  color: #e2e8f0;
-  
-  /* Adiciona uma textura de granulação sutil no fundo (opcional, mas fica incrível) */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+#root {
+  height: 100%;
 }
 
-/* Classe utilitária para "Vidro RPG" (aquele fundo semi-transparente escuro dos menus) */
+/* Painel de Vidro RPG */
 .rpg-panel {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.9);
   backdrop-filter: blur(8px);
-  border: 1px solid #d4af37; /* Borda dourada */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  border: 1px solid #d4af37;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar Personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1115;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 4px;
 }

@@ -26,5 +26,5 @@
     /* A LINHA MÁGICA QUE CONSERTA O IMPORT.META */
     "types": ["vite/client"] 
   },
-  "include": ["src"]
+  "include": ["src", "tailwind.config.js"]
 }

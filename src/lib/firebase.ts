@@ -2,8 +2,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
-// Helper para ler variáveis sem o TypeScript reclamar
+// Helper para evitar erros de tipagem com import.meta
 const getEnv = (key: string) => {
+
   return import.meta.env[key];
 };
 
@@ -14,18 +15,16 @@ const firebaseConfig = {
   messagingSenderId: getEnv("VITE_MESSAGING_SENDER_ID"),
   appId: getEnv("VITE_APP_ID"),
   measurementId: getEnv("VITE_MEASUREMENT_ID")
-  // REMOVIDO: storageBucket
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Lógica para emuladores (localhost)
+// Conecta aos emuladores se estiver rodando localmente (localhost)
 if (window.location.hostname === "localhost") {
   connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, "localhost", 8080);
-  // REMOVIDO: connectStorageEmulator
 }
 
 export { auth, db };
