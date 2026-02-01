@@ -9,8 +9,9 @@ import {
   Dna, Coins, Cube
 } from '@phosphor-icons/react';
 
-// --- IMPORTANTE: CAMINHO DO JSON ---
+// --- IMPORTAÇÕES DE DADOS E COMPONENTES ---
 import CARTAS_JSON from '../data/cartas.json'; 
+import { SheetModal } from '../components/SheetModal'; // <--- NOVA IMPORTAÇÃO DA FICHA
 
 // ==================================================================================
 // 1. TIPOS GERAIS
@@ -38,6 +39,7 @@ interface Character {
   community: string;
   heritage: string;
   level: number;
+  attributes?: any; // Adicionado para compatibilidade com a ficha
 }
 
 // Resultado da Dualidade
@@ -62,7 +64,7 @@ interface StandardResult {
 
 type RollResult = DualityResult | StandardResult;
 
-// --- CORES ---
+// --- CORES DE FUNDO/HUD ---
 const CLASS_COLORS: Record<string, string> = {
   "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
@@ -373,10 +375,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     const fallbackSub = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)));
     setSubclassCards([fundamental || fallbackSub || null, null, null]);
 
-    if (hand.length === 0) {
-      const startingHand = safeCards.filter(c => c.categoria === 'Talento').slice(0, 2);
-      setHand(startingHand.map(c => ({ ...c, uniqueId: crypto.randomUUID(), isExhausted: false, exhaustionType: null, tokens: 0 })));
-    }
+    // MÃO INICIAL VAZIA (Correção aplicada: Sem cartas forçadas)
+    
   }, [character, safeCards]);
 
   const createActiveCard = (card: Card): ActiveCard => ({
@@ -502,7 +502,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      {/* MESA */}
+      {/* MESA (Cartas Fixas) */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-start gap-4 z-40 pointer-events-none">
         <div className="flex gap-2 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
           <TableCard card={ancestryCard} label="Ancestralidade" />
@@ -516,6 +516,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       </div>
 
+      {/* Notificação Mão Cheia */}
       {isSwapping && (
         <div className="fixed top-32 left-1/2 -translate-x-1/2 z-[60] bg-black/80 border border-gold text-gold px-6 py-4 rounded-xl shadow-2xl animate-bounce text-center backdrop-blur-md">
             <div className="flex flex-col items-center gap-2">
@@ -527,7 +528,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      {/* BOTÕES LATERAIS */}
+      {/* BOTÕES LATERAIS (Grimório e Reserva) */}
       <div className="absolute bottom-8 right-8 z-40">
         <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-28 h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
           <img src="/pote_deck.png" className="w-full h-full object-contain" />
@@ -545,7 +546,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </button>
       </div>
 
-      {/* MÃO */}
+      {/* MÃO DO JOGADOR */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-48 flex items-end justify-center z-30 pointer-events-none">
         <div className="flex items-end justify-center -space-x-12 pb-6 pointer-events-auto perspective-500">
           {hand.map((card, idx) => (
@@ -567,7 +568,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       </div>
 
-      {/* MODALS */}
+      {/* MODALS DE LISTAS (GRIMÓRIO/RESERVA) */}
       {(showGrimoire || showReserve) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-[85%] h-[85%] bg-[#0f0b15]/90 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
@@ -592,6 +593,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
+      {/* MODAL ZOOM (DETALHES DA CARTA) */}
       {currentSelectedCard && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setSelectedCardState(null)}>
           <div className="relative flex flex-col md:flex-row items-center gap-10 max-w-5xl w-full p-4" onClick={e => e.stopPropagation()}>
@@ -671,7 +673,14 @@ export default function JogadorVTT() {
         const q = query(collection(db, 'characters'), where('playerId', '==', user.uid));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          setCharacter({ id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as Character);
+          // Garante que atributos existam com valores padrão para não quebrar a ficha
+          const data = querySnapshot.docs[0].data();
+          const defaultAttrs = { agility: {value:0}, strength: {value:0}, finesse: {value:0}, instinct: {value:0}, presence: {value:0}, knowledge: {value:0} };
+          setCharacter({ 
+            id: querySnapshot.docs[0].id, 
+            ...data,
+            attributes: data.attributes || defaultAttrs
+          } as Character);
         } else {
           navigate('/criar-personagem');
         }
@@ -693,6 +702,7 @@ export default function JogadorVTT() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40"></div>
       </div>
 
+      {/* --- HUD: PERFIL --- */}
       <div className="absolute top-6 left-6 z-50 animate-fade-in">
         <button onClick={() => setSheetOpen(true)} className="group relative flex items-center gap-4 pr-8 pl-2 py-2 rounded-full border border-white/20 shadow-xl transition-all hover:scale-[1.02]" style={{ background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' }}>
           <div className="relative w-14 h-14 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0">
@@ -717,21 +727,18 @@ export default function JogadorVTT() {
         </button>
       </div>
 
+      {/* SISTEMA DE CARTAS INTEGRADO */}
       <InternalCardSystem character={character} allCards={CARTAS_JSON as any} />
 
       {/* MODAL DE DADOS */}
       {showDiceRoller && <InternalDiceSystem onClose={() => setShowDiceRoller(false)} />}
 
-      {/* MODAL DE FICHA (PLACEHOLDER) */}
-      {sheetOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-           <div className="relative w-[90%] h-[90%] bg-dungeon-stone border border-gold/30 rounded-xl shadow-2xl flex flex-col p-6">
-              <button onClick={() => setSheetOpen(false)} className="absolute top-4 right-4 text-white hover:text-red-500"><X size={32}/></button>
-              <h2 className="text-3xl text-gold font-rpg text-center">Ficha de {character.name}</h2>
-              <div className="flex-1 flex items-center justify-center opacity-50"><Shield size={64}/></div>
-           </div>
-        </div>
-      )}
+      {/* MODAL DE FICHA (AGORA CONECTADO AO NOVO COMPONENTE) */}
+      <SheetModal 
+        character={character} 
+        isOpen={sheetOpen} 
+        onClose={() => setSheetOpen(false)} 
+      />
     </div>
   );
 }
