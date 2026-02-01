@@ -1,0 +1,1406 @@
+[
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Anão.jpg",
+      "nome": "Ancestralidade - Anão",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Clank.jpg",
+      "nome": "Ancestralidade - Clank",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Drakona.jpg",
+      "nome": "Ancestralidade - Drakona",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Elfo.jpg",
+      "nome": "Ancestralidade - Elfo",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Fada.jpg",
+      "nome": "Ancestralidade - Fada",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Fauno.jpg",
+      "nome": "Ancestralidade - Fauno",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Firbolg.jpg",
+      "nome": "Ancestralidade - Firbolg",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Fungril.jpg",
+      "nome": "Ancestralidade - Fungril",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Galapa.jpg",
+      "nome": "Ancestralidade - Galapa",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Gigante.jpg",
+      "nome": "Ancestralidade - Gigante",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Goblin.jpg",
+      "nome": "Ancestralidade - Goblin",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Humano.jpg",
+      "nome": "Ancestralidade - Humano",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Infernis.jpg",
+      "nome": "Ancestralidade - Infernis",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Katari.jpg",
+      "nome": "Ancestralidade - Katari",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Orc.jpg",
+      "nome": "Ancestralidade - Orc",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Pequenino.jpg",
+      "nome": "Ancestralidade - Pequenino",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Quacho.jpg",
+      "nome": "Ancestralidade - Quacho",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Ancestralidade/Ancestralidade - Símio.jpg",
+      "nome": "Ancestralidade - Símio",
+      "categoria": "Ancestralidade"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Baluarte.jpg",
+      "nome": "Especialização - Baluarte",
+      "categoria": "Classes",
+      "profissao": "Guardião"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Beletrista.jpg",
+      "nome": "Especialização - Beletrista",
+      "categoria": "Classes",
+      "profissao": "Bardo"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Discípulo da Guerra.jpg",
+      "nome": "Especialização - Discípulo da Guerra",
+      "categoria": "Classes",
+      "profissao": "Mago"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Discípulo do conhecimento.jpg",
+      "nome": "Especialização - Discípulo do conhecimento",
+      "categoria": "Classes",
+      "profissao": "Mago"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Elementalista.jpg",
+      "nome": "Especialização - Elementalista",
+      "categoria": "Classes",
+      "profissao": "Feiticeiro"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Escolhido da bravura.jpg",
+      "nome": "Especialização - Escolhido da bravura",
+      "categoria": "Classes",
+      "profissao": "Guerreiro"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Escolhido da Matança.jpg",
+      "nome": "Especialização - Escolhido da Matança",
+      "categoria": "Classes",
+      "profissao": "Guerreiro"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Gatuno.jpg",
+      "nome": "Especialização - Gatuno",
+      "categoria": "Classes",
+      "profissao": "Ladino"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Mafioso.jpg",
+      "nome": "Especialização - Mafioso",
+      "categoria": "Classes",
+      "profissao": "Ladino"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Portador Divino.jpg",
+      "nome": "Especialização - Portador Divino",
+      "categoria": "Classes",
+      "profissao": "Serafim"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Primordialista.jpg",
+      "nome": "Especialização - Primordialista",
+      "categoria": "Classes",
+      "profissao": "Feiticeiro"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Protetor da Renovação.jpg",
+      "nome": "Especialização - Protetor da Renovação",
+      "categoria": "Classes",
+      "profissao": "Druida"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Protetor dos elementos.jpg",
+      "nome": "Especialização - Protetor dos elementos",
+      "categoria": "Classes",
+      "profissao": "Druida"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - rastreador.jpg",
+      "nome": "Especialização - rastreador",
+      "categoria": "Classes",
+      "profissao": "Patrulheiro"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Sentinela Alada.jpg",
+      "nome": "Especialização - Sentinela Alada",
+      "categoria": "Classes",
+      "profissao": "Serafim"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Treinador.jpg",
+      "nome": "Especialização - Treinador",
+      "categoria": "Classes",
+      "profissao": "Patrulheiro"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - Trovador.jpg",
+      "nome": "Especialização - Trovador",
+      "categoria": "Classes",
+      "profissao": "Bardo"
+    },
+    {
+      "caminho": "/cards/Classes/Especialização - VinGador.jpg",
+      "nome": "Especialização - VinGador",
+      "categoria": "Classes",
+      "profissao": "Guardião"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Baluarte.jpg",
+      "nome": "Fundamental - Baluarte",
+      "categoria": "Classes",
+      "profissao": "Guardião"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Beletrista.jpg",
+      "nome": "Fundamental - Beletrista",
+      "categoria": "Classes",
+      "profissao": "Bardo"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Discípulo da Guerra.jpg",
+      "nome": "Fundamental - Discípulo da Guerra",
+      "categoria": "Classes",
+      "profissao": "Mago"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Discípulo do conhecimento.jpg",
+      "nome": "Fundamental - Discípulo do conhecimento",
+      "categoria": "Classes",
+      "profissao": "Mago"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Elementalista.jpg",
+      "nome": "Fundamental - Elementalista",
+      "categoria": "Classes",
+      "profissao": "Feiticeiro"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Escolhido da bravura.jpg",
+      "nome": "Fundamental - Escolhido da bravura",
+      "categoria": "Classes",
+      "profissao": "Guerreiro"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Escolhido da Matança.jpg",
+      "nome": "Fundamental - Escolhido da Matança",
+      "categoria": "Classes",
+      "profissao": "Guerreiro"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Gatuno.jpg",
+      "nome": "Fundamental - Gatuno",
+      "categoria": "Classes",
+      "profissao": "Ladino"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Mafioso.jpg",
+      "nome": "Fundamental - Mafioso",
+      "categoria": "Classes",
+      "profissao": "Ladino"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Portador Divino.jpg",
+      "nome": "Fundamental - Portador Divino",
+      "categoria": "Classes",
+      "profissao": "Serafim"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Primordialista.jpg",
+      "nome": "Fundamental - Primordialista",
+      "categoria": "Classes",
+      "profissao": "Feiticeiro"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Protetor da Renovação.jpg",
+      "nome": "Fundamental - Protetor da Renovação",
+      "categoria": "Classes",
+      "profissao": "Druida"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Protetor dos elementos.jpg",
+      "nome": "Fundamental - Protetor dos elementos",
+      "categoria": "Classes",
+      "profissao": "Druida"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - rastreador.jpg",
+      "nome": "Fundamental - rastreador",
+      "categoria": "Classes",
+      "profissao": "Patrulheiro"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Sentinela Alada.jpg",
+      "nome": "Fundamental - Sentinela Alada",
+      "categoria": "Classes",
+      "profissao": "Serafim"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Treinador.jpg",
+      "nome": "Fundamental - Treinador",
+      "categoria": "Classes",
+      "profissao": "Patrulheiro"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - Trovador.jpg",
+      "nome": "Fundamental - Trovador",
+      "categoria": "Classes",
+      "profissao": "Bardo"
+    },
+    {
+      "caminho": "/cards/Classes/Fundamental - VinGador.jpg",
+      "nome": "Fundamental - VinGador",
+      "categoria": "Classes",
+      "profissao": "Guardião"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Baluarte.jpg",
+      "nome": "Maestria - Baluarte",
+      "categoria": "Classes",
+      "profissao": "Guardião"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Beletrista.jpg",
+      "nome": "Maestria - Beletrista",
+      "categoria": "Classes",
+      "profissao": "Bardo"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Discípulo da Guerra.jpg",
+      "nome": "Maestria - Discípulo da Guerra",
+      "categoria": "Classes",
+      "profissao": "Mago"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Discípulo do conhecimento.jpg",
+      "nome": "Maestria - Discípulo do conhecimento",
+      "categoria": "Classes",
+      "profissao": "Mago"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Elementalista.jpg",
+      "nome": "Maestria - Elementalista",
+      "categoria": "Classes",
+      "profissao": "Feiticeiro"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Escolhido da bravura.jpg",
+      "nome": "Maestria - Escolhido da bravura",
+      "categoria": "Classes",
+      "profissao": "Guerreiro"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Escolhido da Matança.jpg",
+      "nome": "Maestria - Escolhido da Matança",
+      "categoria": "Classes",
+      "profissao": "Guerreiro"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Gatuno.jpg",
+      "nome": "Maestria - Gatuno",
+      "categoria": "Classes",
+      "profissao": "Ladino"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Mafioso.jpg",
+      "nome": "Maestria - Mafioso",
+      "categoria": "Classes",
+      "profissao": "Ladino"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Portador Divino.jpg",
+      "nome": "Maestria - Portador Divino",
+      "categoria": "Classes",
+      "profissao": "Serafim"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Primordialista.jpg",
+      "nome": "Maestria - Primordialista",
+      "categoria": "Classes",
+      "profissao": "Feiticeiro"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Protetor da Renovação.jpg",
+      "nome": "Maestria - Protetor da Renovação",
+      "categoria": "Classes",
+      "profissao": "Druida"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Protetor dos elementos.jpg",
+      "nome": "Maestria - Protetor dos elementos",
+      "categoria": "Classes",
+      "profissao": "Druida"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - rastreador.jpg",
+      "nome": "Maestria - rastreador",
+      "categoria": "Classes",
+      "profissao": "Patrulheiro"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Sentinela Alada.jpg",
+      "nome": "Maestria - Sentinela Alada",
+      "categoria": "Classes",
+      "profissao": "Serafim"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Treinador.jpg",
+      "nome": "Maestria - Treinador",
+      "categoria": "Classes",
+      "profissao": "Patrulheiro"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - Trovador.jpg",
+      "nome": "Maestria - Trovador",
+      "categoria": "Classes",
+      "profissao": "Bardo"
+    },
+    {
+      "caminho": "/cards/Classes/Maestria - VinGador.jpg",
+      "nome": "Maestria - VinGador",
+      "categoria": "Classes",
+      "profissao": "Guardião"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Aristocrática.jpg",
+      "nome": "Comunidade - Aristocrática",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Disciplinada.jpg",
+      "nome": "Comunidade - Disciplinada",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Erudita.jpg",
+      "nome": "Comunidade - Erudita",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Fora Da Lei.jpg",
+      "nome": "Comunidade - Fora Da Lei",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Marítima.jpg",
+      "nome": "Comunidade - Marítima",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Montanhesa.jpg",
+      "nome": "Comunidade - Montanhesa",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Nômade.jpg",
+      "nome": "Comunidade - Nômade",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Silvestre.jpg",
+      "nome": "Comunidade - Silvestre",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Comunidade/Comunidade - Subterrânea.jpg",
+      "nome": "Comunidade - Subterrânea",
+      "categoria": "Comunidade"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Adivinhação.jpg",
+      "nome": "Feitiço - Adivinhação",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Ajustar Realidade.jpg",
+      "nome": "Feitiço - Ajustar Realidade",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Aspecto Selvagem.jpg",
+      "nome": "Feitiço - Aspecto Selvagem",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Aura de Confusão.jpg",
+      "nome": "Feitiço - Aura de Confusão",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Aura Defensora.jpg",
+      "nome": "Feitiço - Aura Defensora",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Aura Esmagadora.jpg",
+      "nome": "Feitiço - Aura Esmagadora",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Banir.jpg",
+      "nome": "Feitiço - Banir",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Barreira Revigorante.jpg",
+      "nome": "Feitiço - Barreira Revigorante",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Caminhar na Parede.jpg",
+      "nome": "Feitiço - Caminhar na Parede",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Campo Curativo.jpg",
+      "nome": "Feitiço - Campo Curativo",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - CAOS LIBERTO.jpg",
+      "nome": "Feitiço - CAOS LIBERTO",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Carga Mágica.jpg",
+      "nome": "Feitiço - Carga Mágica",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Chuva Arcana.jpg",
+      "nome": "Feitiço - Chuva Arcana",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Chuva de Lâminas.jpg",
+      "nome": "Feitiço - Chuva de Lâminas",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Conjurar Enxame.jpg",
+      "nome": "Feitiço - Conjurar Enxame",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Conjurar Montarias.jpg",
+      "nome": "Feitiço - Conjurar Montarias",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - ConstriSçpãelol Mortal.jpg",
+      "nome": "Feitiço - ConstriSçpãelol Mortal",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Contramágica.jpg",
+      "nome": "Feitiço - Contramágica",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - corrente de relÂmpagos.jpg",
+      "nome": "Feitiço - corrente de relÂmpagos",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - da Natureza.jpg",
+      "nome": "Feitiço - da Natureza",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Disfarce em Massa.jpg",
+      "nome": "Feitiço - Disfarce em Massa",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Disfarce Inquietante.jpg",
+      "nome": "Feitiço - Disfarce Inquietante",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Dom Arcano.jpg",
+      "nome": "Feitiço - Dom Arcano",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - ECLIPSE.jpg",
+      "nome": "Feitiço - ECLIPSE",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Em Dobro.jpg",
+      "nome": "Feitiço - Em Dobro",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - enfeitiçar em Massa.jpg",
+      "nome": "Feitiço - enfeitiçar em Massa",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - enfeitiçar.jpg",
+      "nome": "Feitiço - enfeitiçar",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Espectro das Trevas.jpg",
+      "nome": "Feitiço - Espectro das Trevas",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Espionar.jpg",
+      "nome": "Feitiço - Espionar",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Espírito da meia-noite.jpg",
+      "nome": "Feitiço - Espírito da meia-noite",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Espíritos da Floresta.jpg",
+      "nome": "Feitiço - Espíritos da Floresta",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Esvanecer.jpg",
+      "nome": "Feitiço - Esvanecer",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Feixe de Remissão.jpg",
+      "nome": "Feitiço - Feixe de Remissão",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Fenda Espacial.jpg",
+      "nome": "Feitiço - Fenda Espacial",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Fortaleza Selvagem.jpg",
+      "nome": "Feitiço - Fortaleza Selvagem",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Força da Natureza.jpg",
+      "nome": "Feitiço - Força da Natureza",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Fulgor Atordoante.jpg",
+      "nome": "Feitiço - Fulgor Atordoante",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Glifo do Ocaso.jpg",
+      "nome": "Feitiço - Glifo do Ocaso",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Golpe Curativo.jpg",
+      "nome": "Feitiço - Golpe Curativo",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - imitador.jpg",
+      "nome": "Feitiço - imitador",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Impacto Defensivo.jpg",
+      "nome": "Feitiço - Impacto Defensivo",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Incendiar.jpg",
+      "nome": "Feitiço - Incendiar",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Invisibilidade.jpg",
+      "nome": "Feitiço - Invisibilidade",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Lampejo Hipnótico.jpg",
+      "nome": "Feitiço - Lampejo Hipnótico",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Moldar Material.jpg",
+      "nome": "Feitiço - Moldar Material",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Muralha.jpg",
+      "nome": "Feitiço - Muralha",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Mãos Curativas.jpg",
+      "nome": "Feitiço - Mãos Curativas",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Não Minta para Mim.jpg",
+      "nome": "Feitiço - Não Minta para Mim",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Ocultação.jpg",
+      "nome": "Feitiço - Ocultação",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Olho Flutuante.jpg",
+      "nome": "Feitiço - Olho Flutuante",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Onda Desintegradora.jpg",
+      "nome": "Feitiço - Onda Desintegradora",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Palavras de Discórdia.jpg",
+      "nome": "Feitiço - Palavras de Discórdia",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Partilhar o Fardo.jpg",
+      "nome": "Feitiço - Partilhar o Fardo",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Pele de Espinhos.jpg",
+      "nome": "Feitiço - Pele de Espinhos",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Premonição.jpg",
+      "nome": "Feitiço - Premonição",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Projeção Astral.jpg",
+      "nome": "Feitiço - Projeção Astral",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Projeção Sensorial.jpg",
+      "nome": "Feitiço - Projeção Sensorial",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Projétil Corrosivo.jpg",
+      "nome": "Feitiço - Projétil Corrosivo",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Proteção Rúnica.jpg",
+      "nome": "Feitiço - Proteção Rúnica",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Punição.jpg",
+      "nome": "Feitiço - Punição",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Raio Luminoso.jpg",
+      "nome": "Feitiço - Raio Luminoso",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Recuo Espectral.jpg",
+      "nome": "Feitiço - Recuo Espectral",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Reflexo Arcano.jpg",
+      "nome": "Feitiço - Reflexo Arcano",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Refúgio Seguro.jpg",
+      "nome": "Feitiço - Refúgio Seguro",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Ressurreição.jpg",
+      "nome": "Feitiço - Ressurreição",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Restauração.jpg",
+      "nome": "Feitiço - Restauração",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Revigorar.jpg",
+      "nome": "Feitiço - Revigorar",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Sigilo da Retaliação.jpg",
+      "nome": "Feitiço - Sigilo da Retaliação",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Sigilo da Vida.jpg",
+      "nome": "Feitiço - Sigilo da Vida",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Silêncio.jpg",
+      "nome": "Feitiço - Silêncio",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Soberania Vegetal.jpg",
+      "nome": "Feitiço - Soberania Vegetal",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Sombra Traiçoeira.jpg",
+      "nome": "Feitiço - Sombra Traiçoeira",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Sondar Pensamentos.jpg",
+      "nome": "Feitiço - Sondar Pensamentos",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Sussurros Sombrios.jpg",
+      "nome": "Feitiço - Sussurros Sombrios",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Telecinese.jpg",
+      "nome": "Feitiço - Telecinese",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Teleporte.jpg",
+      "nome": "Feitiço - Teleporte",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Tempestade.jpg",
+      "nome": "Feitiço - Tempestade",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Terremoto.jpg",
+      "nome": "Feitiço - Terremoto",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Terror Noturno.jpg",
+      "nome": "Feitiço - Terror Noturno",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Toque Reparador.jpg",
+      "nome": "Feitiço - Toque Reparador",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Translocação.jpg",
+      "nome": "Feitiço - Translocação",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Tronco Descomunal.jpg",
+      "nome": "Feitiço - Tronco Descomunal",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - União Transcendental.jpg",
+      "nome": "Feitiço - União Transcendental",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Vinha Voraz.jpg",
+      "nome": "Feitiço - Vinha Voraz",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Voo.jpg",
+      "nome": "Feitiço - Voo",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Véu da Noite.jpg",
+      "nome": "Feitiço - Véu da Noite",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Zona de Proteção.jpg",
+      "nome": "Feitiço - Zona de Proteção",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Feitiço/Feitiço - Últimas Palavras.jpg",
+      "nome": "Feitiço - Últimas Palavras",
+      "categoria": "Feitiço"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livrgor idmeo iTryefar.jpg",
+      "nome": "Grimório - Livrgor idmeo iTryefar",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Ava.jpg",
+      "nome": "Grimório - Livro de Ava",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Ecsota.jpg",
+      "nome": "Grimório - Livro de Ecsota",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Grynn.jpg",
+      "nome": "Grimório - Livro de Grynn",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Homet.jpg",
+      "nome": "Grimório - Livro de Homet",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Illiat.jpg",
+      "nome": "Grimório - Livro de Illiat",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Korvax.jpg",
+      "nome": "Grimório - Livro de Korvax",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Norai.jpg",
+      "nome": "Grimório - Livro de Norai",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Ronin.jpg",
+      "nome": "Grimório - Livro de Ronin",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Sitil.jpg",
+      "nome": "Grimório - Livro de Sitil",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Vagras.jpg",
+      "nome": "Grimório - Livro de Vagras",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Vyola.jpg",
+      "nome": "Grimório - Livro de Vyola",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Grimório/Grimório - Livro de Yarrow.jpg",
+      "nome": "Grimório - Livro de Yarrow",
+      "categoria": "Grimório"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Abalo Sísmico.jpg",
+      "nome": "Talento - Abalo Sísmico",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - ACUIDADE Cruel.jpg",
+      "nome": "Talento - ACUIDADE Cruel",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Altivez.jpg",
+      "nome": "Talento - Altivez",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - amontoar.jpg",
+      "nome": "Talento - amontoar",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Aproximação Estratégica.jpg",
+      "nome": "Talento - Aproximação Estratégica",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Armadura Corporal.jpg",
+      "nome": "Talento - Armadura Corporal",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Armadura Fortificada.jpg",
+      "nome": "Talento - Armadura Fortificada",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Armeiro.jpg",
+      "nome": "Talento - Armeiro",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Ataque Fragmentado.jpg",
+      "nome": "Talento - Ataque Fragmentado",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Ataque Imprudente.jpg",
+      "nome": "Talento - Ataque Imprudente",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Bastião.jpg",
+      "nome": "Talento - Bastião",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Calejado pela Batalha.jpg",
+      "nome": "Talento - Calejado pela Batalha",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Carisma Infinito.jpg",
+      "nome": "Talento - Carisma Infinito",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Caçador Sombrio.jpg",
+      "nome": "Talento - Caçador Sombrio",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Coletor.jpg",
+      "nome": "Talento - Coletor",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Concentração Mortal.jpg",
+      "nome": "Talento - Concentração Mortal",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Conhece teu inimigo.jpg",
+      "nome": "Talento - Conhece teu inimigo",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Contra-Ataque Rápido.jpg",
+      "nome": "Talento - Contra-Ataque Rápido",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Defesa Irredutível.jpg",
+      "nome": "Talento - Defesa Irredutível",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Delinquente.jpg",
+      "nome": "Talento - Delinquente",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - desprezar fraqueza.jpg",
+      "nome": "Talento - desprezar fraqueza",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dissimulação.jpg",
+      "nome": "Talento - Dissimulação",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom da Falange.jpg",
+      "nome": "Talento - Dom da Falange",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom da Graça.jpg",
+      "nome": "Talento - Dom da Graça",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom da Lâmina.jpg",
+      "nome": "Talento - Dom da Lâmina",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom da meia-noite.jpg",
+      "nome": "Talento - Dom da meia-noite",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom da sabedoria.jpg",
+      "nome": "Talento - Dom da sabedoria",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom do Códice.jpg",
+      "nome": "Talento - Dom do Códice",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom do Esplendor.jpg",
+      "nome": "Talento - Dom do Esplendor",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Dom do valor.jpg",
+      "nome": "Talento - Dom do valor",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Estrangulamento.jpg",
+      "nome": "Talento - Estrangulamento",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Ferocidade.jpg",
+      "nome": "Talento - Ferocidade",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Força Esmagadora.jpg",
+      "nome": "Talento - Força Esmagadora",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Fraternidade Marcial.jpg",
+      "nome": "Talento - Fraternidade Marcial",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Frenesi.jpg",
+      "nome": "Talento - Frenesi",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Fúria.jpg",
+      "nome": "Talento - Fúria",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Golpe da Morte.jpg",
+      "nome": "Talento - Golpe da Morte",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - golpe De Raspão.jpg",
+      "nome": "Talento - golpe De Raspão",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Golpe Debilitante.jpg",
+      "nome": "Talento - Golpe Debilitante",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Golpe Inspirador.jpg",
+      "nome": "Talento - Golpe Inspirador",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - golpe pessoal.jpg",
+      "nome": "Talento - golpe pessoal",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - grito de guerra.jpg",
+      "nome": "Talento - grito de guerra",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - guerra e glória.jpg",
+      "nome": "Talento - guerra e glória",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Imposição.jpg",
+      "nome": "Talento - Imposição",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Impulso.jpg",
+      "nome": "Talento - Impulso",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Incitar.jpg",
+      "nome": "Talento - Incitar",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Inevitável.jpg",
+      "nome": "Talento - Inevitável",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Insolência.jpg",
+      "nome": "Talento - Insolência",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Inspiração Crítica.jpg",
+      "nome": "Talento - Inspiração Crítica",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Intocável.jpg",
+      "nome": "Talento - Intocável",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Invencível.jpg",
+      "nome": "Talento - Invencível",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Jamais esquecido.jpg",
+      "nome": "Talento - Jamais esquecido",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Levante-se.jpg",
+      "nome": "Talento - Levante-se",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Líder Exemplar.jpg",
+      "nome": "Talento - Líder Exemplar",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Manter Posição.jpg",
+      "nome": "Talento - Manter Posição",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Massacrar.jpg",
+      "nome": "Talento - Massacrar",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Mestre da Furtividade.jpg",
+      "nome": "Talento - Mestre da Furtividade",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Mestre do Ofício.jpg",
+      "nome": "Talento - Mestre do Ofício",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Mexa-se.jpg",
+      "nome": "Talento - Mexa-se",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Monstro de Batalha.jpg",
+      "nome": "Talento - Monstro de Batalha",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Movimento Ligeiro.jpg",
+      "nome": "Talento - Movimento Ligeiro",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Notoriedade.jpg",
+      "nome": "Talento - Notoriedade",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Novo Fôlego.jpg",
+      "nome": "Talento - Novo Fôlego",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Não o Suficiente.jpg",
+      "nome": "Talento - Não o Suficiente",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Palavras de Conforto.jpg",
+      "nome": "Talento - Palavras de Conforto",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Palavras Inspiradoras.jpg",
+      "nome": "Talento - Palavras Inspiradoras",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Palavras Tranquilizantes.jpg",
+      "nome": "Talento - Palavras Tranquilizantes",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Passo Célere.jpg",
+      "nome": "Talento - Passo Célere",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Presença Corajosa.jpg",
+      "nome": "Talento - Presença Corajosa",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Quase Lá.jpg",
+      "nome": "Talento - Quase Lá",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Rastreador Talentoso.jpg",
+      "nome": "Talento - Rastreador Talentoso",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Recuperação.jpg",
+      "nome": "Talento - Recuperação",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Redirecionar.jpg",
+      "nome": "Talento - Redirecionar",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Resistir.jpg",
+      "nome": "Talento - Resistir",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Santuário Selvagem.jpg",
+      "nome": "Talento - Santuário Selvagem",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - sou seu escudo.jpg",
+      "nome": "Talento - sou seu escudo",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Testar os Limites.jpg",
+      "nome": "Talento - Testar os Limites",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Trajeto Mortal.jpg",
+      "nome": "Talento - Trajeto Mortal",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Tributo do Anoitecer.jpg",
+      "nome": "Talento - Tributo do Anoitecer",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Turbilhão.jpg",
+      "nome": "Talento - Turbilhão",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Táticas.jpg",
+      "nome": "Talento - Táticas",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Um Passo à Frente.jpg",
+      "nome": "Talento - Um Passo à Frente",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Validação.jpg",
+      "nome": "Talento - Validação",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - vantagem do campeão.jpg",
+      "nome": "Talento - vantagem do campeão",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Versatilidade.jpg",
+      "nome": "Talento - Versatilidade",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Vitalidade.jpg",
+      "nome": "Talento - Vitalidade",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - voz da Natureza.jpg",
+      "nome": "Talento - voz da Natureza",
+      "categoria": "Talento"
+    },
+    {
+      "caminho": "/cards/Talento/Talento - Voz da Razão.jpg",
+      "nome": "Talento - Voz da Razão",
+      "categoria": "Talento"
+    }
+  ]

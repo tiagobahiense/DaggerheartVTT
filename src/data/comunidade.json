@@ -1,0 +1,38 @@
+[
+    {
+      "nome": "Comunidade Aristocrática",
+      "caminho": "public/comunidade/comunidade-aristocratica.png"
+    },
+    {
+      "nome": "Comunidade Erudita",
+      "caminho": "public/comunidade/comunidade-erudita.png"
+    },
+    {
+      "nome": "Comunidade Fora da Lei",
+      "caminho": "public/comunidade/comunidade-fora-da-lei.png"
+    },
+    {
+      "nome": "Comunidade Marítima",
+      "caminho": "public/comunidade/comunidade-maritima.png"
+    },
+    {
+      "nome": "Comunidade Montanhesa",
+      "caminho": "public/comunidade/comunidade-montanhesa.png"
+    },
+    {
+      "nome": "Comunidade Nômade",
+      "caminho": "public/comunidade/comunidade-nomade.png"
+    },
+    {
+      "nome": "Comunidade Silvestre",
+      "caminho": "public/comunidade/comunidade-silvestre.png"
+    },
+    {
+      "nome": "Comunidade Disciplinada",
+      "caminho": "public/comunidade/comunidade-disciplinada.png"
+    },
+    {
+      "nome": "Comunidade Subterrânea",
+      "caminho": "public/comunidade/comunidade-subterranea.png"
+    }
+  ]
