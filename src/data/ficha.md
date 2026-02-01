@@ -1,3 +1,5 @@
+MAGO
+
 1. Estatísticas Básicas
 Estas são as estatísticas fixas que vêm impressas na ficha do Mago:
 • Domínios: Códice e Esplendor.
@@ -114,3 +116,177 @@ Você passou a vida em busca de um livro ou objeto
 importante. O que é, e por que é tão importante?
 Para quais responsabilidades sua comunidade já contou
 com você? Como você a decepcionou?
+
+Vou por os patamares de evolução abaixo com o numero de check box ao lado.
+
+
+
+2° patamar: níveis 2 a 4
+
+No nível 2, crie uma nova
+
+Experiência com +2 e aumente
+
+sua Proficiência em +1.:
+
+
+
+3 - Escolha dois atributos desmarcados, os
+
+marque e receba um bônus de +1 em cada.
+
+
+
+2 - Aumente seus PV em 1 permanentemente.
+
+2 - Aumente seus PF em 1 permanentemente.
+
+1 - Receba +1 em duas Experiências
+
+permanentemente.
+
+
+
+1 - Escolha uma nova carta de domínio de um
+
+domínio ao qual você tem acesso e de um
+
+nível igual ou menor que o seu (nível máx.: 4).
+
+
+
+1 - Aumente sua Evasão em +1 permanentemente.
+
+
+
+Atualize seu nível e ajuste seus limiares de dano
+
+de acordo. Escolha uma nova carta de domínio de
+
+nível igual ou inferior ao seu e que pertença
+
+
+
+
+
+
+
+3° patamar: níveis 5 a 7
+
+No nível 5, crie uma nova Experiência
+
+com +2 e remova todas as marcações
+
+nos atributos. Então, aumente sua
+
+Proficiência em +1.:
+
+
+
+3 - Escolha dois atributos desmarcados, os
+
+marque e receba um bônus de +1 em cada.
+
+
+
+2 - Aumente seus PV em 1 permanentemente.
+
+2 - Aumente seus PF em 1 permanentemente.
+
+1 - Receba +1 em duas Experiências
+
+permanentemente.
+
+
+
+1 - Escolha uma nova carta de domínio de um
+
+domínio ao qual você tem acesso e de um
+
+nível igual ou menor que o seu (nível máx.: 7).
+
+1 - Aumente sua Evasão em +1 permanentemente.
+
+1 - Pegue sua carta de subclasse aprimorada.
+
+Em seguida, corte a opção de multiclasse
+
+deste patamar.
+
+2 - Aumente sua Proficiência em +1.
+
+2 - Multiclasse: escolha uma classe adicional
+
+para o seu personagem. Em seguida, corte
+
+“Peque uma carta de subclasse aprimorada”
+
+e a outra opção de multiclasse nesta ficha.
+
+
+
+Atualize seu nível e ajuste seus limiares de dano
+
+de acordo. Escolha uma nova carta de domínio de
+
+nível igual ou inferior ao seu e que pertença
+
+
+
+4° patamar: níveis 8 a 10
+
+No nível 8, crie uma nova Experiência
+
+com +2 e remova todas as marcações
+
+nos atributos. Então, aumente sua
+
+Proficiência em +1.:
+
+
+
+3 - Escolha dois atributos desmarcados, os
+
+marque e receba um bônus de +1 em cada.
+
+2 - Aumente seus PV em 1 permanentemente.
+
+2 - Aumente seus PF em 1 permanentemente.
+
+1 - Receba +1 em duas Experiências
+
+permanentemente.
+
+1 - Escolha uma nova carta de domínio de um
+
+domínio ao qual você tem acesso e de um
+
+nível igual ou menor que o seu.
+
+1 - Aumente sua Evasão em +1 permanentemente.
+
+1 - Pegue sua carta de subclasse aprimorada.
+
+Em seguida, corte a opção de multiclasse
+
+deste patamar.
+
+2 - Aumente sua Proficiência em +1.
+
+2 - Multiclasse: escolha uma classe adicional
+
+para o seu personagem. Em seguida, corte
+
+“Peque uma carta de subclasse aprimorada”
+
+e a outra opção de multiclasse nesta ficha.
+
+
+
+Atualize seu nível e ajuste seus limiares de dano
+
+de acordo. Escolha uma nova carta de domínio de
+
+nível igual ou inferior ao seu e que pertença a um
+
+domínio ao qual você tem acesso.
