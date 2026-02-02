@@ -161,7 +161,7 @@ export const ImageUrlModal = ({ isOpen, onClose, onConfirm, currentUrl }: any) =
 };
 
 // --- LINHA DE COMBATE (ATUALIZADA) ---
-export const CombatRow = ({ label, weapon, onChange, placeholderName, isInventory }: any) => (
+export const CombatRow = ({ weapon, onChange, placeholderName, isInventory }: any) => (
     <div className="flex items-start gap-2 bg-black/20 p-2 rounded border border-white/5 hover:border-white/10 transition-colors">
         {/* Ícone */}
         <div className="w-8 h-8 rounded bg-[#1a1520] flex items-center justify-center border border-white/10 shrink-0 mt-1">

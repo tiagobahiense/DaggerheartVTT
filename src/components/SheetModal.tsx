@@ -139,13 +139,14 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   };
 
   const updateAttribute = (attrName: string, val: number) => {
-      const currentAttrs = sheetData.attributes || {};
-      const newAttrs = { 
-          ...currentAttrs, 
-          [attrName]: { ...(currentAttrs as any)[attrName], value: val } 
-      };
-      updateSheet('attributes', newAttrs);
-  };
+    // Forçamos o type aqui para evitar o erro do TS7053
+    const currentAttrs = (sheetData.attributes || {}) as Record<string, any>;
+    const newAttrs = { 
+        ...currentAttrs, 
+        [attrName]: { ...currentAttrs[attrName], value: val } 
+    };
+    updateSheet('attributes', newAttrs);
+};
 
   const addInventoryItem = () => {
       const newItem = { name: '', quantity: 1 };
