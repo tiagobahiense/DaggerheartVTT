@@ -1,18 +1,637 @@
-import { Eye, Lightning, HandPalm } from '@phosphor-icons/react';
-import { FloatingButton } from '../components/UI/FloatingButton';
+import { useState, useEffect, useRef } from 'react';
+import { 
+  collection, query, onSnapshot, orderBy, 
+  addDoc, serverTimestamp, limit, writeBatch, doc 
+} from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
+import { 
+  Users, Eye, Skull, Campfire, MoonStars, 
+  Dna, X, Cube, Coins, Sparkle, HandPalm, 
+  MapTrifold, Robot, UserCircle, Stack, Scroll
+} from '@phosphor-icons/react';
+import { SheetModal } from '../components/SheetModal';
 
-export default function MestreVTT() {
+// --- CORES (IDÊNTICAS AO JOGADOR) ---
+const CLASS_COLORS: Record<string, string> = {
+  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
+  "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
+};
+const ANCESTRY_COLORS: Record<string, string> = {
+  "Anão": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
+  "Fauno": "#84cc16", "Firbolg": "#065f46", "Fungril": "#a3e635", "Galapa": "#0d9488", "Gigante": "#475569",
+  "Goblin": "#4ade80", "Humano": "#38bdf8", "Infernis": "#dc2626", "Katari": "#f59e0b", "Orc": "#3f6212",
+  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "Símio": "#a16207",
+};
+
+// --- TIPOS ---
+interface Card {
+  caminho: string;
+  nome: string;
+  categoria: string;
+  uniqueId?: string;
+  isExhausted?: boolean;
+  exhaustionType?: 'short' | 'long' | null;
+  tokens?: number;
+}
+
+interface Character {
+  id: string;
+  name: string;
+  class: string;
+  subclass: string;
+  ancestry: string;
+  heritage: string; // Adicionado heritage
+  community: string;
+  level: number;
+  imageUrl?: string;
+  isOnline?: boolean; // Campo para controle de status
+  cards?: {
+    hand: Card[];
+    reserve: Card[];
+  };
+  attributes?: any;
+  weapons?: any;
+  armor?: any;
+  paSpent?: number;
+}
+
+interface RollLog {
+  id: string;
+  playerName: string;
+  result: any;
+  timestamp: any;
+  type: 'DUALITY' | 'STANDARD';
+}
+
+// ============================================================================
+// 1. COMPONENTE: LISTA DE JOGADORES (ESTILO VISUAL DO JOGADOR)
+// ============================================================================
+const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
   return (
-    <div className="h-screen w-screen bg-black relative">
-       <div className="absolute inset-0 flex items-center justify-center text-gray-700 font-rpg text-4xl">
-         VISÃO DO MESTRE (MAPA)
+    <div className="absolute top-6 left-6 flex flex-col gap-4 z-40 animate-slide-right w-64">
+      {players.map((char) => {
+        const color1 = CLASS_COLORS[char.class] || '#4b5563';
+        const color2 = ANCESTRY_COLORS[char.ancestry] || '#1f2937';
+        // Se isOnline for undefined, assume true para teste, ou implemente lógica de heartbeat
+        const isOnline = char.isOnline !== false; 
+
+        return (
+            <button 
+                key={char.id}
+                onClick={() => onSelectPlayer(char)}
+                className={`group relative flex items-center gap-3 pr-4 pl-2 py-2 rounded-full border shadow-xl transition-all hover:scale-[1.02] text-left w-full
+                    ${isOnline ? 'border-white/20' : 'border-white/5 bg-gray-900/80 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}
+                `}
+                style={isOnline ? { background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' } : {}}
+            >
+                <div className="relative w-12 h-12 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0 overflow-hidden">
+                    {char.imageUrl ? (
+                        <img src={char.imageUrl} className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="text-lg font-rpg text-white font-bold">{char.level}</span>
+                    )}
+                    <span className="absolute -bottom-1 text-[8px] uppercase tracking-widest text-white/60 bg-black/60 px-1 rounded z-10">{isOnline ? 'LVL' : 'OFF'}</span>
+                </div>
+                
+                <div className="flex flex-col items-start min-w-0 overflow-hidden">
+                    <h2 className="font-rpg text-sm font-bold leading-none text-white truncate w-full group-hover:text-gold transition-colors">{char.name}</h2>
+                    <div className="flex items-center gap-1 text-[10px] text-white/90 mt-1 truncate w-full">
+                        <span className="font-bold uppercase tracking-wide">{char.class}</span>
+                        {isOnline && <span className="italic opacity-70">- {char.subclass}</span>}
+                    </div>
+                </div>
+
+                {isOnline && <div className="absolute right-3 opacity-0 group-hover:opacity-50 transition-opacity"><Scroll size={16} className="text-white" /></div>}
+            </button>
+        );
+      })}
+    </div>
+  );
+};
+
+// ============================================================================
+// 2. COMPONENTE: SISTEMA DE DADOS DO MESTRE (IGUAL AO DO JOGADOR + SYNC)
+// ============================================================================
+function MasterDiceSystem({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<'DUALITY' | 'STANDARD'>('DUALITY');
+  const [isRolling, setIsRolling] = useState(false);
+  const [result, setResult] = useState<any | null>(null);
+
+  // Estados Dualidade
+  const [modifier, setModifier] = useState(0);
+  const [difficulty, setDifficulty] = useState<number>(12);
+  const [advantage, setAdvantage] = useState<'none' | 'advantage' | 'disadvantage'>('none');
+
+  // Estados Standard
+  const [selectedDie, setSelectedDie] = useState(20);
+  const [diceCount, setDiceCount] = useState(1);
+  const [standardMod, setStandardMod] = useState(0);
+
+  // --- FUNÇÃO PARA SALVAR NO FIREBASE ---
+  const pushRollToFirebase = async (rollResult: any, type: 'DUALITY' | 'STANDARD') => {
+      try {
+        await addDoc(collection(db, 'rolls'), {
+            playerName: "Mestre", // Nome fixo ou configurável
+            type,
+            result: rollResult,
+            timestamp: serverTimestamp()
+        });
+      } catch (e) {
+          console.error("Erro ao enviar rolagem:", e);
+      }
+  };
+
+  // --- ROLAGEM DUALIDADE ---
+  const rollDuality = () => {
+    setIsRolling(true);
+    setResult(null);
+
+    setTimeout(() => {
+      const hope = Math.floor(Math.random() * 12) + 1;
+      const fear = Math.floor(Math.random() * 12) + 1;
+      
+      let advRoll = 0;
+      if (advantage !== 'none') advRoll = Math.floor(Math.random() * 6) + 1;
+      const finalAdvMod = advantage === 'advantage' ? advRoll : advantage === 'disadvantage' ? -advRoll : 0;
+
+      const total = hope + fear + modifier + finalAdvMod;
+
+      let outcome: 'CRITICAL' | 'HOPE' | 'FEAR' = 'FEAR';
+      if (hope === fear) outcome = 'CRITICAL';
+      else if (hope > fear) outcome = 'HOPE';
+      else outcome = 'FEAR';
+
+      const finalResult = {
+        type: 'DUALITY',
+        hopeDie: hope,
+        fearDie: fear,
+        modifier: modifier + finalAdvMod,
+        total,
+        outcome,
+        isSuccess: total >= difficulty
+      };
+
+      setResult(finalResult);
+      pushRollToFirebase(finalResult, 'DUALITY');
+      setIsRolling(false);
+    }, 1000);
+  };
+
+  // --- ROLAGEM PADRÃO ---
+  const rollStandard = () => {
+    setIsRolling(true);
+    setResult(null);
+
+    setTimeout(() => {
+        const rolls = Array.from({ length: diceCount }, () => Math.floor(Math.random() * selectedDie) + 1);
+        const sum = rolls.reduce((a, b) => a + b, 0);
+        
+        const finalResult = {
+            type: 'STANDARD',
+            rolls,
+            dieType: selectedDie,
+            modifier: standardMod,
+            total: sum + standardMod
+        };
+
+        setResult(finalResult);
+        pushRollToFirebase(finalResult, 'STANDARD');
+        setIsRolling(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        
+        <div className="flex justify-between items-start mb-6">
+            <div className="flex gap-4">
+                <button onClick={() => { setTab('DUALITY'); setResult(null); }} className={`text-lg font-rpg font-bold px-3 py-1 rounded transition-colors ${tab === 'DUALITY' ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}>Dualidade</button>
+                <button onClick={() => { setTab('STANDARD'); setResult(null); }} className={`text-lg font-rpg font-bold px-3 py-1 rounded transition-colors ${tab === 'STANDARD' ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}>Dados Padrão</button>
+            </div>
+            <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
+        </div>
+
+        {tab === 'DUALITY' && !isRolling && !result && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex justify-between gap-4">
+              <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
+                <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
+                <div className="flex items-center gap-3 justify-center">
+                  <button onClick={() => setModifier(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
+                  <span className="text-xl font-bold text-white w-8 text-center">{modifier >= 0 ? `+${modifier}` : modifier}</span>
+                  <button onClick={() => setModifier(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
+                </div>
+              </div>
+              <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
+                <label className="text-xs uppercase text-white/50 mb-1 block">Dificuldade</label>
+                <input type="number" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} className="w-full bg-transparent text-xl font-bold text-white text-center outline-none border-b border-white/20 focus:border-gold" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setAdvantage(v => v === 'advantage' ? 'none' : 'advantage')} className={`flex-1 py-2 rounded border transition-all text-xs font-bold uppercase ${advantage === 'advantage' ? 'bg-green-900/50 border-green-500 text-green-100' : 'bg-black/40 border-white/10 text-white/40'}`}>Vantagem (+d6)</button>
+              <button onClick={() => setAdvantage(v => v === 'disadvantage' ? 'none' : 'disadvantage')} className={`flex-1 py-2 rounded border transition-all text-xs font-bold uppercase ${advantage === 'disadvantage' ? 'bg-red-900/50 border-red-500 text-red-100' : 'bg-black/40 border-white/10 text-white/40'}`}>Desvantagem (-d6)</button>
+            </div>
+            <button onClick={rollDuality} className="w-full py-4 bg-gradient-to-r from-gold/80 to-yellow-600/80 hover:from-gold hover:to-yellow-500 text-black font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"><Dna size={24} weight="fill" /> ROLAR DUALIDADE</button>
+          </div>
+        )}
+
+        {tab === 'STANDARD' && !isRolling && !result && (
+            <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-4 gap-2">
+                    {[4, 6, 8, 10, 12, 20, 100].map(d => (
+                        <button key={d} onClick={() => setSelectedDie(d)} className={`py-2 rounded border text-sm font-bold ${selectedDie === d ? 'bg-purple-900 border-purple-400 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}>d{d}</button>
+                    ))}
+                </div>
+                <div className="flex gap-4">
+                     <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
+                        <label className="text-xs uppercase text-white/50 mb-1 block">Quantidade</label>
+                        <div className="flex items-center gap-3 justify-center">
+                            <button onClick={() => setDiceCount(c => Math.max(1, c - 1))} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
+                            <span className="text-xl font-bold text-white w-8 text-center">{diceCount}</span>
+                            <button onClick={() => setDiceCount(c => c + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
+                        </div>
+                     </div>
+                     <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
+                        <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
+                        <div className="flex items-center gap-3 justify-center">
+                            <button onClick={() => setStandardMod(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
+                            <span className="text-xl font-bold text-white w-8 text-center">{standardMod >= 0 ? `+${standardMod}` : standardMod}</span>
+                            <button onClick={() => setStandardMod(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
+                        </div>
+                     </div>
+                </div>
+                <button onClick={rollStandard} className="w-full py-4 bg-gradient-to-r from-purple-800 to-indigo-900 hover:from-purple-700 hover:to-indigo-800 text-white font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"><Cube size={24} weight="fill" /> ROLAR DADOS</button>
+            </div>
+        )}
+
+        {isRolling && (
+          <div className="h-64 flex flex-col items-center justify-center gap-8 perspective-1000">
+            <div className="flex gap-12">
+                <div className="w-20 h-20 bg-gradient-to-br from-gold to-yellow-800 rounded-xl border-2 border-white/30 animate-tumble-3d shadow-2xl flex items-center justify-center"><Dna size={40} className="text-black/50 animate-spin-slow" /></div>
+                {tab === 'DUALITY' && (<div className="w-20 h-20 bg-gradient-to-br from-purple-900 to-black rounded-xl border-2 border-purple-500 animate-tumble-3d-reverse shadow-2xl flex items-center justify-center"><Skull size={40} className="text-white/30 animate-spin-slow" /></div>)}
+            </div>
+            <p className="text-gold font-rpg tracking-widest text-lg animate-pulse">O DESTINO GIRA...</p>
+          </div>
+        )}
+
+        {result?.type === 'DUALITY' && !isRolling && (
+          <div className="text-center animate-fade-in-up">
+            <div className="flex justify-center items-center gap-6 mb-6">
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative w-24 h-24 bg-gradient-to-br from-gold to-yellow-700 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-white/20 transform hover:scale-110 transition-transform">
+                   <span className="text-5xl font-bold text-white drop-shadow-md">{result.hopeDie}</span>
+                   <span className="absolute -top-3 bg-black/80 text-[10px] text-gold px-2 py-0.5 rounded border border-gold/30 uppercase tracking-widest">Esperança</span>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white/20">+</div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative w-24 h-24 bg-gradient-to-br from-purple-600 to-black rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(147,51,234,0.3)] border border-white/20 transform hover:scale-110 transition-transform">
+                   <span className="text-5xl font-bold text-purple-100 drop-shadow-md">{result.fearDie}</span>
+                   <span className="absolute -top-3 bg-black/80 text-[10px] text-purple-400 px-2 py-0.5 rounded border border-purple-500/30 uppercase tracking-widest">Medo</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6">
+                <div className="text-white/50 text-sm mb-1">{result.hopeDie} (Esp) + {result.fearDie} (Medo) + {result.modifier} (Mod) = </div>
+                <div className={`text-6xl font-rpg font-bold drop-shadow-lg ${result.isSuccess ? 'text-green-400' : 'text-red-400'}`}>{result.total}</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/40 mt-1">vs Dificuldade {difficulty}</div>
+            </div>
+
+            <div className={`p-4 rounded-lg border-2 mb-6 ${result.outcome === 'CRITICAL' ? 'bg-gold/10 border-gold text-gold' : result.outcome === 'HOPE' ? 'bg-blue-900/20 border-blue-400 text-blue-200' : 'bg-purple-900/20 border-purple-500 text-purple-200'}`}>
+                <h3 className="text-xl font-bold uppercase flex items-center justify-center gap-2">
+                    {result.outcome === 'CRITICAL' && <Sparkle size={24} weight="fill" />}
+                    {result.outcome === 'HOPE' && <Coins size={24} weight="fill" />}
+                    {result.outcome === 'FEAR' && <Skull size={24} weight="fill" />}
+                    {result.isSuccess ? "Sucesso" : "Falha"} com {result.outcome === 'CRITICAL' ? " CRÍTICO!" : result.outcome === 'HOPE' ? " ESPERANÇA" : " MEDO"}
+                </h3>
+            </div>
+            <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
+          </div>
+        )}
+
+        {result?.type === 'STANDARD' && !isRolling && (
+            <div className="text-center animate-fade-in-up">
+                <div className="flex flex-wrap justify-center gap-4 mb-6">
+                    {result.rolls.map((val: any, i: any) => (
+                        <div key={i} className="relative w-16 h-16 bg-white/5 border border-white/20 rounded-lg flex items-center justify-center shadow-lg">
+                            <span className="text-2xl font-bold text-white">{val}</span>
+                            <span className="absolute -bottom-2 text-[8px] bg-black px-1 rounded text-white/50">d{result.dieType}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="mb-6">
+                    <div className="text-white/50 text-sm mb-1">[{result.rolls.join(' + ')}] {result.modifier >= 0 ? `+ ${result.modifier}` : result.modifier} (Mod) =</div>
+                    <div className="text-6xl font-rpg font-bold text-white drop-shadow-lg">{result.total}</div>
+                </div>
+                <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
+            </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// 3. COMPONENTE: MONITOR DE CARTAS (Modal "Olho de Deus")
+// ============================================================================
+const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onClose: () => void, players: Character[] }) => {
+  const [zoomedCard, setZoomedCard] = useState<Card | null>(null);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col animate-fade-in">
+       {/* Header */}
+       <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a120b]">
+          <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de Grimórios</h2>
+          <button onClick={onClose}><X size={32} className="text-white/50 hover:text-red-400" /></button>
        </div>
 
-       {/* HUD do Mestre */}
-       <div className="absolute bottom-6 right-6 flex flex-col gap-4 z-40">
-          <FloatingButton icon={<Eye size={32} />} label="Revelar Mapa" />
-          <FloatingButton icon={<Lightning size={32} />} label="Dano em Área" />
-          <FloatingButton icon={<HandPalm size={32} />} label="Controlar NPC" />
+       {/* Conteúdo scrollável */}
+       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 flex gap-6 custom-scrollbar">
+          {players.map(player => (
+             <div key={player.id} className="min-w-[350px] w-[350px] bg-white/5 border border-white/10 rounded-xl flex flex-col h-full overflow-hidden">
+                {/* Cabeçalho do Jogador */}
+                <div className="p-3 bg-black/40 border-b border-white/5 flex items-center gap-3">
+                   <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden"><img src={player.imageUrl || ''} className="w-full h-full object-cover"/></div>
+                   <span className="font-bold text-white truncate">{player.name}</span>
+                </div>
+
+                {/* Área de Cartas Scrollável Verticalmente */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+                    
+                    {/* MÃO */}
+                    <div>
+                        <h4 className="text-[10px] uppercase text-gold/70 tracking-widest mb-2 flex items-center gap-1"><HandPalm /> Mão Ativa</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                            {player.cards?.hand?.map((card, idx) => (
+                                <div key={idx} onClick={() => setZoomedCard(card)} className={`relative aspect-[2/3] rounded border cursor-help hover:scale-105 transition-transform ${card.isExhausted ? 'border-red-500/50 grayscale opacity-70' : 'border-white/20'}`}>
+                                    <img src={card.caminho} className="w-full h-full object-cover rounded" />
+                                    {card.tokens ? <div className="absolute top-1 right-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md">{card.tokens}</div> : null}
+                                    {card.isExhausted && <div className="absolute inset-0 flex items-center justify-center"><Skull className="text-white/80" /></div>}
+                                </div>
+                            ))}
+                            {(!player.cards?.hand || player.cards.hand.length === 0) && <p className="text-xs text-white/20 col-span-2 text-center py-4">Mão vazia</p>}
+                        </div>
+                    </div>
+
+                    {/* RESERVA */}
+                    <div className="border-t border-white/5 pt-2">
+                        <h4 className="text-[10px] uppercase text-blue-300/70 tracking-widest mb-2 flex items-center gap-1"><Stack /> Reserva</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                            {player.cards?.reserve?.map((card, idx) => (
+                                <div key={idx} onClick={() => setZoomedCard(card)} className="relative aspect-[2/3] rounded border border-white/10 opacity-60 hover:opacity-100 transition-opacity cursor-help">
+                                    <img src={card.caminho} className="w-full h-full object-cover rounded" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+             </div>
+          ))}
+       </div>
+
+       {/* Zoom da Carta */}
+       {zoomedCard && (
+         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setZoomedCard(null)}>
+            <div className="relative max-w-md w-full p-4 animate-scale-up">
+                <img src={zoomedCard.caminho} className="w-full rounded-xl shadow-2xl border border-gold/30" />
+                <div className="mt-4 bg-black/80 p-4 rounded-xl border border-white/20 text-center">
+                    <h3 className="text-xl text-gold font-rpg">{zoomedCard.nome}</h3>
+                    <p className="text-xs text-white/50 uppercase mt-1">{zoomedCard.categoria}</p>
+                    {zoomedCard.isExhausted && <p className="text-red-400 font-bold mt-2 text-sm uppercase border border-red-500/30 p-1 rounded">Exaurida ({zoomedCard.exhaustionType === 'short' ? 'Descanso Curto' : 'Longo'})</p>}
+                    {zoomedCard.tokens ? <p className="text-white mt-1 text-sm">Tokens Acumulados: {zoomedCard.tokens}</p> : null}
+                </div>
+            </div>
+         </div>
+       )}
+    </div>
+  );
+};
+
+// ============================================================================
+// 4. COMPONENTE: NOTIFICAÇÃO DE DADOS (TOAST - LISTEN GLOBAL)
+// ============================================================================
+const DiceToast = () => {
+    const [lastRoll, setLastRoll] = useState<RollLog | null>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const q = query(collection(db, 'rolls'), orderBy('timestamp', 'desc'), limit(1));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                const rollData = { id: snapshot.docs[0].id, ...data } as RollLog;
+                
+                const now = new Date().getTime();
+                const rollTime = rollData.timestamp?.toMillis ? rollData.timestamp.toMillis() : now;
+                
+                if (now - rollTime < 10000) { 
+                    setLastRoll(rollData);
+                    setVisible(true);
+                    const timer = setTimeout(() => setVisible(false), 8000); 
+                    return () => clearTimeout(timer);
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    if (!visible || !lastRoll) return null;
+
+    return (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] animate-bounce-in">
+            <div className={`px-6 py-4 rounded-xl border-2 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md flex items-center gap-4 min-w-[300px] ${lastRoll.type === 'DUALITY' ? 'bg-black/90 border-gold' : 'bg-[#1a0b2e]/90 border-purple-500'}`}>
+                <div className="flex flex-col items-center border-r border-white/10 pr-4">
+                    <span className="text-[10px] uppercase text-white/50 tracking-widest">Jogador</span>
+                    <span className="text-lg font-bold text-white leading-none">{lastRoll.playerName}</span>
+                </div>
+                
+                {lastRoll.type === 'DUALITY' ? (
+                    <div className="flex items-center gap-4">
+                        <div className="text-center">
+                            <span className="block text-2xl font-bold text-green-400 drop-shadow">{lastRoll.result.total}</span>
+                            <span className="text-[9px] text-white/30 uppercase">Total</span>
+                        </div>
+                        <div className="flex gap-2 text-xs">
+                             <span className="text-gold font-bold">{lastRoll.result.hopeDie} (Esp)</span>
+                             <span className="text-purple-400 font-bold">{lastRoll.result.fearDie} (Medo)</span>
+                        </div>
+                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${lastRoll.result.outcome === 'CRITICAL' ? 'bg-gold text-black' : lastRoll.result.isSuccess ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'}`}>
+                            {lastRoll.result.outcome === 'CRITICAL' ? 'Crítico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <div className="text-center">
+                            <span className="block text-2xl font-bold text-purple-300 drop-shadow">{lastRoll.result.total}</span>
+                            <span className="text-[9px] text-white/30 uppercase">Total</span>
+                        </div>
+                        <div className="text-xs text-white/50">
+                            [{lastRoll.result.rolls.join(' + ')}] + {lastRoll.result.modifier}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// 5. TELA PRINCIPAL: MESTRE VTT
+// ============================================================================
+export default function MestreVTT() {
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [selectedChar, setSelectedChar] = useState<Character | null>(null);
+  const [showCardsMonitor, setShowCardsMonitor] = useState(false);
+  const [showDiceSystem, setShowDiceSystem] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // --- STYLES FOR ANIMATIONS (Copied from Player) ---
+  const styles = `
+        @keyframes spell-cast {
+          0% { transform: translateY(40vh) scale(0.5) rotate(0deg); opacity: 1; box-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+          40% { transform: translateY(0) scale(1.2) rotate(2deg); opacity: 1; box-shadow: 0 0 50px 20px rgba(212, 175, 55, 0.6); filter: brightness(1.5) contrast(1.2); }
+          100% { transform: translateY(-50vh) scale(1.5) rotate(-5deg); opacity: 0; filter: brightness(2); }
+        }
+        .animate-cast-spell { animation: spell-cast 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+        @keyframes tumble-3d {
+            0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+            25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
+            50% { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg); }
+            75% { transform: rotateX(540deg) rotateY(270deg) rotateZ(135deg); }
+            100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg); }
+        }
+        @keyframes tumble-3d-reverse {
+            0% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+            100% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+        }
+        .animate-tumble-3d { animation: tumble-3d 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+        .animate-tumble-3d-reverse { animation: tumble-3d-reverse 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+        .perspective-1000 { perspective: 1000px; }
+  `;
+
+  // --- LISTENERS ---
+  useEffect(() => {
+    // Escuta todos os personagens
+    const q = query(collection(db, 'characters'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const chars = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Character));
+      setCharacters(chars);
+      
+      // Se tiver uma ficha aberta, atualiza ela em real-time também
+      if (selectedChar) {
+          const updated = chars.find(c => c.id === selectedChar.id);
+          if (updated) setSelectedChar(updated);
+      }
+    });
+    return () => unsubscribe();
+  }, [selectedChar]);
+
+  // --- ACTIONS ---
+  const handleRestAll = async (type: 'short' | 'long') => {
+      if (!window.confirm(`Aplicar descanso ${type === 'short' ? 'CURTO' : 'LONGO'} para TODOS os jogadores?`)) return;
+      
+      const batch = writeBatch(db);
+      
+      characters.forEach(char => {
+          if (char.cards && char.cards.hand) {
+              const newHand = char.cards.hand.map(card => {
+                  if (!card.isExhausted) return card;
+                  // Descanso Longo limpa tudo
+                  if (type === 'long') return { ...card, isExhausted: false, exhaustionType: null };
+                  // Descanso Curto limpa só exaustão curta
+                  if (type === 'short' && card.exhaustionType === 'short') return { ...card, isExhausted: false, exhaustionType: null };
+                  return card;
+              });
+              
+              const ref = doc(db, 'characters', char.id);
+              batch.update(ref, { "cards.hand": newHand });
+          }
+      });
+
+      await batch.commit();
+      alert("Descanso aplicado globalmente.");
+  };
+
+  return (
+    <div className="h-screen w-screen bg-black relative overflow-hidden select-none">
+       <style>{styles}</style>
+       {/* Background */}
+       <div className="absolute inset-0 z-0">
+         <img src="/jogador-vtt-fundo.webp" className="w-full h-full object-cover opacity-60" />
+         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40"></div>
+       </div>
+
+       {/* 1. TOAST DE DADOS (Visível para todos quando alguém rola) */}
+       <DiceToast />
+
+       {/* 2. LISTA DE JOGADORES (Lado Esquerdo) - Agora com visual estilo Jogo */}
+       <PlayerList 
+         players={characters} 
+         onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} 
+       />
+
+       {/* 3. MODAIS E FICHAS */}
+       <SheetModal 
+          character={selectedChar} 
+          isOpen={isSheetOpen} 
+          onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} 
+       />
+       
+       <CardsMonitorModal 
+          isOpen={showCardsMonitor} 
+          onClose={() => setShowCardsMonitor(false)} 
+          players={characters} 
+       />
+
+       {/* DICE SYSTEM SINCRONIZADO DO MESTRE */}
+       {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}
+
+       {/* 4. BOTÕES DE DESCANSO GLOBAL (Top Right) */}
+       <div className="absolute top-6 right-6 z-40 flex gap-2">
+           <button onClick={() => handleRestAll('short')} className="flex items-center gap-2 px-4 py-2 bg-orange-900/40 border border-orange-500/30 rounded text-orange-200 text-xs hover:bg-orange-800 transition-colors uppercase font-bold tracking-wide backdrop-blur-md">
+               <Campfire size={18} /> Descanso Curto (Todos)
+           </button>
+           <button onClick={() => handleRestAll('long')} className="flex items-center gap-2 px-4 py-2 bg-indigo-900/40 border border-indigo-500/30 rounded text-indigo-200 text-xs hover:bg-indigo-800 transition-colors uppercase font-bold tracking-wide backdrop-blur-md">
+               <MoonStars size={18} /> Descanso Longo (Todos)
+           </button>
+       </div>
+
+       {/* 5. HUD DO MESTRE (Bottom Right - Tools) */}
+       <div className="absolute bottom-6 right-6 z-40 flex flex-col items-end gap-4 animate-slide-up">
+           {/* Botões de Mesa */}
+           <div className="flex gap-3 mb-2">
+               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors" title="Cenários"><MapTrifold size={24} /></button>
+               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors" title="Inimigos"><Robot size={24} /></button>
+               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-500 hover:text-green-400 flex items-center justify-center transition-colors" title="NPCs"><UserCircle size={24} /></button>
+               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-blue-500 hover:text-blue-400 flex items-center justify-center transition-colors" title="Tokens Jogadores"><Users size={24} /></button>
+           </div>
+           
+           {/* Botão Principal: Monitorar Cartas */}
+           <button 
+              onClick={() => setShowCardsMonitor(true)}
+              className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-900 to-black border border-blue-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform group"
+           >
+              <div className="bg-blue-500/20 p-2 rounded-full group-hover:bg-blue-500 group-hover:text-white transition-colors text-blue-300">
+                  <Eye size={32} />
+              </div>
+              <div className="text-left">
+                  <span className="block font-bold text-white text-lg">Visão do Mestre</span>
+                  <span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span>
+              </div>
+           </button>
+
+           {/* Botão de Dados */}
+           <button 
+             onClick={() => setShowDiceSystem(true)}
+             className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-yellow-900 border-2 border-white/30 shadow-[0_0_30px_rgba(212,175,55,0.4)] flex items-center justify-center text-black hover:scale-110 transition-transform group"
+           >
+             <Dna size={40} weight="bold" className="group-hover:animate-spin-slow" />
+           </button>
        </div>
     </div>
   );

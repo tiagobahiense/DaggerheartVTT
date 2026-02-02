@@ -1,38 +1,120 @@
-// src/components/sheet/SheetWidgets.tsx
-import { useState } from 'react';
 import { 
     Sword, Shield, Heart, Lightning, Coins, X, 
-    Link as LinkIcon, PencilSimple, Check, Target
+    Link as LinkIcon, PencilSimple, Check, Target,
+    WarningCircle, Trash
 } from '@phosphor-icons/react';
+import { useState } from 'react';
+
+// --- ESTILOS GLOBAIS PARA REMOVER SETAS DE INPUT NUMBER ---
+const GlobalStyles = () => (
+    <style>{`
+        /* Remove setas no Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        /* Remove setas no Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    `}</style>
+);
 
 // --- COMPONENTES VISUAIS GERAIS ---
 
-export const AttributeBox = ({ label, value, icon, color }: any) => (
+// --- NOVO: WIDGET DE PROFICIÊNCIA ---
+export const ProficiencyWidget = ({ value, onChange }: any) => (
+    <div className="bg-[#1a1520]/50 p-3 rounded-xl border border-white/5 flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-gold/10 flex items-center justify-center text-gold border border-gold/30">
+                <Target size={18} weight="fill"/>
+            </div>
+            <div>
+                <h3 className="text-gold font-rpg text-sm uppercase tracking-widest leading-none">Proficiência</h3>
+                <span className="text-[10px] text-white/30 uppercase">Nível de Habilidade</span>
+            </div>
+        </div>
+        <div className="flex gap-1.5">
+            {Array.from({ length: 6 }).map((_, i) => {
+                const isActive = i < value;
+                return (
+                    <button
+                        key={i}
+                        onClick={() => onChange(isActive && i === value - 1 ? i : i + 1)} // Permite desmarcar ao clicar no último ativo
+                        className={`w-8 h-8 rounded border transition-all flex items-center justify-center font-bold text-xs ${
+                            isActive
+                                ? 'bg-gold border-gold text-black shadow-[0_0_10px_rgba(212,175,55,0.5)] transform scale-105'
+                                : 'bg-black/40 border-white/10 text-white/20 hover:border-gold/50 hover:text-gold'
+                        }`}
+                    >
+                        {i + 1}
+                    </button>
+                );
+            })}
+        </div>
+    </div>
+);
+
+export const AttributeBox = ({ label, value, icon, color, onChange }: any) => (
     <div className="flex items-center justify-between bg-[#1a1520] border border-white/10 p-1.5 rounded w-full">
         <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-black/40 flex items-center justify-center text-white/40 text-xs">{icon}</div>
             <div className="text-[10px] font-bold text-white uppercase tracking-wider">{label}</div>
         </div>
-        <div className="text-lg font-bold text-white bg-black/40 px-2 py-0.5 rounded border border-white/5 min-w-[32px] text-center" style={{ borderColor: value > 0 ? color : 'transparent' }}>
-            {value >= 0 ? `+${value}` : value}
+        <div className="relative">
+            <input 
+                type="number"
+                value={value}
+                onChange={(e) => onChange && onChange(parseInt(e.target.value) || 0)}
+                className="w-10 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-lg font-bold text-white outline-none focus:border-gold"
+                style={{ borderColor: value > 0 ? color : 'transparent' }}
+            />
         </div>
     </div>
 );
 
-export const ResourceDisplay = ({ label, current, max, color, icon }: any) => (
-    <div className="flex flex-col items-center justify-center bg-[#1a1520] border border-white/10 rounded-lg p-2 min-w-[80px]">
-        <span className={`text-xl ${color} mb-1`}>{icon}</span>
-        <div className="text-lg font-bold text-white leading-none">
-            {current} <span className="text-[10px] text-white/30">/ {max}</span>
+// Layout dividido verticalmente para não sobrepor números
+export const ResourceDisplay = ({ label, current, max, color, icon, onChangeCurrent, onChangeMax }: any) => (
+    <div className="flex flex-col items-center gap-1 w-full">
+        <GlobalStyles />
+        <div className={`text-xs font-bold uppercase tracking-widest ${color} flex items-center gap-1`}>{icon} {label}</div>
+        
+        {/* Container da Bola */}
+        <div className="w-20 h-20 rounded-full border-4 border-[#1a1520] bg-black shadow-lg flex flex-col items-center overflow-hidden group relative">
+             
+             {/* Metade Superior: Valor Atual */}
+             <div className="flex-1 w-full flex items-end justify-center pb-0.5">
+                <input 
+                    type="number" 
+                    value={current} 
+                    onChange={(e) => onChangeCurrent && onChangeCurrent(parseInt(e.target.value) || 0)}
+                    className={`w-full bg-transparent text-3xl font-bold ${color} text-center outline-none p-0 leading-none`}
+                />
+             </div>
+             
+             {/* Divisor Visual */}
+             <div className="w-10 h-[1px] bg-white/20"></div>
+
+             {/* Metade Inferior: Valor Máximo */}
+             <div className="h-[35%] w-full bg-white/5 flex items-start justify-center pt-0.5">
+                <input 
+                    type="number" 
+                    value={max} 
+                    onChange={(e) => onChangeMax && onChangeMax(parseInt(e.target.value) || 0)}
+                    className="bg-transparent text-xs font-bold text-white/50 text-center outline-none w-full hover:text-white transition-colors"
+                />
+             </div>
         </div>
-        <span className="text-[8px] uppercase text-white/40 mt-1">{label}</span>
     </div>
 );
 
 export const ThresholdBox = ({ label, range, highlight }: any) => (
-    <div className={`rounded border px-2 py-1 flex flex-col items-center justify-center ${highlight ? 'bg-white/10 border-white/20' : 'bg-white/5 border-white/5'}`}>
-        <div className="text-[8px] text-white/50 uppercase tracking-tighter">{label}</div>
-        <div className="text-sm font-bold text-white">{range}</div>
+    <div className={`flex flex-col items-center p-2 rounded w-24 border ${highlight ? 'bg-red-900/20 border-red-500/50' : 'bg-black/40 border-white/10'}`}>
+        <span className="text-[8px] uppercase text-white/40 mb-1 tracking-widest">{label}</span>
+        <span className={`text-lg font-bold ${!range || range === '-' ? 'text-white/10' : 'text-white'}`}>
+            {range || "-"}
+        </span>
     </div>
 );
 
@@ -43,7 +125,7 @@ export const ArmorWidget = ({ maxPA, currentPA, onUpdatePA, name }: any) => (
             <span className="text-[10px] text-white/40 uppercase tracking-widest">{name}</span>
         </div>
         <div className="flex flex-wrap gap-1.5 justify-center max-w-[120px]">
-            {Array.from({ length: Math.max(maxPA, 6) }).map((_, i) => { 
+            {Array.from({ length: 12 }).map((_, i) => { 
                 const isAvailableSlot = i < maxPA;
                 const isSpent = i < currentPA;
                 if (!isAvailableSlot) return <div key={i} className="w-3 h-3 rounded-full border border-white/5 bg-transparent opacity-20"></div>;
@@ -60,164 +142,144 @@ export const ArmorWidget = ({ maxPA, currentPA, onUpdatePA, name }: any) => (
     </div>
 );
 
-// --- COMPONENTES DE COMBATE ---
-
-export const CombatRow = ({ label, placeholderName, isInventory = false }: any) => {
-  return (
-    <div className={`flex flex-col gap-1.5 p-2 rounded border ${isInventory ? 'bg-black/20 border-white/5 opacity-60' : 'bg-white/5 border-white/10'} hover:border-white/20 transition-colors`}>
-      {/* LINHA 1: Nome | Atributo/Alcance | Dano */}
-      <div className="flex items-center gap-2">
-         {/* Badge Label */}
-         <div className="w-20 shrink-0">
-             <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded text-gold/60 uppercase font-bold tracking-wider border border-white/5 block text-center">
-                {label}
-             </span>
-         </div>
-         
-         {/* Nome */}
-         <input 
-            type="text" 
-            placeholder={placeholderName || "Nome da Arma"}
-            className="flex-1 bg-transparent border-b border-white/10 text-sm text-white focus:border-gold outline-none placeholder:text-white/10 py-0.5"
-         />
-
-         {/* Attr & Range */}
-         <div className="w-28 border-l border-white/10 pl-2">
-            <input 
-                type="text" 
-                placeholder="Agil | Perto"
-                className="w-full bg-transparent text-xs text-center text-gold focus:text-white outline-none placeholder:text-white/10 border-b border-white/5"
-            />
-         </div>
-
-         {/* Damage */}
-         <div className="w-16 border-l border-white/10 pl-2">
-           <input 
-            type="text" 
-            placeholder="d8+2"
-            className="w-full bg-transparent text-sm font-bold text-center text-white focus:text-gold outline-none placeholder:text-white/10 border-b border-white/5"
-          />
-         </div>
-      </div>
-
-      {/* LINHA 2: Habilidades (2 Campos) */}
-      <div className="flex gap-2 pl-2">
-         <div className="w-4 border-l-2 border-white/5 rounded-bl"></div> {/* Linha guia visual */}
-         <input 
-            type="text" 
-            placeholder="Habilidade / Traço 1"
-            className="w-1/2 bg-black/20 border border-white/5 rounded px-2 py-1 text-xs text-white/60 focus:border-gold outline-none focus:text-white"
-         />
-         <input 
-            type="text" 
-            placeholder="Habilidade / Traço 2"
-            className="w-1/2 bg-black/20 border border-white/5 rounded px-2 py-1 text-xs text-white/60 focus:border-gold outline-none focus:text-white"
-         />
-      </div>
-    </div>
-  );
+// --- MODAL DE URL DA IMAGEM ---
+export const ImageUrlModal = ({ isOpen, onClose, onConfirm, currentUrl }: any) => {
+    const [url, setUrl] = useState(currentUrl);
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-[#1a1520] border border-white/20 p-6 rounded-xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                <h3 className="text-white font-bold mb-4">Alterar Imagem do Personagem</h3>
+                <input type="text" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." className="w-full bg-black/50 border border-white/10 rounded p-2 text-white mb-4 focus:border-gold outline-none" autoFocus />
+                <div className="flex justify-end gap-2">
+                    <button onClick={onClose} className="px-4 py-2 text-white/50 hover:text-white">Cancelar</button>
+                    <button onClick={() => { onConfirm(url); onClose(); }} className="px-4 py-2 bg-gold/20 text-gold border border-gold/50 rounded hover:bg-gold/30">Salvar</button>
+                </div>
+            </div>
+        </div>
+    );
 };
 
-export const ArmorRow = () => {
-    return (
-      <div className="flex flex-col gap-2 p-2 rounded border bg-blue-900/10 border-blue-500/20">
+// --- LINHA DE COMBATE (ATUALIZADA) ---
+export const CombatRow = ({ label, weapon, onChange, placeholderName, isInventory }: any) => (
+    <div className="flex items-start gap-2 bg-black/20 p-2 rounded border border-white/5 hover:border-white/10 transition-colors">
+        {/* Ícone */}
+        <div className="w-8 h-8 rounded bg-[#1a1520] flex items-center justify-center border border-white/10 shrink-0 mt-1">
+            {isInventory ? <WarningCircle className="text-white/20" /> : <Sword className="text-gold" />}
+        </div>
         
-        {/* LINHA 1: Label | Nome | Limiares | Armadura Base */}
+        <div className="flex-1 flex flex-col gap-1">
+             {/* 1. NOME */}
+             <input 
+                type="text" 
+                value={weapon?.name || ''} 
+                onChange={e => onChange({...weapon, name: e.target.value})} 
+                placeholder={placeholderName || "Nome da Arma"} 
+                className="bg-transparent text-sm font-bold text-white placeholder-white/20 outline-none w-full border-b border-transparent focus:border-white/20" 
+             />
+             
+             {/* 2. ATRIBUTO & ALCANCE | DADOS & TIPO DE DANO */}
+             <div className="flex gap-2 items-center">
+                <input 
+                    type="text" 
+                    value={weapon?.attrRange || ''} 
+                    onChange={e => onChange({...weapon, attrRange: e.target.value})} 
+                    placeholder="Atributo & Alcance" 
+                    className="bg-transparent text-[10px] text-white/60 flex-1 outline-none hover:text-white placeholder-white/10" 
+                />
+                <span className="text-white/20 text-[10px]">|</span>
+                <input 
+                    type="text" 
+                    value={weapon?.damageType || ''} 
+                    onChange={e => onChange({...weapon, damageType: e.target.value})} 
+                    placeholder="Dados & Tipo" 
+                    className="bg-transparent text-[10px] text-white/60 flex-1 outline-none hover:text-white placeholder-white/10 text-right" 
+                />
+             </div>
+
+             {/* 3. HABILIDADE */}
+             <input 
+                type="text" 
+                value={weapon?.ability || ''} 
+                onChange={e => onChange({...weapon, ability: e.target.value})} 
+                placeholder="Habilidade..." 
+                className="bg-transparent text-[10px] text-gold/70 w-full outline-none hover:text-gold placeholder-white/10 italic" 
+             />
+        </div>
+    </div>
+);
+
+// --- LINHA DE ARMADURA (VISUAL ROBUSTO) ---
+export const ArmorRow = ({ armor, onChange }: any) => (
+    <div className="flex flex-col gap-2 p-2 rounded border bg-blue-900/10 border-blue-500/20">
         <div className="flex items-center gap-3">
              <div className="w-20 shrink-0">
-                <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded text-blue-400 uppercase font-bold tracking-wider border border-blue-500/20 block text-center">
-                    Armadura
-                </span>
+                <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded text-blue-400 uppercase font-bold tracking-wider border border-blue-500/20 block text-center">Armadura</span>
             </div>
-
-            {/* Nome */}
             <input 
-                type="text" 
-                placeholder="Nome (Ex: Cota de Malha)" 
-                className="flex-1 bg-transparent border-b border-white/10 text-sm text-white focus:border-blue-500 outline-none placeholder:text-white/10 py-0.5" 
+                type="text" value={armor?.name || ''} onChange={e => onChange({...armor, name: e.target.value})}
+                placeholder="Nome da Armadura" className="flex-1 bg-transparent border-b border-white/10 text-sm text-white focus:border-blue-500 outline-none placeholder:text-white/10 py-0.5" 
             />
-
-            {/* Limiares Base */}
+            {/* INPUTS DE LIMIARES (O 5 e o 12) */}
             <div className="flex items-center gap-1 border-l border-white/10 pl-3">
                 <span className="text-[8px] uppercase text-white/30 mr-1 font-bold">Limiares</span>
                 <input 
-                    type="number" 
-                    placeholder="X" 
-                    className="w-8 bg-black/30 border border-white/10 rounded text-center text-white text-sm focus:border-blue-500 outline-none [&::-webkit-inner-spin-button]:appearance-none" 
+                    type="number" value={armor?.baseMajor || ''} onChange={e => onChange({...armor, baseMajor: parseInt(e.target.value) || 0})}
+                    placeholder="-" className="w-8 bg-black/30 border border-white/10 rounded text-center text-white text-sm focus:border-blue-500 outline-none" 
                 />
                 <span className="text-white/20">/</span>
                 <input 
-                    type="number" 
-                    placeholder="Y" 
-                    className="w-8 bg-black/30 border border-white/10 rounded text-center text-white text-sm focus:border-blue-500 outline-none [&::-webkit-inner-spin-button]:appearance-none" 
+                    type="number" value={armor?.baseSevere || ''} onChange={e => onChange({...armor, baseSevere: parseInt(e.target.value) || 0})}
+                    placeholder="-" className="w-8 bg-black/30 border border-white/10 rounded text-center text-white text-sm focus:border-blue-500 outline-none" 
                 />
             </div>
-
-            {/* Base Armor */}
+            {/* INPUT DE BASE (Pontos de Armadura) */}
             <div className="flex items-center gap-1 border-l border-white/10 pl-3">
                 <span className="text-[8px] uppercase text-white/30 mr-1 font-bold">Base</span>
                 <input 
-                    type="number" 
-                    placeholder="0" 
-                    className="w-8 bg-black/30 border border-white/10 rounded text-center text-blue-400 font-bold text-lg focus:border-blue-500 outline-none [&::-webkit-inner-spin-button]:appearance-none" 
+                    type="number" value={armor?.baseSlots || ''} onChange={e => onChange({...armor, baseSlots: parseInt(e.target.value) || 0})}
+                    placeholder="0" className="w-8 bg-black/30 border border-white/10 rounded text-center text-blue-400 font-bold text-lg focus:border-blue-500 outline-none" 
                 />
             </div>
         </div>
-
-        {/* LINHA 2: Habilidades (2 Campos) */}
         <div className="flex gap-2 pl-2">
-             <div className="w-4 border-l-2 border-blue-500/10 rounded-bl"></div> {/* Linha guia visual */}
-             <input type="text" placeholder="Habilidade da Armadura 1..." className="w-1/2 bg-black/20 border border-white/5 rounded px-2 py-1 text-xs text-white/70 focus:border-blue-500 outline-none focus:text-white" />
-             <input type="text" placeholder="Habilidade da Armadura 2..." className="w-1/2 bg-black/20 border border-white/5 rounded px-2 py-1 text-xs text-white/70 focus:border-blue-500 outline-none focus:text-white" />
+             <div className="w-4 border-l-2 border-blue-500/10 rounded-bl"></div> 
+             <input type="text" value={armor?.trait1 || ''} onChange={e => onChange({...armor, trait1: e.target.value})} placeholder="Habilidade 1..." className="w-1/2 bg-black/20 border border-white/5 rounded px-2 py-1 text-xs text-white/70 focus:border-blue-500 outline-none focus:text-white" />
+             <input type="text" value={armor?.trait2 || ''} onChange={e => onChange({...armor, trait2: e.target.value})} placeholder="Habilidade 2..." className="w-1/2 bg-black/20 border border-white/5 rounded px-2 py-1 text-xs text-white/70 focus:border-blue-500 outline-none focus:text-white" />
         </div>
-      </div>
-    );
-};
+    </div>
+);
 
-// --- MODAIS E OUTROS ---
-
-export const ImageUrlModal = ({ isOpen, onClose, onConfirm, currentUrl }: any) => {
-    const [url, setUrl] = useState(currentUrl || '');
-    if (!isOpen) return null;
-    
-    // CORREÇÃO: e.stopPropagation no onClick do container principal para não fechar a ficha inteira
-    // E no conteúdo interno para não fechar o modal ao clicar no input
-    return (
-      <div 
-        className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 p-4" 
-        onClick={(e) => { 
-            e.stopPropagation(); // Impede que o clique no fundo feche a ficha de personagem
-            onClose(); // Fecha apenas este modal de imagem
-        }}
-      >
-        <div 
-            className="bg-[#1a1520] border border-white/20 rounded-xl p-6 w-full max-w-md shadow-2xl"
-            onClick={(e) => e.stopPropagation()} // Impede que o clique dentro do modal o feche
-        >
-          <h3 className="text-gold font-serif text-xl mb-4 flex items-center gap-2"><PencilSimple /> Alterar Retrato</h3>
-          <div className="mb-6">
-            <label className="block text-xs text-white/60 mb-2 uppercase tracking-wide">Link da Imagem (URL)</label>
+// --- ITEM DA MOCHILA ---
+export const InventoryRow = ({ item, onChange, onDelete }: any) => (
+    <div className="flex items-center gap-2 bg-black/30 p-2 rounded border border-white/10 hover:border-gold/30 transition-colors group">
+        <div className="w-8 h-8 rounded bg-[#1a1520] flex items-center justify-center border border-white/10 text-white/20">
+            <Check size={14} />
+        </div>
+        <input 
+            type="text" 
+            value={item.name} 
+            onChange={(e) => onChange({ ...item, name: e.target.value })}
+            placeholder="Nome do item..." 
+            className="flex-1 bg-transparent text-sm text-white placeholder-white/20 outline-none border-b border-transparent focus:border-white/20 pb-0.5" 
+        />
+        <div className="flex items-center bg-black/40 rounded border border-white/10 px-2 h-8">
+            <span className="text-[10px] text-white/40 mr-1 uppercase">Qtd</span>
             <input 
-                type="text" 
-                value={url} 
-                onChange={(e) => setUrl(e.target.value)} 
-                placeholder="https://..." 
-                className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-white text-sm focus:border-gold outline-none" 
+                type="number" 
+                value={item.quantity} 
+                onChange={(e) => onChange({ ...item, quantity: parseInt(e.target.value) || 1 })}
+                className="w-8 bg-transparent text-center text-gold font-bold text-sm outline-none" 
             />
-          </div>
-          <div className="flex justify-end gap-3">
-            <button onClick={onClose} className="px-4 py-2 rounded text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm">Cancelar</button>
-            <button onClick={() => { onConfirm(url); onClose(); }} className="px-6 py-2 rounded bg-gold/20 border border-gold/50 text-gold hover:bg-gold hover:text-black transition-all font-bold text-sm flex items-center gap-2"><Check weight="bold" /> Confirmar</button>
-          </div>
         </div>
-      </div>
-    );
-};
+        <button onClick={onDelete} className="p-1.5 text-white/20 hover:text-red-500 hover:bg-red-900/20 rounded transition-colors"><Trash size={16} /></button>
+    </div>
+);
 
 export const ItemRow = ({ name }: any) => (
-    <div className="flex justify-between items-center p-2 bg-white/5 rounded border border-white/5 hover:bg-white/10 transition-colors">
-        <span className="text-white text-xs">{name}</span>
-        <div className="w-2 h-2 rounded-full bg-white/20"></div>
+    <div className="flex items-center justify-between p-2 bg-black/20 rounded border border-white/5 text-xs text-white/70">
+        <span>{name}</span>
+        <Check size={12} className="text-green-500" />
     </div>
 );
 
@@ -228,18 +290,35 @@ export const TextAreaQuestion = ({ label, placeholder }: any) => (
     </div>
 );
 
-export const EvolutionColumn = ({ data }: any) => {
+// Bolinhas Interativas para Evolução
+export const EvolutionColumn = ({ data, tierId, savedValues, onToggle }: any) => {
     if (!data) return null;
     return (
         <div className="bg-black/20 p-3 rounded border border-white/10 h-full">
             <h4 className="text-gold font-bold text-center text-xs mb-1">{data.title}</h4>
             <div className="space-y-2">
-                {data.items.map((item: any, i: number) => (
-                    <div key={i} className="flex items-start gap-2 border-b border-white/5 pb-1 last:border-0">
-                        <div className="flex gap-0.5 mt-1 min-w-fit">{Array.from({ length: item.count }).map((_, idx) => <div key={idx} className="w-2 h-2 border border-white/30 rounded-full bg-black"></div>)}</div>
-                        <span className="text-[10px] text-white/70 leading-tight">{item.text}</span>
-                    </div>
-                ))}
+                {data.items.map((item: any, i: number) => {
+                    const uniqueKey = `${tierId}-${i}`;
+                    const currentVal = savedValues?.[uniqueKey] || 0;
+
+                    return (
+                        <div key={i} className="flex items-start gap-2 border-b border-white/5 pb-1 last:border-0">
+                            <div className="flex gap-0.5 mt-1 min-w-fit">
+                                {Array.from({ length: item.count }).map((_, idx) => {
+                                    const isActive = idx < currentVal;
+                                    return (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => onToggle(uniqueKey, isActive ? idx : idx + 1)} 
+                                            className={`w-3 h-3 rounded-full border transition-all ${isActive ? 'bg-gold border-gold shadow-[0_0_5px_#fbbf24]' : 'bg-transparent border-white/30 hover:border-gold/50'}`}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            <span className="text-[10px] text-white/60 leading-tight cursor-default">{item.text}</span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

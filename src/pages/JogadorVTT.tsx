@@ -1,17 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { 
   X, Shield, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Scroll, Plus, 
   ArrowsLeftRight, Coin, Skull, Sparkle, Campfire, MoonStars,
-  Dna, Coins, Cube
+  Dna, Coins, Cube, ArrowUUpLeft
 } from '@phosphor-icons/react';
 
 // --- IMPORTAÇÕES DE DADOS E COMPONENTES ---
 import CARTAS_JSON from '../data/cartas.json'; 
-import { SheetModal } from '../components/SheetModal'; // <--- NOVA IMPORTAÇÃO DA FICHA
+import { SheetModal } from '../components/SheetModal';
 
 // ==================================================================================
 // 1. TIPOS GERAIS
@@ -39,7 +39,16 @@ interface Character {
   community: string;
   heritage: string;
   level: number;
-  attributes?: any; // Adicionado para compatibilidade com a ficha
+  attributes?: any;
+  weapons?: any;
+  armor?: any;
+  imageUrl?: string;
+  paSpent?: number;
+  // Persistência das cartas
+  cards?: {
+    hand: ActiveCard[];
+    reserve: Card[];
+  };
 }
 
 // Resultado da Dualidade
@@ -124,7 +133,7 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
         isSuccess: total >= difficulty
       });
       setIsRolling(false);
-    }, 1000); // 1s para a animação 3D
+    }, 1000);
   };
 
   // --- ROLAGEM PADRÃO ---
@@ -151,7 +160,6 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
         
-        {/* Header e Abas */}
         <div className="flex justify-between items-start mb-6">
             <div className="flex gap-4">
                 <button 
@@ -170,7 +178,6 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
             <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
         </div>
 
-        {/* --- CONTEÚDO DUALIDADE --- */}
         {tab === 'DUALITY' && !isRolling && !result && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between gap-4">
@@ -199,10 +206,8 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* --- CONTEÚDO PADRÃO --- */}
         {tab === 'STANDARD' && !isRolling && !result && (
             <div className="space-y-6 animate-fade-in">
-                {/* Seletor de Tipo de Dado */}
                 <div className="grid grid-cols-4 gap-2">
                     {[4, 6, 8, 10, 12, 20, 100].map(d => (
                         <button 
@@ -240,10 +245,8 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
             </div>
         )}
 
-        {/* --- ANIMAÇÃO 3D --- */}
         {isRolling && (
           <div className="h-64 flex flex-col items-center justify-center gap-8 perspective-1000">
-            {/* Dados Girando em 3D */}
             <div className="flex gap-12">
                 <div className="w-20 h-20 bg-gradient-to-br from-gold to-yellow-800 rounded-xl border-2 border-white/30 animate-tumble-3d shadow-2xl flex items-center justify-center">
                     <Dna size={40} className="text-black/50 animate-spin-slow" />
@@ -258,7 +261,6 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* --- RESULTADO DUALIDADE --- */}
         {result?.type === 'DUALITY' && !isRolling && (
           <div className="text-center animate-fade-in-up">
             <div className="flex justify-center items-center gap-6 mb-6">
@@ -300,7 +302,6 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* --- RESULTADO PADRÃO --- */}
         {result?.type === 'STANDARD' && !isRolling && (
             <div className="text-center animate-fade-in-up">
                 <div className="flex flex-wrap justify-center gap-4 mb-6">
@@ -329,13 +330,64 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
 }
 
 // ==================================================================================
-// 3. COMPONENTE INTERNO: SISTEMA DE CARTAS
+// 3. COMPONENTE INTERNO: SISTEMA DE CARTAS (InternalCardSystem)
 // ==================================================================================
 function InternalCardSystem({ character, allCards }: { character: Character, allCards: any[] }) {
   const safeCards: Card[] = Array.isArray(allCards) ? allCards : [];
 
+  // --- PERSISTÊNCIA: Carregamento Inicial ---
   const [hand, setHand] = useState<ActiveCard[]>([]);
-  const [reserve, setReserve] = useState<Card[]>([]); 
+  const [reserve, setReserve] = useState<Card[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  
+  // Ref para evitar loops infinitos no useEffect de salvamento
+  const handRef = useRef(hand);
+  const reserveRef = useRef(reserve);
+
+  // Inicializa com dados do banco se existirem
+  useEffect(() => {
+    if (character && !isDataLoaded) {
+      if (character.cards) {
+        setHand(character.cards.hand || []);
+        setReserve(character.cards.reserve || []);
+      }
+      setIsDataLoaded(true);
+    }
+  }, [character, isDataLoaded]);
+
+  // Atualiza refs para o salvamento
+  useEffect(() => {
+    handRef.current = hand;
+    reserveRef.current = reserve;
+  }, [hand, reserve]);
+
+  // --- PERSISTÊNCIA: Salvamento Automático OTIMIZADO ---
+  useEffect(() => {
+    // Só salva se já carregou os dados iniciais para não sobrescrever com vazio
+    if (!isDataLoaded || !character.id) return;
+
+    const saveData = async () => {
+      try {
+        const charRef = doc(db, 'characters', character.id);
+        
+        // CORREÇÃO: Usando notação de ponto para atualizar APENAS hand e reserve
+        // sem destruir o resto do objeto 'cards' (caso exista) e sem substituir tudo.
+        await updateDoc(charRef, {
+          "cards.hand": handRef.current,
+          "cards.reserve": reserveRef.current
+        });
+        
+        // console.log("Cartas salvas com sucesso!");
+      } catch (error) {
+        console.error("Erro ao salvar cartas:", error);
+      }
+    };
+
+    // Reduzi o tempo para 800ms para garantir que salve antes de um F5 rápido
+    const debounce = setTimeout(saveData, 800); 
+    return () => clearTimeout(debounce);
+  }, [hand, reserve, character.id, isDataLoaded]);
+
   
   const [pendingCard, setPendingCard] = useState<Card | null>(null);
   const [isSwapping, setIsSwapping] = useState(false);
@@ -361,7 +413,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     return selectedCardState.staticCard;
   }, [selectedCardState, hand]);
 
-
+  // Carrega cartas fixas da mesa (Ancestralidade, Classe)
   useEffect(() => {
     if (!character || safeCards.length === 0) return;
     const safeStr = (str?: string) => (str || "").toLowerCase();
@@ -374,8 +426,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     const fundamental = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)) && c.nome.toLowerCase().includes("fundamental"));
     const fallbackSub = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)));
     setSubclassCards([fundamental || fallbackSub || null, null, null]);
-
-    // MÃO INICIAL VAZIA (Correção aplicada: Sem cartas forçadas)
     
   }, [character, safeCards]);
 
@@ -390,7 +440,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         if (type === 'short' && card.exhaustionType === 'short') return { ...card, isExhausted: false, exhaustionType: null };
         return card;
     }));
-    alert(`Descanso ${type === 'short' ? 'Curto' : 'Longo'} realizado! Cartas recuperadas.`);
+    // alert removido para não interferir, função mantida para lógica futura se necessário
   };
 
   const handleCastCard = (card: ActiveCard) => {
@@ -403,34 +453,59 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const initiateDraw = (card: Card, source: 'grimoire' | 'reserve', reserveIndex: number = -1) => {
     if (hand.some(c => c.nome === card.nome)) return alert("Você já tem essa carta.");
     if (hand.length < 5) {
-      setHand([...hand, createActiveCard(card)]);
-      if (source === 'grimoire') { setShowGrimoire(false); setSearchTerm(''); }
-      else if (source === 'reserve') { setReserve(reserve.filter((_, i) => i !== reserveIndex)); setShowReserve(false); }
+      // Adiciona na mão
+      setHand(prev => [...prev, createActiveCard(card)]);
+      
+      // Remove da reserva se veio de lá
+      if (source === 'reserve') { 
+          setReserve(prev => prev.filter((_, i) => i !== reserveIndex)); 
+          setShowReserve(false); 
+      } else if (source === 'grimoire') {
+          setShowGrimoire(false); 
+          setSearchTerm(''); 
+      }
       return;
     }
+    // Mão cheia
     setPendingCard(card); setSwapSource(source); setReserveIndexToSwap(reserveIndex); setIsSwapping(true); setShowGrimoire(false); setShowReserve(false); setSearchTerm('');
   };
 
   const executeSwap = (indexToRemove: number) => {
     if (!pendingCard) return;
     const cardToRemove = hand[indexToRemove];
-    const newReserve = [...reserve, { nome: cardToRemove.nome, caminho: cardToRemove.caminho, categoria: cardToRemove.categoria }];
     
-    let finalReserve = newReserve;
-    if (swapSource === 'reserve' && reserveIndexToSwap > -1) finalReserve = newReserve.filter((_, i) => i !== reserveIndexToSwap);
+    // Adiciona carta removida à reserva
+    const cardToReserve = { nome: cardToRemove.nome, caminho: cardToRemove.caminho, categoria: cardToRemove.categoria };
+    let newReserve = [...reserve, cardToReserve];
+    
+    // Se veio da reserva, remove a carta que entrou na mão da lista de reserva
+    if (swapSource === 'reserve' && reserveIndexToSwap > -1) {
+        // Correção lógica: Se tirou da reserva, ela não deve ser duplicada.
+        // O array newReserve já tem a carta que saiu da mão.
+        // Agora removemos a carta que foi para a mão (que estava na reserva).
+        const filtered = reserve.filter((_, i) => i !== reserveIndexToSwap);
+        newReserve = [...filtered, cardToReserve];
+    }
 
-    setReserve(finalReserve);
+    setReserve(newReserve);
+    
     const newHand = [...hand];
     newHand[indexToRemove] = createActiveCard(pendingCard);
     setHand(newHand);
+    
     setIsSwapping(false); setPendingCard(null); setSwapSource(null); setReserveIndexToSwap(-1);
   };
 
   const manualMoveToReserve = (index: number) => {
     const card = hand[index];
-    setHand(hand.filter((_, i) => i !== index));
-    setReserve([...reserve, { nome: card.nome, caminho: card.caminho, categoria: card.categoria }]);
+    setHand(prev => prev.filter((_, i) => i !== index));
+    setReserve(prev => [...prev, { nome: card.nome, caminho: card.caminho, categoria: card.categoria }]);
     setSelectedCardState(null);
+  };
+
+  const returnToGrimoire = (uniqueId: string) => {
+      setHand(prev => prev.filter(c => c.uniqueId !== uniqueId));
+      setSelectedCardState(null);
   };
 
   const applyExhaustion = (uniqueId: string, type: 'short' | 'long') => {
@@ -484,14 +559,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         .perspective-1000 { perspective: 1000px; }
       `}</style>
 
-      {/* MESTRE SIMULAÇÃO */}
-      <div className="absolute top-6 right-6 z-50 flex flex-col gap-2 items-end pointer-events-auto">
-        <div className="text-[10px] text-white/40 uppercase tracking-widest bg-black/50 px-2 rounded">Mestre (Simulação)</div>
-        <div className="flex gap-2">
-            <button onClick={() => triggerRest('short')} className="flex items-center gap-2 bg-orange-900/50 hover:bg-orange-700 text-orange-100 text-xs px-3 py-2 rounded border border-orange-500/30 transition-colors"><Campfire size={16} /> Descanso Curto</button>
-            <button onClick={() => triggerRest('long')} className="flex items-center gap-2 bg-indigo-900/50 hover:bg-indigo-700 text-indigo-100 text-xs px-3 py-2 rounded border border-indigo-500/30 transition-colors"><MoonStars size={16} /> Descanso Longo</button>
-        </div>
-      </div>
+      {/* --- NOTA: Mestre (Simulação) foi removido daqui conforme solicitado --- */}
 
       {castingCard && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none">
@@ -579,9 +647,9 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
             </div>
             <div className="flex-1 overflow-y-auto p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 custom-scrollbar">
               {showGrimoire && filteredGrimoire.map((card, idx) => (
-                <div key={idx} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center">
-                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold"><img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" /></div>
-                  <p className="text-center text-xs text-white/40 mt-3 truncate w-full">{card.nome}</p>
+                <div key={idx} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
+                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"><img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /></div>
+                  <p className="text-center text-xs text-white/40 mt-3 truncate w-full group-hover:text-white">{card.nome}</p>
                 </div>
               ))}
               {showReserve && reserve.map((card, idx) => (
@@ -593,12 +661,17 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      {/* MODAL ZOOM (DETALHES DA CARTA) */}
+      {/* MODAL ZOOM (DETALHES DA CARTA) CORRIGIDO */}
       {currentSelectedCard && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setSelectedCardState(null)}>
-          <div className="relative flex flex-col md:flex-row items-center gap-10 max-w-5xl w-full p-4" onClick={e => e.stopPropagation()}>
-            <div className="relative h-[65vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden">
-                <img src={currentSelectedCard.caminho} className={`w-full h-full object-cover ${(currentSelectedCard as ActiveCard).isExhausted ? 'grayscale' : ''}`} />
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 animate-fade-in" onClick={() => setSelectedCardState(null)}>
+          {/* Overlay com Blur apenas no fundo */}
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-none"></div>
+
+          <div className="relative flex flex-col md:flex-row items-center gap-10 max-w-5xl w-full p-4 z-10" onClick={e => e.stopPropagation()}>
+            
+            {/* Container da Imagem Ajustado (Shrink-0 para não espremer, object-contain para não cortar) */}
+            <div className="relative h-[65vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden shrink-0 bg-[#0a080c]">
+                <img src={currentSelectedCard.caminho} className={`w-full h-full object-contain ${(currentSelectedCard as ActiveCard).isExhausted ? 'grayscale' : ''}`} />
                 {(currentSelectedCard as ActiveCard).isExhausted && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px]">
                         <Skull size={64} className="text-white/80 mb-4" />
@@ -608,7 +681,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                 )}
             </div>
             
-            <div className="flex flex-col gap-4 min-w-[300px]">
+            {/* Container de Texto (subpixel-antialiased para nitidez) */}
+            <div className="flex flex-col gap-4 min-w-[300px] subpixel-antialiased pl-4">
               <h3 className="text-3xl font-rpg text-white">{currentSelectedCard.nome}</h3>
               <span className="text-xs uppercase text-gold border border-gold/30 px-2 py-1 rounded w-fit">{currentSelectedCard.categoria}</span>
               
@@ -640,7 +714,10 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                     <div className="p-4 bg-red-900/20 border border-red-500/30 rounded text-center"><p className="text-red-300 font-bold mb-1">Carta Exaurida</p><p className="text-xs text-red-400/70">Aguarde o Mestre realizar um descanso {(currentSelectedCard as ActiveCard).exhaustionType === 'short' ? 'Curto ou Longo' : 'Longo'} para recuperar.</p></div>
                   )}
 
-                  <button onClick={() => { const idx = hand.findIndex(c => (c as ActiveCard).uniqueId === (currentSelectedCard as ActiveCard).uniqueId); if (idx > -1) manualMoveToReserve(idx); }} className="mt-2 flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-gray-300 rounded hover:bg-white/10 hover:border-white/30 transition-all"><Stack size={24} /><span className="font-bold">Mover para Reserva</span></button>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                      <button onClick={() => { const idx = hand.findIndex(c => (c as ActiveCard).uniqueId === (currentSelectedCard as ActiveCard).uniqueId); if (idx > -1) manualMoveToReserve(idx); }} className="flex items-center justify-center gap-2 px-2 py-3 bg-white/5 border border-white/10 text-gray-300 rounded hover:bg-white/10 hover:border-white/30 transition-all text-sm font-bold"><Stack size={20} /> Mover para Reserva</button>
+                      <button onClick={() => returnToGrimoire((currentSelectedCard as ActiveCard).uniqueId)} className="flex items-center justify-center gap-2 px-2 py-3 bg-red-900/10 border border-red-500/20 text-red-300 rounded hover:bg-red-900/30 hover:border-red-500/40 transition-all text-sm font-bold"><ArrowUUpLeft size={20} /> Devolver ao Grimório</button>
+                  </div>
                 </div>
               )}
 
@@ -676,10 +753,13 @@ export default function JogadorVTT() {
           // Garante que atributos existam com valores padrão para não quebrar a ficha
           const data = querySnapshot.docs[0].data();
           const defaultAttrs = { agility: {value:0}, strength: {value:0}, finesse: {value:0}, instinct: {value:0}, presence: {value:0}, knowledge: {value:0} };
+          
+          // Combina dados do banco com defaults
           setCharacter({ 
             id: querySnapshot.docs[0].id, 
             ...data,
-            attributes: data.attributes || defaultAttrs
+            attributes: data.attributes || defaultAttrs,
+            cards: data.cards || { hand: [], reserve: [] } // Inicializa cartas vazias se não existirem
           } as Character);
         } else {
           navigate('/criar-personagem');
@@ -733,7 +813,7 @@ export default function JogadorVTT() {
       {/* MODAL DE DADOS */}
       {showDiceRoller && <InternalDiceSystem onClose={() => setShowDiceRoller(false)} />}
 
-      {/* MODAL DE FICHA (AGORA CONECTADO AO NOVO COMPONENTE) */}
+      {/* MODAL DE FICHA */}
       <SheetModal 
         character={character} 
         isOpen={sheetOpen} 

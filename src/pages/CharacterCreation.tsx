@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { ArrowRight, CaretLeft, MagicWand, Users, Crown, Compass } from '@phosphor-icons/react';
+import { CLASS_DATABASE } from '../data/classDatabase'; 
 
 // --- BANCO DE DADOS DO SISTEMA ---
-
 const RPG_DATA: any = {
   classes: {
     bardo: {
@@ -360,7 +360,7 @@ export default function CharacterCreation() {
           <div className="flex w-full h-full px-4 md:px-10 items-center animate-fade-in gap-4 md:gap-12 pb-10">
             
             {/* PAINEL ESQUERDO */}
-            <div className="hidden md:flex flex-col gap-6 items-center min-w-[240px] border-r border-white/10 pr-8 h-full justify-start pt-10 overflow-y-auto">
+            <div className="hidden md:flex flex-col gap-6 items-center w-[320px] max-w-[320px] shrink-0 border-r border-white/10 pr-8 h-full justify-start pt-10 overflow-y-auto">
               <div className="text-center group w-full">
                 <div className="w-32 h-32 rounded-full border-2 border-gold overflow-hidden mx-auto shadow-[0_0_30px_rgba(212,175,55,0.3)] bg-black mb-4">
                   <img 
@@ -382,10 +382,25 @@ export default function CharacterCreation() {
               
               <div className={`w-[2px] h-12 bg-gradient-to-b from-gold to-white/10`}></div>
 
-              <div className="w-full bg-white/5 p-3 rounded border border-white/10 text-center">
-                 <p className="text-[10px] text-gold uppercase tracking-widest mb-1">Habilidade de Classe</p>
-                 <p className="text-purple-200 font-bold text-sm">{RPG_DATA.classes[charData.classId].ability.name}</p>
-                 <p className="text-xs text-white/50 mt-1 italic">"{RPG_DATA.classes[charData.classId].ability.text}"</p>
+              {/* LISTA DE HABILIDADES DE CLASSE */}
+              <div className="w-full flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                 {CLASS_DATABASE[charData.classId] && CLASS_DATABASE[charData.classId].startingFeatures ? (
+                    CLASS_DATABASE[charData.classId].startingFeatures.map((feat: any, i: number) => (
+                      <div key={i} className="bg-white/5 p-3 rounded border border-white/10 text-center shrink-0">
+                         <p className="text-[10px] text-gold uppercase tracking-widest mb-1">{feat.title}</p>
+                         <p className="text-xs text-white/70 italic leading-relaxed whitespace-pre-line">
+                           "{feat.description}"
+                         </p>
+                      </div>
+                    ))
+                 ) : (
+                    // Fallback
+                    <div className="bg-white/5 p-3 rounded border border-white/10 text-center">
+                       <p className="text-[10px] text-gold uppercase tracking-widest mb-1">Habilidade de Classe</p>
+                       <p className="text-purple-200 font-bold text-sm">{RPG_DATA.classes[charData.classId].ability.name}</p>
+                       <p className="text-xs text-white/50 mt-1 italic">"{RPG_DATA.classes[charData.classId].ability.text}"</p>
+                    </div>
+                 )}
               </div>
 
               {step > 1 && (
@@ -462,7 +477,7 @@ export default function CharacterCreation() {
                 </div>
               )}
 
-              {/* SELEÇÃO DE ANCESTRALIDADE (CORRIGIDA) */}
+              {/* SELEÇÃO DE ANCESTRALIDADE */}
               {step === 2 && (
                 <div>
                    <h2 className="text-4xl text-white font-rpg mb-8 text-center sticky top-0 bg-black/90 py-4 z-20 backdrop-blur border-b border-white/10">Sua Origem Ancestral</h2>
@@ -476,21 +491,15 @@ export default function CharacterCreation() {
                             hover:border-green-400 hover:shadow-lg transition-all flex flex-row h-36
                           "
                         >
-                          {/* CORREÇÃO DE IMAGEM:
-                              1. Removi bg-black (agora usa o bg do pai)
-                              2. Removi a camada preta de sobreposição para não escurecer
-                              3. Adicionei 'transformOrigin' para o zoom acontecer no rosto e não no meio
-                          */}
                           <div className="w-1/3 relative overflow-hidden bg-gray-900/50">
                              <img 
                                 src={`/ancestralidade/${anc.imgName}`} 
                                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                                 style={{ 
                                   objectPosition: anc.position,
-                                  transformOrigin: anc.position // O ZOOM AGORA RESPEITA O FOCO NO ROSTO
+                                  transformOrigin: anc.position
                                 }}
                              />
-                             {/* Brilho sutil dourado ao invés de sombra preta */}
                              <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-20 transition-opacity"></div>
                           </div>
                           

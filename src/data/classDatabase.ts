@@ -22,6 +22,11 @@ export interface ClassDefinition {
     name: string;
     description: string;
   };
+  // Adicionado para suportar a exibição na ficha (SheetModal)
+  startingFeatures: {
+    title: string;
+    description: string;
+  }[];
   questions: {
     origin: string[];
     bonds: string[];
@@ -96,8 +101,14 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     damageThresholds: { minor: 5, major: 11, severe: 15 },
     ability: {
       name: "Inspiração",
-      description: "Uma vez por sessão, forneça a você e seus aliados um Dado de Inspiração (d6 no nv 1, d8 no nv 5). Use para somar a um teste, reação, dano ou recuperar PF. Extra: 'Fazer uma Cena' (Gaste 3 Esperança para distrair inimigo, -2 Dificuldade)."
+      description: "Uma vez por sessão, conceda a você e aliados um Dado de Inspiração (d6 no 1º nível, d8 no 5º) para somar a testes, dano ou recuperar PF."
     },
+    startingFeatures: [
+      {
+        title: "Inspiração",
+        description: "Uma vez por sessão, descreva como inspira o grupo e conceda a você e aliados 1 Dado de Inspiração. No 1º nível é um d6 (no 5º nível torna-se d8). Pode ser rolado para: Somar a um teste, reação ou dano; ou Recuperar PF igual ao resultado. Dados não usados são perdidos ao fim da sessão."
+      }
+    ],
     questions: {
       origin: [
         "Quem em sua comunidade lhe ensinou a ter tanta confiança em si mesmo?",
@@ -127,11 +138,21 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     color: "#16a34a", // Green
     icon: "Leaf",
     stats: { hp: 5, stress: 5, hope: 2, evasion: 10, armorSlots: 6, baseArmorPoints: 2 },
-    damageThresholds: { minor: 6, major: 13, severe: 17 }, // Baseado na Armadura de Couro
+    damageThresholds: { minor: 6, major: 13, severe: 17 },
     ability: {
       name: "Forma de Fera",
-      description: "Marque 1 PF para se transformar em uma criatura. Receba as habilidades da fera, some a Evasão dela à sua e use o atributo dela para atacar. Extra: 'Dádiva da Natureza' (efeitos sutis da natureza à vontade)."
+      description: "Marque 1 PF para se transformar em uma criatura de patamar igual ou menor ao seu. Use as habilidades, Evasão e ataque da forma."
     },
+    startingFeatures: [
+      {
+        title: "Forma de Fera",
+        description: "Marque 1 PF para se transformar em uma criatura de patamar igual ou menor ao seu. Pode encerrar a forma a qualquer momento. Não usa armas nem feitiços de domínio (efeitos ativos permanecem). Usa as habilidades, Evasão e atributo de ataque da forma. Armadura se integra ao corpo e PA permanecem ao sair. Ao marcar o último PV, você retorna à forma normal."
+      },
+      {
+        title: "Dádiva da Natureza",
+        description: "Crie livremente efeitos naturais sutis e inofensivos (flores, brisas, fogo pequeno etc.)."
+      }
+    ],
     questions: {
       origin: [
         "Por que a comunidade na qual você cresceu confiava tanto na natureza?",
@@ -155,7 +176,7 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     evolution: STANDARD_EVOLUTION
   },
 
-  // ==================== FEITICEIRO (SORCERER) ====================
+  // ==================== FEITICEIRO ====================
   "feiticeiro": {
     label: "Feiticeiro",
     color: "#9333ea", // Purple
@@ -163,9 +184,23 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     stats: { hp: 5, stress: 5, hope: 2, evasion: 10, armorSlots: 6, baseArmorPoints: 3 },
     damageThresholds: { minor: 5, major: 11, severe: 15 },
     ability: {
-      name: "Magia Inata",
-      description: "Sentido Arcano: Sente magia próxima. Ilusão Menor: Teste de conjuração (10) para criar ilusão visual. Canalizar Poder Bruto: 1x/descanso, coloque carta de domínio na reserva para ganhar Esperança ou Dobrar Dano de feitiço."
+      name: "Poder Arcano",
+      description: "Possui Sentido Arcano, Ilusão Menor e Canalizar Poder Bruto (use cartas de domínio para ganhar Esperança ou dobrar dano de feitiços)."
     },
+    startingFeatures: [
+      {
+        title: "Sentido Arcano",
+        description: "Você percebe a presença de pessoas ou objetos mágicos próximos."
+      },
+      {
+        title: "Ilusão Menor",
+        description: "Teste de conjuração (10). Em sucesso, cria uma ilusão visual convincente em alcance próximo, até o seu tamanho."
+      },
+      {
+        title: "Canalizar Poder Bruto",
+        description: "1 vez por descanso longo, coloque uma carta de domínio na reserva e escolha: Ganhar Esperança igual ao nível da carta; ou Aumentar o dano de um feitiço em 2× o nível da carta."
+      }
+    ],
     questions: {
       origin: [
         "Quem lhe ensinou a domar sua magia descontrolada?",
@@ -194,12 +229,22 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     label: "Guardião",
     color: "#0ea5e9", // Blue/Cyan
     icon: "Shield",
-    stats: { hp: 6, stress: 5, hope: 2, evasion: 9, armorSlots: 6, baseArmorPoints: 4 }, // Mais HP, menos Evasão
-    damageThresholds: { minor: 7, major: 15, severe: 19 }, // Cota de malha
+    stats: { hp: 6, stress: 5, hope: 2, evasion: 9, armorSlots: 6, baseArmorPoints: 4 },
+    damageThresholds: { minor: 7, major: 15, severe: 19 },
     ability: {
-      name: "Inabalável",
-      description: "Barreira Implacável: Gaste 2 Esperança para reduzir dano recebido em 1d6 (antes da armadura). Se o dano for zerado, ganhe 1 Esperança. Passiva: Você tem Vantagem em testes para proteger aliados."
+      name: "Determinação",
+      description: "1 vez por descanso longo, receba um Dado de Determinação (d4, sobe no nível 5). Enquanto Determinado, reduz dano físico e soma o dado ao dano causado."
     },
+    startingFeatures: [
+      {
+        title: "Determinação",
+        description: "1 vez por descanso longo, entre em Determinação e receba um Dado de Determinação. 1º nível: d4 (5º nível: d6). Começa com valor 1 e aumenta +1 ao causar dano que retire PV. Termina ao exceder o valor máximo ou ao fim da cena."
+      },
+      {
+        title: "Enquanto Determinado",
+        description: "Reduz dano físico em 1 categoria; Soma o valor do dado às rolagens de dano; Não pode ser Imobilizado nem ficar Vulnerável."
+      }
+    ],
     questions: {
       origin: [
         "Qual foi a primeira pessoa que você falhou em proteger?",
@@ -228,12 +273,22 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     label: "Guerreiro",
     color: "#ea580c", // Orange
     icon: "Sword",
-    stats: { hp: 6, stress: 5, hope: 2, evasion: 9, armorSlots: 6, baseArmorPoints: 4 }, // Mais HP
+    stats: { hp: 6, stress: 5, hope: 2, evasion: 9, armorSlots: 6, baseArmorPoints: 4 },
     damageThresholds: { minor: 7, major: 15, severe: 19 },
     ability: {
-      name: "Mestre de Batalha",
-      description: "Ataque de Oportunidade: Se inimigo tentar sair do alcance corpo a corpo, faça reação. Sucesso: Impeça movimento ou cause dano. Treinamento de Combate: Receba bônus de dano igual ao seu nível em dano físico."
+      name: "Combate Tático",
+      description: "Realize Ataques de Oportunidade contra inimigos que fogem. Receba bônus de dano físico igual ao seu nível e ignore tipos de empunhadura."
     },
+    startingFeatures: [
+      {
+        title: "Ataque de Oportunidade",
+        description: "Se um inimigo corpo a corpo tentar sair do alcance, faça um teste de reação contra a Dificuldade dele. Sucesso: escolha 1 efeito. Sucesso crítico: escolha 2 efeitos. (Impede o movimento, Causa dano da arma principal, ou Move-se junto com o alvo)."
+      },
+      {
+        title: "Treinamento de Combate",
+        description: "Ignora tipos de empunhadura. Ao causar dano físico, recebe bônus igual ao seu nível no dano."
+      }
+    ],
     questions: {
       origin: [
         "Anos atrás, você perdeu uma batalha que o deixou à beira da morte. Quem o derrotou?",
@@ -262,12 +317,22 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     label: "Ladino",
     color: "#1f2937", // Dark Grey / Black
     icon: "MaskHappy",
-    stats: { hp: 5, stress: 5, hope: 2, evasion: 11, armorSlots: 6, baseArmorPoints: 2 }, // Evasão alta
-    damageThresholds: { minor: 6, major: 13, severe: 17 }, // Couro
+    stats: { hp: 5, stress: 5, hope: 2, evasion: 11, armorSlots: 6, baseArmorPoints: 2 },
+    damageThresholds: { minor: 6, major: 13, severe: 17 },
     ability: {
-      name: "Especialista Furtivo",
-      description: "Ataque Furtivo: Se tiver Vantagem no ataque, cause +1d6 de dano (aumenta com nível). Esconder-se: Pode se esconder como Ação Bônus gastando 1 Esperança."
+      name: "Furtividade",
+      description: "Permanece Oculto ao se esconder. Causa Ataque Furtivo (dano extra de +d6 por patamar) ao atacar Oculto ou com aliado próximo ao alvo."
     },
+    startingFeatures: [
+      {
+        title: "Oculto",
+        description: "Quando estaria Escondido, você fica Oculto. Permanece invisível mesmo se alguém se mover para vê-lo, desde que não se mova. Perde a condição ao se mover à vista ou atacar."
+      },
+      {
+        title: "Ataque Furtivo",
+        description: "Ao acertar um ataque enquanto Oculto ou com um aliado corpo a corpo do alvo, adicione d6 por patamar ao dano (Nível 1: 1º patamar; Níveis 2–4: 2º patamar...)."
+      }
+    ],
     questions: {
       origin: [
         "Qual foi a coisa mais valiosa que você roubou?",
@@ -291,17 +356,27 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     evolution: STANDARD_EVOLUTION
   },
 
-  // ==================== MAGO (WIZARD) ====================
+  // ==================== MAGO ====================
   "mago": {
     label: "Mago",
     color: "#2563eb", // Blue
     icon: "BookOpen",
-    stats: { hp: 5, stress: 5, hope: 2, evasion: 10, armorSlots: 6, baseArmorPoints: 1 }, // Pouca armadura
-    damageThresholds: { minor: 4, major: 8, severe: 12 }, // Roupas/Manto
+    stats: { hp: 5, stress: 5, hope: 2, evasion: 10, armorSlots: 6, baseArmorPoints: 1 },
+    damageThresholds: { minor: 4, major: 8, severe: 12 },
     ability: {
-      name: "Escola de Magia",
-      description: "Padrões Estranhos: Escolha nº 1-12. Ao rolar esse nº no D12, ganhe 1 Esperança ou recupere 1 PF. Prestidigitação: Efeitos mágicos menores à vontade. Extra: 'Não Dessa Vez' (Gaste 3 Esperança para forçar inimigo a refazer teste)."
+      name: "Alta Magia",
+      description: "Padrões Estranhos: Escolha um nº da sorte para ganhar Esperança/PF. Prestidigitação: Efeitos mágicos menores à vontade."
     },
+    startingFeatures: [
+      {
+        title: "Padrões Estranhos",
+        description: "Escolha um número de 1 a 12. Ao rolar esse número em um Dado do Destino, ganhe 1 Esperança ou recupere 1 Fadiga. Pode trocar o número em um descanso longo."
+      },
+      {
+        title: "Prestidigitação",
+        description: "Execute livremente pequenos efeitos mágicos inofensivos (luz, cheiro, flutuar objetos, reparar itens pequenos etc.)."
+      }
+    ],
     questions: {
       origin: [
         "Qual grande mistério mágico você está tentando resolver?",
@@ -325,17 +400,23 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     evolution: STANDARD_EVOLUTION
   },
 
-  // ==================== PATRULHEIRO (RANGER) ====================
+  // ==================== PATRULHEIRO ====================
   "patrulheiro": {
     label: "Patrulheiro",
     color: "#65a30d", // Dark Green / Lime
-    icon: "Crosshair", // Ou PawPrint se preferir focar no pet
+    icon: "Crosshair",
     stats: { hp: 5, stress: 5, hope: 2, evasion: 10, armorSlots: 6, baseArmorPoints: 2 },
     damageThresholds: { minor: 6, major: 13, severe: 17 },
     ability: {
-      name: "Companheiro",
-      description: "Vínculo Selvagem: Você tem um companheiro animal. Ele age junto com você. Se ele sofrer dano, você pode marcar Stress para negar. Extra: 'Na Mosca' (Gaste 1 Esperança para adicionar +1d6 de dano em ataque à distância)."
+      name: "Marca da Presa",
+      description: "Gaste 1 Esperança para marcar um alvo. Você sabe a direção dele e causa 1 PF ao causar dano."
     },
+    startingFeatures: [
+      {
+        title: "Marca da Presa",
+        description: "Gaste 1 Esperança e ataque um alvo. Se acertar, cause dano normal e o Marque. Enquanto a marca durar: Você sabe a direção exata do alvo; Ao causar dano, o alvo marca 1 PF; Ao errar um ataque, pode encerrar a marca para rerrolar os Dados de Dualidade."
+      }
+    ],
     questions: {
       origin: [
         "Por que você prefere a companhia de animais à de pessoas?",
@@ -367,9 +448,15 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     stats: { hp: 5, stress: 5, hope: 2, evasion: 10, armorSlots: 6, baseArmorPoints: 3 },
     damageThresholds: { minor: 5, major: 11, severe: 15 },
     ability: {
-      name: "Divindade",
-      description: "Prece: Role 'Oração'. Em sucesso, cure PF ou PV. Asas: Você pode voar por curtos períodos gastando Esperança. Extra: 'Intervenção' (Gaste 3 Esperança para rolar novamente qualquer dado)."
+      name: "Dados de Oração",
+      description: "No início da sessão, role d4s baseados em conjuração. Gaste esses dados para reduzir dano, somar a rolagens ou ganhar Esperança."
     },
+    startingFeatures: [
+      {
+        title: "Dados de Oração",
+        description: "No início da sessão, role d4 em quantidade igual ao atributo de conjuração da subclasse. Esses são seus Dados de Oração. Você pode gastar dados para ajudar a si ou aliados em alcance distante, usando o valor para: Reduzir dano sofrido; Somar a uma rolagem após feita; Ganhar Esperança igual ao resultado. Dados não usados são perdidos ao fim da sessão."
+      }
+    ],
     questions: {
       origin: [
         "Qual divindade você serve e por quê?",
