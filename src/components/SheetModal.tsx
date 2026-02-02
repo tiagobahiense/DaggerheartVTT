@@ -139,8 +139,8 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   };
 
   const updateAttribute = (attrName: string, val: number) => {
-    // Forçamos o type aqui para evitar o erro do TS7053
-    const currentAttrs = (sheetData.attributes || {}) as Record<string, any>;
+    // O 'as any' aqui evita o erro de tipagem chata do TypeScript
+    const currentAttrs = (sheetData.attributes || {}) as any;
     const newAttrs = { 
         ...currentAttrs, 
         [attrName]: { ...currentAttrs[attrName], value: val } 
