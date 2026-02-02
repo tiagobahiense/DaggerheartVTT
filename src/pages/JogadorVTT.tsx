@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { 
   X, Shield, HandGrabbing, Stack, ArrowsOutSimple, 
@@ -12,6 +12,8 @@ import {
 // --- IMPORTAÇÕES DE DADOS E COMPONENTES ---
 import CARTAS_JSON from '../data/cartas.json'; 
 import { SheetModal } from '../components/SheetModal';
+import NPCViewer from '../components/NPCViewer'; 
+import Tabletop from '../components/Tabletop';
 
 // ==================================================================================
 // 1. TIPOS GERAIS
@@ -355,6 +357,25 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     }
   }, [character, isDataLoaded]);
 
+  // CORREÇÃO: Sync com Servidor (para quando o Mestre altera as cartas)
+  useEffect(() => {
+      if (character?.cards) {
+          // Compara versões stringificadas para evitar loops se os objetos não forem idênticos por referência
+          const serverHand = JSON.stringify(character.cards.hand || []);
+          const localHand = JSON.stringify(hand);
+          
+          if (serverHand !== localHand) {
+              setHand(character.cards.hand || []);
+          }
+
+          const serverReserve = JSON.stringify(character.cards.reserve || []);
+          const localReserve = JSON.stringify(reserve);
+          if (serverReserve !== localReserve) {
+              setReserve(character.cards.reserve || []);
+          }
+      }
+  }, [character]);
+
   // Atualiza refs para o salvamento
   useEffect(() => {
     handRef.current = hand;
@@ -370,20 +391,16 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       try {
         const charRef = doc(db, 'characters', character.id);
         
-        // CORREÇÃO: Usando notação de ponto para atualizar APENAS hand e reserve
-        // sem destruir o resto do objeto 'cards' (caso exista) e sem substituir tudo.
         await updateDoc(charRef, {
           "cards.hand": handRef.current,
           "cards.reserve": reserveRef.current
         });
         
-        // console.log("Cartas salvas com sucesso!");
       } catch (error) {
         console.error("Erro ao salvar cartas:", error);
       }
     };
 
-    // Reduzi o tempo para 800ms para garantir que salve antes de um F5 rápido
     const debounce = setTimeout(saveData, 800); 
     return () => clearTimeout(debounce);
   }, [hand, reserve, character.id, isDataLoaded]);
@@ -433,16 +450,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     ...card, uniqueId: crypto.randomUUID(), isExhausted: false, exhaustionType: null, tokens: 0
   });
 
-  const triggerRest = (type: 'short' | 'long') => {
-    setHand(prevHand => prevHand.map(card => {
-        if (!card.isExhausted) return card;
-        if (type === 'long') return { ...card, isExhausted: false, exhaustionType: null };
-        if (type === 'short' && card.exhaustionType === 'short') return { ...card, isExhausted: false, exhaustionType: null };
-        return card;
-    }));
-    // alert removido para não interferir, função mantida para lógica futura se necessário
-  };
-
   const handleCastCard = (card: ActiveCard) => {
     if (card.isExhausted) return alert("Esta carta está exaurida.");
     setSelectedCardState(null);
@@ -453,10 +460,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const initiateDraw = (card: Card, source: 'grimoire' | 'reserve', reserveIndex: number = -1) => {
     if (hand.some(c => c.nome === card.nome)) return alert("Você já tem essa carta.");
     if (hand.length < 5) {
-      // Adiciona na mão
       setHand(prev => [...prev, createActiveCard(card)]);
       
-      // Remove da reserva se veio de lá
       if (source === 'reserve') { 
           setReserve(prev => prev.filter((_, i) => i !== reserveIndex)); 
           setShowReserve(false); 
@@ -466,7 +471,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       }
       return;
     }
-    // Mão cheia
     setPendingCard(card); setSwapSource(source); setReserveIndexToSwap(reserveIndex); setIsSwapping(true); setShowGrimoire(false); setShowReserve(false); setSearchTerm('');
   };
 
@@ -474,15 +478,10 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     if (!pendingCard) return;
     const cardToRemove = hand[indexToRemove];
     
-    // Adiciona carta removida à reserva
     const cardToReserve = { nome: cardToRemove.nome, caminho: cardToRemove.caminho, categoria: cardToRemove.categoria };
     let newReserve = [...reserve, cardToReserve];
     
-    // Se veio da reserva, remove a carta que entrou na mão da lista de reserva
     if (swapSource === 'reserve' && reserveIndexToSwap > -1) {
-        // Correção lógica: Se tirou da reserva, ela não deve ser duplicada.
-        // O array newReserve já tem a carta que saiu da mão.
-        // Agora removemos a carta que foi para a mão (que estava na reserva).
         const filtered = reserve.filter((_, i) => i !== reserveIndexToSwap);
         newReserve = [...filtered, cardToReserve];
     }
@@ -557,9 +556,16 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         .animate-tumble-3d { animation: tumble-3d 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
         .animate-tumble-3d-reverse { animation: tumble-3d-reverse 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
         .perspective-1000 { perspective: 1000px; }
+        
+        /* DARK SOULS TEXT ANIMATION */
+        @keyframes ds-fade-in {
+            0% { opacity: 0; transform: scale(1.2); }
+            15% { opacity: 1; transform: scale(1); }
+            85% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.9); }
+        }
+        .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
       `}</style>
-
-      {/* --- NOTA: Mestre (Simulação) foi removido daqui conforme solicitado --- */}
 
       {castingCard && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none">
@@ -733,7 +739,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 }
 
 // ==================================================================================
-// 4. COMPONENTE PRINCIPAL: JOGADOR VTT
+// 5. COMPONENTE PRINCIPAL: JOGADOR VTT
 // ==================================================================================
 export default function JogadorVTT() {
   const navigate = useNavigate();
@@ -741,33 +747,63 @@ export default function JogadorVTT() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
+  const [sessaoData, setSessaoData] = useState<any>(null); // Sincronização de Sessão
+  const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
+  // --- BUSCA DO PERSONAGEM (EM TEMPO REAL) ---
   useEffect(() => {
-    const fetchCharacter = async () => {
-      const user = auth.currentUser;
-      if (!user) { navigate('/login'); return; }
-      try {
-        const q = query(collection(db, 'characters'), where('playerId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          // Garante que atributos existam com valores padrão para não quebrar a ficha
-          const data = querySnapshot.docs[0].data();
-          const defaultAttrs = { agility: {value:0}, strength: {value:0}, finesse: {value:0}, instinct: {value:0}, presence: {value:0}, knowledge: {value:0} };
-          
-          // Combina dados do banco com defaults
-          setCharacter({ 
-            id: querySnapshot.docs[0].id, 
-            ...data,
-            attributes: data.attributes || defaultAttrs,
-            cards: data.cards || { hand: [], reserve: [] } // Inicializa cartas vazias se não existirem
-          } as Character);
+    const user = auth.currentUser;
+    if (!user) { navigate('/login'); return; }
+
+    const q = query(collection(db, 'characters'), where('playerId', '==', user.uid));
+    
+    // CORREÇÃO: Usando onSnapshot para ouvir atualizações do Mestre em tempo real
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            const defaultAttrs = { agility: {value:0}, strength: {value:0}, finesse: {value:0}, instinct: {value:0}, presence: {value:0}, knowledge: {value:0} };
+            
+            setCharacter({ 
+                id: snapshot.docs[0].id, 
+                ...data,
+                attributes: data.attributes || defaultAttrs,
+                cards: data.cards || { hand: [], reserve: [] } 
+            } as Character);
+            setLoading(false);
         } else {
-          navigate('/criar-personagem');
+            navigate('/criar-personagem');
         }
-      } catch (error) { console.error(error); } finally { setLoading(false); }
-    };
-    fetchCharacter();
+    }, (error) => {
+        console.error("Erro ao buscar personagem:", error);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [navigate]);
+
+  // Listener para dados da Sessão (Mapa/Cenário)
+  useEffect(() => {
+    const q = query(collection(db, 'sessoes'), limit(1));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+            const docSnap = snapshot.docs[0];
+            setSessaoData({ id: docSnap.id, ...docSnap.data() });
+        }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // --- CONTROLE ALERTA MEDO ---
+  useEffect(() => {
+    if (sessaoData?.fear_data?.last_trigger) {
+        const diff = Date.now() - sessaoData.fear_data.last_trigger;
+        if (diff < 5000) {
+            setFearAlertVisible(true);
+            const timer = setTimeout(() => setFearAlertVisible(false), 5000 - diff);
+            return () => clearTimeout(timer);
+        }
+    }
+  }, [sessaoData?.fear_data?.last_trigger]);
 
   if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando Grimório...</div>;
   if (!character) return null;
@@ -777,13 +813,38 @@ export default function JogadorVTT() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black select-none">
-      <div className="absolute inset-0 z-0">
+      
+      {/* CAMADA 0: BACKGROUND ESTÁTICO (DEVOLVIDA) */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <img src="/jogador-vtt-fundo.webp" className="w-full h-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40"></div>
       </div>
+      
+      {/* ============================== */}
+      {/* CAMADAS DE VISUALIZAÇÃO (MAPA) */}
+      {/* ============================== */}
+      
+      {/* Camada 1: Cenário/NPC (Overlay ou Fundo) */}
+      {/* O NPCViewer controla seus próprios Z-Indices (NPC=100, Cenário=0) */}
+      {sessaoData && (
+          <NPCViewer sessaoData={sessaoData} isMaster={false} />
+      )}
 
-      {/* --- HUD: PERFIL --- */}
-      <div className="absolute top-6 left-6 z-50 animate-fade-in">
+      {/* Camada 2: Mesa/Mapa (Frente) */}
+      {/* Tabletop agora é uma janela Draggable para todos */}
+      {sessaoData && (
+         <Tabletop sessaoData={sessaoData} isMaster={false} charactersData={[]} />
+      )}
+
+      {/* Overlay Escuro para melhorar leitura do HUD */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
+
+      {/* ============================== */}
+      {/* HUD (Interface)                */}
+      {/* ============================== */}
+
+      {/* PERFIL (Topo Esquerdo) */}
+      <div className="absolute top-6 left-6 z-50 animate-fade-in pointer-events-auto">
         <button onClick={() => setSheetOpen(true)} className="group relative flex items-center gap-4 pr-8 pl-2 py-2 rounded-full border border-white/20 shadow-xl transition-all hover:scale-[1.02]" style={{ background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' }}>
           <div className="relative w-14 h-14 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0">
             <span className="text-xl font-rpg text-white font-bold">{character.level}</span>
@@ -800,8 +861,8 @@ export default function JogadorVTT() {
         </button>
       </div>
 
-      {/* BOTÃO FLUTUANTE DE DADOS */}
-      <div className="absolute bottom-36 right-8 z-40">
+      {/* BOTÃO FLUTUANTE DE DADOS (Canto Inferior Direito) */}
+      <div className="absolute bottom-36 right-8 z-40 pointer-events-auto">
         <button onClick={() => setShowDiceRoller(true)} className="w-16 h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
             <div className="group-hover:animate-spin"><Dna size={32} weight="bold" /></div>
         </button>
@@ -819,6 +880,22 @@ export default function JogadorVTT() {
         isOpen={sheetOpen} 
         onClose={() => setSheetOpen(false)} 
       />
+
+      {/* ========================================= */}
+      {/* ALERTA DE MEDO (GLOBAL OVERLAY)           */}
+      {/* ========================================= */}
+      {fearAlertVisible && (
+           <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
+               <div className="relative w-full flex flex-col items-center animate-ds-text">
+                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
+                   <h1 className="font-rpg text-7xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-900 uppercase tracking-[0.2em] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] py-4 text-center">
+                       O MESTRE USOU O MEDO
+                   </h1>
+                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
+               </div>
+           </div>
+      )}
+
     </div>
   );
 }

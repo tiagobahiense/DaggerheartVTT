@@ -42,7 +42,8 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     },
     inventory: [] as { name: string, quantity: number }[],
     evolution: {} as Record<string, number>,
-    proficiency: 0
+    proficiency: 0,
+    guide: { origin: [] as string[], bonds: [] as string[] }
   });
 
   const classKey = character?.class?.toLowerCase().replace(' ', '') || "mago";
@@ -75,10 +76,12 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
             },
             inventory: character.inventory || [],
             evolution: character.evolution || {},
-            proficiency: character.proficiency || 0
+            proficiency: character.proficiency || 0,
+            guide: character.guide || { origin: [], bonds: [] }
         });
         setCharacterImage(character.imageUrl || '');
         setPaSpent(character.paSpent || 0);
+        setSelectedTraits(character.selectedTraits || {});
     }
   }, [character]);
 
@@ -181,8 +184,22 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     setSelectedTraits(prev => {
       const current = prev[category] || [];
       const updated = current.includes(trait) ? current.filter(t => t !== trait) : [...current, trait];
-      return { ...prev, [category]: updated };
+      const newState = { ...prev, [category]: updated };
+      
+      // Salva diretamente no Firebase
+      saveCharacterData({ selectedTraits: newState });
+      
+      return newState;
     });
+  };
+
+  const handleGuideChange = (section: 'origin' | 'bonds', index: number, value: string) => {
+      const currentGuide = sheetData.guide || { origin: [], bonds: [] };
+      const currentSection = currentGuide[section] ? [...currentGuide[section]] : [];
+      currentSection[index] = value;
+      
+      const newGuide = { ...currentGuide, [section]: currentSection };
+      updateSheet('guide', newGuide);
   };
 
   const tabs = [
@@ -394,8 +411,30 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
           {/* === ABA GUIA === */}
           {activeTab === 'guia' && (
             <div className="grid grid-cols-2 gap-4 h-full overflow-y-auto custom-scrollbar">
-                <div className="space-y-3"><h3 className="text-sm font-bold text-gold uppercase">Origem</h3>{classData.questions.origin.map((q: string, i: number) => <TextAreaQuestion key={i} label={`Pergunta ${i+1}`} placeholder={q} />)}</div>
-                <div className="space-y-3"><h3 className="text-sm font-bold text-gold uppercase">Vínculos</h3>{classData.questions.bonds.map((q: string, i: number) => <TextAreaQuestion key={i} label={`Vínculo ${i+1}`} placeholder={q} />)}</div>
+                <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gold uppercase">Origem</h3>
+                    {classData.questions.origin.map((q: string, i: number) => (
+                        <TextAreaQuestion 
+                            key={`origin-${i}`} 
+                            label={`Pergunta ${i+1}`} 
+                            placeholder={q}
+                            value={sheetData.guide?.origin?.[i] || ''}
+                            onChange={(val: string) => handleGuideChange('origin', i, val)}
+                        />
+                    ))}
+                </div>
+                <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-gold uppercase">Vínculos</h3>
+                    {classData.questions.bonds.map((q: string, i: number) => (
+                        <TextAreaQuestion 
+                            key={`bonds-${i}`} 
+                            label={`Vínculo ${i+1}`} 
+                            placeholder={q}
+                            value={sheetData.guide?.bonds?.[i] || ''}
+                            onChange={(val: string) => handleGuideChange('bonds', i, val)}
+                        />
+                    ))}
+                </div>
             </div>
           )}
 

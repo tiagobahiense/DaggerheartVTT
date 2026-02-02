@@ -283,10 +283,16 @@ export const ItemRow = ({ name }: any) => (
     </div>
 );
 
-export const TextAreaQuestion = ({ label, placeholder }: any) => (
+// --- TEXT AREA COM PERSISTÊNCIA ---
+export const TextAreaQuestion = ({ label, placeholder, value, onChange }: any) => (
     <div className="bg-white/5 rounded p-3 border border-white/10">
         <label className="block text-xs text-gold mb-2 font-bold uppercase">{label}</label>
-        <textarea className="w-full bg-black/50 border border-white/10 rounded p-2 text-white/80 text-xs resize-none h-16 focus:border-gold outline-none" placeholder={placeholder} />
+        <textarea 
+            className="w-full bg-black/50 border border-white/10 rounded p-2 text-white/80 text-xs resize-none h-16 focus:border-gold outline-none" 
+            placeholder={placeholder}
+            value={value || ''}
+            onChange={(e) => onChange && onChange(e.target.value)}
+        />
     </div>
 );
 

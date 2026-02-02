@@ -1,17 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   collection, query, onSnapshot, orderBy, 
-  addDoc, serverTimestamp, limit, writeBatch, doc 
+  addDoc, serverTimestamp, limit, writeBatch, doc, updateDoc, getDocs 
 } from 'firebase/firestore';
-import { db, auth } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { 
   Users, Eye, Skull, Campfire, MoonStars, 
   Dna, X, Cube, Coins, Sparkle, HandPalm, 
-  MapTrifold, Robot, UserCircle, Stack, Scroll
+  MapTrifold, UserCircle, Stack, Scroll, Image as ImageIcon,
+  Fire
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
 
-// --- CORES (IDÊNTICAS AO JOGADOR) ---
+// --- IMPORTAÇÃO DOS SEUS COMPONENTES ---
+import SceneryViewer from '../components/NPCViewer'; 
+import Tabletop from '../components/Tabletop';
+
+// --- CONFIGURAÇÕES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
   "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
@@ -23,7 +28,7 @@ const ANCESTRY_COLORS: Record<string, string> = {
   "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "Símio": "#a16207",
 };
 
-// --- TIPOS ---
+// --- INTERFACES ---
 interface Card {
   caminho: string;
   nome: string;
@@ -40,19 +45,15 @@ interface Character {
   class: string;
   subclass: string;
   ancestry: string;
-  heritage: string; // Adicionado heritage
+  heritage: string; 
   community: string;
   level: number;
   imageUrl?: string;
-  isOnline?: boolean; // Campo para controle de status
+  isOnline?: boolean; 
   cards?: {
     hand: Card[];
     reserve: Card[];
   };
-  attributes?: any;
-  weapons?: any;
-  armor?: any;
-  paSpent?: number;
 }
 
 interface RollLog {
@@ -64,15 +65,14 @@ interface RollLog {
 }
 
 // ============================================================================
-// 1. COMPONENTE: LISTA DE JOGADORES (ESTILO VISUAL DO JOGADOR)
+// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES
 // ============================================================================
 const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
   return (
-    <div className="absolute top-6 left-6 flex flex-col gap-4 z-40 animate-slide-right w-64">
+    <div className="absolute top-6 left-6 flex flex-col gap-4 z-[900] animate-slide-right w-64 pointer-events-auto">
       {players.map((char) => {
         const color1 = CLASS_COLORS[char.class] || '#4b5563';
         const color2 = ANCESTRY_COLORS[char.ancestry] || '#1f2937';
-        // Se isOnline for undefined, assume true para teste, ou implemente lógica de heartbeat
         const isOnline = char.isOnline !== false; 
 
         return (
@@ -110,7 +110,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
 };
 
 // ============================================================================
-// 2. COMPONENTE: SISTEMA DE DADOS DO MESTRE (IGUAL AO DO JOGADOR + SYNC)
+// 2. COMPONENTE AUXILIAR: SISTEMA DE DADOS DO MESTRE
 // ============================================================================
 function MasterDiceSystem({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<'DUALITY' | 'STANDARD'>('DUALITY');
@@ -127,11 +127,10 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
   const [diceCount, setDiceCount] = useState(1);
   const [standardMod, setStandardMod] = useState(0);
 
-  // --- FUNÇÃO PARA SALVAR NO FIREBASE ---
   const pushRollToFirebase = async (rollResult: any, type: 'DUALITY' | 'STANDARD') => {
       try {
         await addDoc(collection(db, 'rolls'), {
-            playerName: "Mestre", // Nome fixo ou configurável
+            playerName: "Mestre", 
             type,
             result: rollResult,
             timestamp: serverTimestamp()
@@ -141,7 +140,6 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
       }
   };
 
-  // --- ROLAGEM DUALIDADE ---
   const rollDuality = () => {
     setIsRolling(true);
     setResult(null);
@@ -177,7 +175,6 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
     }, 1000);
   };
 
-  // --- ROLAGEM PADRÃO ---
   const rollStandard = () => {
     setIsRolling(true);
     setResult(null);
@@ -201,7 +198,7 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
         
         <div className="flex justify-between items-start mb-6">
@@ -334,7 +331,7 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
 }
 
 // ============================================================================
-// 3. COMPONENTE: MONITOR DE CARTAS (Modal "Olho de Deus")
+// 3. COMPONENTE AUXILIAR: MONITOR DE CARTAS
 // ============================================================================
 const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onClose: () => void, players: Character[] }) => {
   const [zoomedCard, setZoomedCard] = useState<Card | null>(null);
@@ -342,7 +339,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col animate-fade-in">
+    <div className="fixed inset-0 z-[3000] bg-black/95 flex flex-col animate-fade-in" onClick={e => e.stopPropagation()}>
        {/* Header */}
        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a120b]">
           <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de Grimórios</h2>
@@ -395,7 +392,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
 
        {/* Zoom da Carta */}
        {zoomedCard && (
-         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setZoomedCard(null)}>
+         <div className="fixed inset-0 z-[3100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setZoomedCard(null)}>
             <div className="relative max-w-md w-full p-4 animate-scale-up">
                 <img src={zoomedCard.caminho} className="w-full rounded-xl shadow-2xl border border-gold/30" />
                 <div className="mt-4 bg-black/80 p-4 rounded-xl border border-white/20 text-center">
@@ -412,7 +409,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
 };
 
 // ============================================================================
-// 4. COMPONENTE: NOTIFICAÇÃO DE DADOS (TOAST - LISTEN GLOBAL)
+// 4. COMPONENTE AUXILIAR: NOTIFICAÇÃO DE DADOS (TOAST)
 // ============================================================================
 const DiceToast = () => {
     const [lastRoll, setLastRoll] = useState<RollLog | null>(null);
@@ -442,7 +439,7 @@ const DiceToast = () => {
     if (!visible || !lastRoll) return null;
 
     return (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[250] animate-bounce-in">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[4000] animate-bounce-in">
             <div className={`px-6 py-4 rounded-xl border-2 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md flex items-center gap-4 min-w-[300px] ${lastRoll.type === 'DUALITY' ? 'bg-black/90 border-gold' : 'bg-[#1a0b2e]/90 border-purple-500'}`}>
                 <div className="flex flex-col items-center border-r border-white/10 pr-4">
                     <span className="text-[10px] uppercase text-white/50 tracking-widest">Jogador</span>
@@ -488,8 +485,18 @@ export default function MestreVTT() {
   const [showCardsMonitor, setShowCardsMonitor] = useState(false);
   const [showDiceSystem, setShowDiceSystem] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [sessaoData, setSessaoData] = useState<any>(null);
 
-  // --- STYLES FOR ANIMATIONS (Copied from Player) ---
+  // Estados dos Gerenciadores
+  const [showSceneryManager, setShowSceneryManager] = useState(false);
+  const [showTabletopManager, setShowTabletopManager] = useState(false);
+
+  // --- MEDO (FEAR) SYSTEM ---
+  const [showFearModal, setShowFearModal] = useState(false);
+  const [fearTokens, setFearTokens] = useState(0); // 0 a 10
+  const [fearAlertVisible, setFearAlertVisible] = useState(false);
+
+  // --- STYLES ---
   const styles = `
         @keyframes spell-cast {
           0% { transform: translateY(40vh) scale(0.5) rotate(0deg); opacity: 1; box-shadow: 0 0 0 rgba(212, 175, 55, 0); }
@@ -512,17 +519,67 @@ export default function MestreVTT() {
         .animate-tumble-3d { animation: tumble-3d 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
         .animate-tumble-3d-reverse { animation: tumble-3d-reverse 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
         .perspective-1000 { perspective: 1000px; }
+
+        /* DARK SOULS TEXT ANIMATION */
+        @keyframes ds-fade-in {
+            0% { opacity: 0; transform: scale(1.2); }
+            15% { opacity: 1; transform: scale(1); }
+            85% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.9); }
+        }
+        .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
   `;
 
-  // --- LISTENERS ---
+  // 1. Busca e inicializa Sessão
   useEffect(() => {
-    // Escuta todos os personagens
+    const initSession = async () => {
+        const q = query(collection(db, 'sessoes'), limit(1));
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            if (!snapshot.empty) {
+                const docSnap = snapshot.docs[0];
+                const data = docSnap.data();
+                setSessaoData({ id: docSnap.id, ...data });
+                
+                // Sync Tokens de Medo
+                if (data.fear_data) {
+                    setFearTokens(data.fear_data.tokens || 0);
+                    // Checa trigger de alerta
+                    const lastTrigger = data.fear_data.last_trigger;
+                    const now = Date.now();
+                    if (lastTrigger && (now - lastTrigger) < 5000) {
+                        setFearAlertVisible(true);
+                        setTimeout(() => setFearAlertVisible(false), 5000);
+                    }
+                }
+            } else {
+                // Cria sessão se não existir (Garra de Persistência)
+                try {
+                    await addDoc(collection(db, 'sessoes'), {
+                        createdAt: serverTimestamp(),
+                        active_scenery: null,
+                        active_npc: null,
+                        active_map: null,
+                        cenarios: [],
+                        maps: [],
+                        saved_maps: [],
+                        saved_enemies: [],
+                        fear_data: { tokens: 0, last_trigger: 0 }
+                    });
+                } catch (e) { console.error("Erro ao criar sessão inicial", e); }
+            }
+        });
+        return unsubscribe;
+    };
+    const unsub = initSession();
+    return () => { unsub.then(f => f && f()); };
+  }, []);
+
+  // 2. Busca Personagens
+  useEffect(() => {
     const q = query(collection(db, 'characters'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chars = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Character));
       setCharacters(chars);
-      
-      // Se tiver uma ficha aberta, atualiza ela em real-time também
       if (selectedChar) {
           const updated = chars.find(c => c.id === selectedChar.id);
           if (updated) setSelectedChar(updated);
@@ -531,107 +588,188 @@ export default function MestreVTT() {
     return () => unsubscribe();
   }, [selectedChar]);
 
-  // --- ACTIONS ---
   const handleRestAll = async (type: 'short' | 'long') => {
-      if (!window.confirm(`Aplicar descanso ${type === 'short' ? 'CURTO' : 'LONGO'} para TODOS os jogadores?`)) return;
-      
+      if (!window.confirm("Aplicar descanso?")) return;
       const batch = writeBatch(db);
-      
       characters.forEach(char => {
-          if (char.cards && char.cards.hand) {
+          if (char.cards?.hand) {
               const newHand = char.cards.hand.map(card => {
                   if (!card.isExhausted) return card;
-                  // Descanso Longo limpa tudo
                   if (type === 'long') return { ...card, isExhausted: false, exhaustionType: null };
-                  // Descanso Curto limpa só exaustão curta
                   if (type === 'short' && card.exhaustionType === 'short') return { ...card, isExhausted: false, exhaustionType: null };
                   return card;
               });
-              
-              const ref = doc(db, 'characters', char.id);
-              batch.update(ref, { "cards.hand": newHand });
+              batch.update(doc(db, 'characters', char.id), { "cards.hand": newHand });
           }
       });
-
       await batch.commit();
-      alert("Descanso aplicado globalmente.");
+  };
+
+  // --- FEAR SYSTEM LOGIC ---
+  const toggleFearToken = async (index: number) => {
+      // Se clicar num token apagado (index >= tokens), acende até ele (index + 1)
+      // Se clicar num token aceso, apaga ele e os da frente (index)
+      let newCount = fearTokens;
+      if (index < fearTokens) {
+          newCount = index; // Apaga
+      } else {
+          newCount = index + 1; // Acende
+      }
+      
+      if (sessaoData?.id) {
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              "fear_data.tokens": newCount
+          });
+      }
+  };
+
+  const triggerFearAlert = async () => {
+      if (sessaoData?.id) {
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              "fear_data.last_trigger": Date.now()
+          });
+          setShowFearModal(false);
+      }
   };
 
   return (
     <div className="h-screen w-screen bg-black relative overflow-hidden select-none">
        <style>{styles}</style>
-       {/* Background */}
-       <div className="absolute inset-0 z-0">
+
+       {/* Background Estático */}
+       <div className="absolute inset-0 z-0 pointer-events-none">
          <img src="/jogador-vtt-fundo.webp" className="w-full h-full object-cover opacity-60" />
          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40"></div>
        </div>
 
-       {/* 1. TOAST DE DADOS (Visível para todos quando alguém rola) */}
-       <DiceToast />
+       {/* ========================================= */}
+       {/* CAMADAS DE CONTEÚDO (MAPA E CENÁRIO)      */}
+       {/* ========================================= */}
 
-       {/* 2. LISTA DE JOGADORES (Lado Esquerdo) - Agora com visual estilo Jogo */}
-       <PlayerList 
-         players={characters} 
-         onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} 
-       />
+       {/* Camada 1: Projetor de Cenário (Fundo) */}
+       {sessaoData && (
+          <SceneryViewer 
+             sessaoData={sessaoData} 
+             isMaster={true} 
+             showManager={showSceneryManager} 
+             onCloseManager={() => setShowSceneryManager(false)}
+          />
+       )}
 
-       {/* 3. MODAIS E FICHAS */}
-       <SheetModal 
-          character={selectedChar} 
-          isOpen={isSheetOpen} 
-          onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} 
-       />
-       
-       <CardsMonitorModal 
-          isOpen={showCardsMonitor} 
-          onClose={() => setShowCardsMonitor(false)} 
-          players={characters} 
-       />
-
-       {/* DICE SYSTEM SINCRONIZADO DO MESTRE */}
-       {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}
-
-       {/* 4. BOTÕES DE DESCANSO GLOBAL (Top Right) */}
-       <div className="absolute top-6 right-6 z-40 flex gap-2">
-           <button onClick={() => handleRestAll('short')} className="flex items-center gap-2 px-4 py-2 bg-orange-900/40 border border-orange-500/30 rounded text-orange-200 text-xs hover:bg-orange-800 transition-colors uppercase font-bold tracking-wide backdrop-blur-md">
-               <Campfire size={18} /> Descanso Curto (Todos)
-           </button>
-           <button onClick={() => handleRestAll('long')} className="flex items-center gap-2 px-4 py-2 bg-indigo-900/40 border border-indigo-500/30 rounded text-indigo-200 text-xs hover:bg-indigo-800 transition-colors uppercase font-bold tracking-wide backdrop-blur-md">
-               <MoonStars size={18} /> Descanso Longo (Todos)
-           </button>
+       {/* Camada 2: Mesa de Jogo (Frente) */}
+       <div className="absolute inset-0 z-[10] pointer-events-none">
+           <div className="w-full h-full pointer-events-auto">
+             {sessaoData && (
+                <Tabletop 
+                    sessaoData={sessaoData}
+                    isMaster={true}
+                    charactersData={characters}
+                    showManager={showTabletopManager}
+                    onCloseManager={() => setShowTabletopManager(false)}
+                />
+             )}
+           </div>
        </div>
 
-       {/* 5. HUD DO MESTRE (Bottom Right - Tools) */}
-       <div className="absolute bottom-6 right-6 z-40 flex flex-col items-end gap-4 animate-slide-up">
-           {/* Botões de Mesa */}
+       {/* ========================================= */}
+       {/* ALERTA DE MEDO (GLOBAL OVERLAY)           */}
+       {/* ========================================= */}
+       {fearAlertVisible && (
+           <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
+               <div className="relative w-full flex flex-col items-center animate-ds-text">
+                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
+                   <h1 className="font-rpg text-7xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-900 uppercase tracking-[0.2em] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] py-4 text-center">
+                       O MESTRE USOU O MEDO
+                   </h1>
+                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
+               </div>
+           </div>
+       )}
+
+       {/* ========================================= */}
+       {/* CAMADA DE INTERFACE (UI) Z-1000+          */}
+       {/* ========================================= */}
+       
+       <DiceToast />
+       <PlayerList players={characters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} />
+       <SheetModal character={selectedChar} isOpen={isSheetOpen} onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} />
+       <CardsMonitorModal isOpen={showCardsMonitor} onClose={() => setShowCardsMonitor(false)} players={characters} />
+       {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}
+
+       {/* HUD DO MESTRE (Botões de Ação) */}
+       <div className="absolute bottom-6 right-6 z-[1000] flex flex-col items-end gap-4 animate-slide-up pointer-events-auto">
+           
+           {/* Botões de Descanso (AGORA ACIMA) */}
+           <div className="flex gap-2 mb-2 bg-black/40 p-2 rounded-xl backdrop-blur-sm border border-white/10">
+               <button onClick={() => handleRestAll('short')} className="flex items-center gap-2 px-4 py-2 bg-orange-900/40 border border-orange-500/30 rounded text-orange-200 text-xs hover:bg-orange-800 transition-colors uppercase font-bold tracking-wide">
+                    <Campfire size={18} /> Curto
+               </button>
+               <button onClick={() => handleRestAll('long')} className="flex items-center gap-2 px-4 py-2 bg-indigo-900/40 border border-indigo-500/30 rounded text-indigo-200 text-xs hover:bg-indigo-800 transition-colors uppercase font-bold tracking-wide">
+                    <MoonStars size={18} /> Longo
+               </button>
+           </div>
+
+           {/* Botões de Gerenciamento (EMBAIXO) */}
            <div className="flex gap-3 mb-2">
-               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors" title="Cenários"><MapTrifold size={24} /></button>
-               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors" title="Inimigos"><Robot size={24} /></button>
-               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-500 hover:text-green-400 flex items-center justify-center transition-colors" title="NPCs"><UserCircle size={24} /></button>
-               <button className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-blue-500 hover:text-blue-400 flex items-center justify-center transition-colors" title="Tokens Jogadores"><Users size={24} /></button>
+               <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas">
+                   <MapTrifold size={24} />
+               </button>
+               
+               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Cenários/NPCs">
+                   <ImageIcon size={24} />
+               </button>
            </div>
            
-           {/* Botão Principal: Monitorar Cartas */}
-           <button 
-              onClick={() => setShowCardsMonitor(true)}
-              className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-900 to-black border border-blue-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform group"
-           >
-              <div className="bg-blue-500/20 p-2 rounded-full group-hover:bg-blue-500 group-hover:text-white transition-colors text-blue-300">
-                  <Eye size={32} />
-              </div>
-              <div className="text-left">
-                  <span className="block font-bold text-white text-lg">Visão do Mestre</span>
-                  <span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span>
-              </div>
+           <button onClick={() => setShowCardsMonitor(true)} className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-900 to-black border border-blue-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform">
+              <div className="bg-blue-500/20 p-2 rounded-full text-blue-300"><Eye size={32} /></div>
+              <div className="text-left"><span className="block font-bold text-white text-lg">Visão do Mestre</span><span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span></div>
            </button>
 
-           {/* Botão de Dados */}
-           <button 
-             onClick={() => setShowDiceSystem(true)}
-             className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-yellow-900 border-2 border-white/30 shadow-[0_0_30px_rgba(212,175,55,0.4)] flex items-center justify-center text-black hover:scale-110 transition-transform group"
-           >
-             <Dna size={40} weight="bold" className="group-hover:animate-spin-slow" />
-           </button>
+           <div className="flex items-end gap-4 relative">
+                {/* BOTÃO DO MEDO */}
+                <div className="relative">
+                    <button 
+                        onClick={() => setShowFearModal(!showFearModal)} 
+                        className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-900 to-black border-2 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.5)] flex items-center justify-center text-white hover:scale-110 transition-transform mb-2 z-10"
+                    >
+                        <Skull size={32} weight="fill" className="animate-pulse" />
+                    </button>
+
+                    {/* MODAL DA CAIXINHA DE MEDO (FLUTUANTE) */}
+                    {showFearModal && (
+                        <div className="absolute bottom-20 right-0 bg-[#1a0b2e] border-2 border-purple-500/50 rounded-xl p-4 w-64 shadow-[0_0_30px_rgba(0,0,0,0.9)] animate-scale-up z-50">
+                            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                                <h3 className="text-purple-300 font-rpg text-lg">Caixa do Medo</h3>
+                                <X className="text-white/50 cursor-pointer hover:text-white" onClick={() => setShowFearModal(false)} />
+                            </div>
+                            
+                            {/* Grid de Bolinhas */}
+                            <div className="grid grid-cols-5 gap-3 mb-6 place-items-center">
+                                {Array.from({ length: 10 }).map((_, i) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => toggleFearToken(i)}
+                                        className={`w-8 h-8 rounded-full border border-purple-500/30 flex items-center justify-center transition-all duration-300 ${i < fearTokens ? 'bg-purple-600 shadow-[0_0_15px_#a855f7]' : 'bg-black/50'}`}
+                                    >
+                                        {i < fearTokens && <Fire size={20} weight="fill" className="text-white animate-pulse" />}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button 
+                                onClick={triggerFearAlert} 
+                                className="w-full py-2 bg-gradient-to-r from-red-900 to-purple-900 border border-purple-500 text-white font-rpg tracking-widest text-lg rounded hover:brightness-125 transition-all active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+                            >
+                                USAR MEDO
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <button onClick={() => setShowDiceSystem(true)} className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-yellow-900 border-2 border-white/30 shadow-xl flex items-center justify-center text-black hover:scale-110 transition-transform">
+                    <Dna size={40} weight="bold" />
+                </button>
+           </div>
        </div>
     </div>
   );
