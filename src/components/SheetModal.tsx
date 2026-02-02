@@ -105,7 +105,10 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   }
   
   const maxPA = sheetData.armor?.baseSlots > 0 ? sheetData.armor.baseSlots : classData.stats.baseArmorPoints;
-  const getAttr = (key: string) => sheetData.attributes?.[key]?.value ?? character.attributes?.[key]?.value ?? 0;
+  
+  // CORREÇÃO AQUI: Adicionado ( ... as any) para evitar erro TS7053 no build
+  const getAttr = (key: string) => (sheetData.attributes as any)?.[key]?.value ?? (character.attributes as any)?.[key]?.value ?? 0;
+  
   const agilityVal = getAttr('agility');
   const totalEvasion = classData.stats.evasion + agilityVal;
 
