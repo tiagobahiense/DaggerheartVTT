@@ -295,23 +295,20 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
         {/* HEADER */}
         <div className="bg-[#1a1520] border-b border-white/10 px-6 py-3 flex justify-between items-center shrink-0" style={{ borderTop: `4px solid ${classData.color}` }}>
           <div className="flex items-center gap-3">
-          <input 
-    type="number"
-    min="1"
-    max="10"
-    value={character.level}
-    onChange={(e) => {
-        let val = parseInt(e.target.value);
-        // Trava entre 1 e 10
-        if (isNaN(val)) val = 1;
-        if (val < 1) val = 1;
-        if (val > 10) val = 10;
-        
-        // Salva direto no Firebase (atualiza a ficha toda)
-        saveCharacterData({ level: val });
-    }}
-    className="w-8 h-8 rounded bg-black border border-white/20 font-bold text-white text-sm text-center outline-none focus:border-gold p-0"
-/>
+          <div className="relative w-8 h-8">
+    <select
+        value={character.level}
+        onChange={(e) => saveCharacterData({ level: parseInt(e.target.value) })}
+        className="w-full h-full bg-black border border-white/20 rounded font-bold text-white text-sm text-center appearance-none outline-none focus:border-gold cursor-pointer"
+        style={{ textAlignLast: 'center' }}
+    >
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(lvl => (
+            <option key={lvl} value={lvl} className="bg-[#1a1520] text-white">
+                {lvl}
+            </option>
+        ))}
+    </select>
+</div>
              <div>
                 <h2 className="text-lg font-rpg font-bold text-white leading-none">{character.name}</h2>
                 <span className="text-[10px] text-white/50 uppercase tracking-widest">{classData.label} • {character.subclass}</span>
