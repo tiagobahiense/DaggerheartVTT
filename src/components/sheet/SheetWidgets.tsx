@@ -3,7 +3,7 @@ import {
     Link as LinkIcon, PencilSimple, Check, Target,
     WarningCircle, Trash
 } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // --- ESTILOS GLOBAIS PARA REMOVER SETAS DE INPUT NUMBER ---
 const GlobalStyles = () => (
@@ -56,23 +56,68 @@ export const ProficiencyWidget = ({ value, onChange }: any) => (
     </div>
 );
 
-export const AttributeBox = ({ label, value, icon, color, onChange }: any) => (
-    <div className="flex items-center justify-between bg-[#1a1520] border border-white/10 p-1.5 rounded w-full">
-        <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-black/40 flex items-center justify-center text-white/40 text-xs">{icon}</div>
-            <div className="text-[10px] font-bold text-white uppercase tracking-wider">{label}</div>
+export const AttributeBox = ({ label, value, icon, color, onChange }: any) => {
+    // Estado local para permitir digitar "-" ou deixar vazio sem bugar
+    const [localValue, setLocalValue] = useState(value?.toString() || "0");
+
+    // Sincroniza quando o valor vem do banco de dados ou muda externamente
+    useEffect(() => {
+        if (value > 0) {
+            setLocalValue(`+${value}`);
+        } else {
+            setLocalValue(value?.toString() || "0");
+        }
+    }, [value]);
+
+    const handleChange = (e: any) => {
+        const inputVal = e.target.value;
+        setLocalValue(inputVal); // Atualiza o visual imediatamente
+
+        // Tenta converter para número para salvar
+        const parsedVal = parseInt(inputVal);
+
+        if (!isNaN(parsedVal)) {
+            // Trava entre -99 e +99
+            let finalVal = parsedVal;
+            if (finalVal > 99) finalVal = 99;
+            if (finalVal < -99) finalVal = -99;
+            
+            onChange && onChange(finalVal);
+        } else if (inputVal === "") {
+            // Se apagar tudo, considera 0 (opcional)
+            onChange && onChange(0);
+        }
+        // Se for apenas "-", não chamamos o onChange ainda, esperamos o número
+    };
+
+    const handleBlur = () => {
+        // Ao sair do campo, força a formatação correta (ex: volta a mostrar +5)
+        if (value > 0) {
+            setLocalValue(`+${value}`);
+        } else {
+            setLocalValue(value?.toString() || "0");
+        }
+    };
+
+    return (
+        <div className="flex items-center justify-between bg-[#1a1520] border border-white/10 p-1.5 rounded w-full">
+            <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-black/40 flex items-center justify-center text-white/40 text-xs">{icon}</div>
+                <div className="text-[10px] font-bold text-white uppercase tracking-wider">{label}</div>
+            </div>
+            <div className="relative">
+                <input 
+                    type="text"
+                    value={localValue}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className="w-12 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-lg font-bold text-white outline-none focus:border-gold"
+                    style={{ borderColor: value > 0 ? color : 'transparent' }}
+                />
+            </div>
         </div>
-        <div className="relative">
-            <input 
-                type="number"
-                value={value}
-                onChange={(e) => onChange && onChange(parseInt(e.target.value) || 0)}
-                className="w-10 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-lg font-bold text-white outline-none focus:border-gold"
-                style={{ borderColor: value > 0 ? color : 'transparent' }}
-            />
-        </div>
-    </div>
-);
+    );
+};
 
 // Layout dividido verticalmente para não sobrepor números
 export const ResourceDisplay = ({ label, current, max, color, icon, onChangeCurrent, onChangeMax }: any) => (

@@ -4,7 +4,7 @@ import {
   Coins, Scroll, Backpack, Lightning, 
   TrendUp, PersonSimpleRun, BookOpen, 
   CaretUp, User, PencilSimple, Target,
-  Plus
+  Plus, Trash
 } from '@phosphor-icons/react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -16,6 +16,57 @@ import {
     CombatRow, ArmorRow, ImageUrlModal, InventoryRow,
     ProficiencyWidget
 } from './sheet/SheetWidgets';
+
+// --- COMPONENTE LOCAL PARA ITEM DE EXPERIÊNCIA ---
+const ExperienceItem = ({ item, onChange, onDelete }: any) => {
+    const [localValue, setLocalValue] = useState(item.value?.toString() || "0");
+
+    useEffect(() => {
+        if (item.value > 0) setLocalValue(`+${item.value}`);
+        else setLocalValue(item.value?.toString() || "0");
+    }, [item.value]);
+
+    const handleChange = (e: any) => {
+        const val = e.target.value;
+        setLocalValue(val);
+        const parsed = parseInt(val);
+        if (!isNaN(parsed)) {
+            let final = parsed;
+            if (final > 99) final = 99;
+            if (final < -99) final = -99;
+            onChange({ ...item, value: final });
+        } else if (val === '') {
+            onChange({ ...item, value: 0 });
+        }
+    };
+
+    const handleBlur = () => {
+         if (item.value > 0) setLocalValue(`+${item.value}`);
+         else setLocalValue(item.value?.toString() || "0");
+    };
+
+    return (
+        <div className="flex items-center gap-2 bg-black/20 p-2 rounded border border-white/5 hover:border-white/10 transition-colors group">
+            <div className="w-6 h-6 rounded bg-black/40 flex items-center justify-center text-white/20 text-xs shrink-0"><Scroll /></div>
+            <input 
+                type="text" 
+                value={item.name} 
+                onChange={(e) => onChange({...item, name: e.target.value})}
+                placeholder="Experiência..." 
+                className="flex-1 bg-transparent text-xs font-bold text-white placeholder-white/20 outline-none w-full border-b border-transparent focus:border-white/20 pb-0.5" 
+            />
+            <input 
+                type="text" 
+                value={localValue}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className="w-10 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-xs font-bold text-white outline-none focus:border-gold"
+                style={{ borderColor: item.value !== 0 ? (item.value > 0 ? '#fbbf24' : '#ef4444') : 'transparent' }}
+            />
+            <button onClick={onDelete} className="p-1 text-white/20 hover:text-red-400 transition-colors"><Trash size={14} /></button>
+        </div>
+    );
+};
 
 interface SheetModalProps {
   character: any;
@@ -38,8 +89,10 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     stats: { 
         hp: { current: 0, max: 0 }, 
         stress: { current: 0, max: 0 }, 
-        hope: { current: 0, max: 0 } 
+        hope: { current: 0, max: 0 },
+        evasion: 0 
     },
+    experiences: [] as { name: string, value: number }[], // ADICIONADO: Lista de experiências
     inventory: [] as { name: string, quantity: number }[],
     evolution: {} as Record<string, number>,
     proficiency: 0,
@@ -72,8 +125,10 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                 hope: { 
                     current: character.stats?.hope?.current ?? defaultHope, 
                     max: character.stats?.hope?.max ?? 10 
-                }
+                },
+                evasion: character.stats?.evasion ?? classData.stats.evasion ?? 10
             },
+            experiences: character.experiences || [], // Carrega experiências
             inventory: character.inventory || [],
             evolution: character.evolution || {},
             proficiency: character.proficiency || 0,
@@ -106,12 +161,8 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   
   const maxPA = sheetData.armor?.baseSlots > 0 ? sheetData.armor.baseSlots : classData.stats.baseArmorPoints;
   
-  // CORREÇÃO AQUI: Adicionado ( ... as any) para evitar erro TS7053 no build
   const getAttr = (key: string) => (sheetData.attributes as any)?.[key]?.value ?? (character.attributes as any)?.[key]?.value ?? 0;
   
-  const agilityVal = getAttr('agility');
-  const totalEvasion = classData.stats.evasion + agilityVal;
-
   // --- SALVAR NO FIREBASE ---
   const saveCharacterData = async (newData: any) => {
       if (!character.id) return;
@@ -142,7 +193,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   };
 
   const updateAttribute = (attrName: string, val: number) => {
-    // O 'as any' aqui evita o erro de tipagem chata do TypeScript
     const currentAttrs = (sheetData.attributes || {}) as any;
     const newAttrs = { 
         ...currentAttrs, 
@@ -150,6 +200,23 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     };
     updateSheet('attributes', newAttrs);
 };
+
+  // --- FUNÇÕES DE EXPERIÊNCIA ---
+  const addExperience = () => {
+    const newExp = [...(sheetData.experiences || []), { name: '', value: 0 }];
+    updateSheet('experiences', newExp);
+  };
+
+  const updateExperience = (index: number, val: any) => {
+    const newExp = [...(sheetData.experiences || [])];
+    newExp[index] = val;
+    updateSheet('experiences', newExp);
+  };
+
+  const deleteExperience = (index: number) => {
+    const newExp = (sheetData.experiences || []).filter((_, i) => i !== index);
+    updateSheet('experiences', newExp);
+  };
 
   const addInventoryItem = () => {
       const newItem = { name: '', quantity: 1 };
@@ -190,7 +257,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
       const updated = current.includes(trait) ? current.filter(t => t !== trait) : [...current, trait];
       const newState = { ...prev, [category]: updated };
       
-      // Salva diretamente no Firebase
       saveCharacterData({ selectedTraits: newState });
       
       return newState;
@@ -252,24 +318,46 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
           {activeTab === 'principal' && (
             <div className="h-full flex flex-col gap-6">
               <div className="flex flex-1 gap-6 min-h-0">
-                  {/* ATRIBUTOS */}
+                  {/* ATRIBUTOS & EXPERIÊNCIAS (COLUNA ESQUERDA ALTERADA) */}
                   <div className="w-1/4 flex flex-col h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg">
+                    {/* Header Atributos */}
                     <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2 shrink-0">
                         <PersonSimpleRun className="text-white/50" />
                         <h3 className="text-xs font-bold text-white uppercase tracking-widest">Atributos</h3>
                     </div>
-                    <div className="p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar h-full justify-between">
-                        <div className="space-y-2">
-                            <AttributeBox label="Agilidade" value={getAttr('agility')} onChange={(v: number) => updateAttribute('agility', v)} icon={<PersonSimpleRun />} color={classData.color} />
-                            <AttributeBox label="Força" value={getAttr('strength')} onChange={(v: number) => updateAttribute('strength', v)} icon={<Sword />} color={classData.color} />
-                            <AttributeBox label="Acuidade" value={getAttr('finesse')} onChange={(v: number) => updateAttribute('finesse', v)} icon={<TrendUp />} color={classData.color} />
+                    
+                    {/* Lista de Atributos (Todos Juntos) - Sem Scroll Próprio */}
+                    <div className="p-4 space-y-2 shrink-0 border-b border-white/5 pb-4">
+                         <AttributeBox label="Agilidade" value={getAttr('agility')} onChange={(v: number) => updateAttribute('agility', v)} icon={<PersonSimpleRun />} color={classData.color} />
+                         <AttributeBox label="Força" value={getAttr('strength')} onChange={(v: number) => updateAttribute('strength', v)} icon={<Sword />} color={classData.color} />
+                         <AttributeBox label="Acuidade" value={getAttr('finesse')} onChange={(v: number) => updateAttribute('finesse', v)} icon={<TrendUp />} color={classData.color} />
+                         <AttributeBox label="Instinto" value={getAttr('instinct')} onChange={(v: number) => updateAttribute('instinct', v)} icon={<Lightning />} color={classData.color} />
+                         <AttributeBox label="Presença" value={getAttr('presence')} onChange={(v: number) => updateAttribute('presence', v)} icon={<Shield />} color={classData.color} />
+                         <AttributeBox label="Conhec." value={getAttr('knowledge')} onChange={(v: number) => updateAttribute('knowledge', v)} icon={<Scroll />} color={classData.color} />
+                    </div>
+
+                    {/* Header Experiências */}
+                    <div className="bg-[#1a1520]/50 p-3 border-b border-white/5 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-2">
+                            <Scroll className="text-white/50" />
+                            <h3 className="text-xs font-bold text-white uppercase tracking-widest">Experiências</h3>
                         </div>
-                        <div className="border-t border-white/5 my-1"></div>
-                        <div className="space-y-2">
-                            <AttributeBox label="Instinto" value={getAttr('instinct')} onChange={(v: number) => updateAttribute('instinct', v)} icon={<Lightning />} color={classData.color} />
-                            <AttributeBox label="Presença" value={getAttr('presence')} onChange={(v: number) => updateAttribute('presence', v)} icon={<Shield />} color={classData.color} />
-                            <AttributeBox label="Conhec." value={getAttr('knowledge')} onChange={(v: number) => updateAttribute('knowledge', v)} icon={<Scroll />} color={classData.color} />
-                        </div>
+                        <button onClick={addExperience} className="text-gold hover:text-white transition-colors"><Plus /></button>
+                    </div>
+
+                    {/* Lista de Experiências (Com Scroll) */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar min-h-0 bg-black/10">
+                        {sheetData.experiences?.map((exp, i) => (
+                            <ExperienceItem 
+                                key={i} 
+                                item={exp} 
+                                onChange={(val: any) => updateExperience(i, val)} 
+                                onDelete={() => deleteExperience(i)} 
+                            />
+                        ))}
+                        {(!sheetData.experiences || sheetData.experiences.length === 0) && (
+                            <p className="text-[10px] text-white/20 text-center italic mt-2">Nenhuma experiência.</p>
+                        )}
                     </div>
                   </div>
 
@@ -337,7 +425,19 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
               <div className="h-24 shrink-0 flex gap-6">
                  <div className="w-1/4 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={48} /></div>
-                    <span className="text-4xl font-bold text-cyan-400 leading-none drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">{totalEvasion}</span>
+                    
+                    {/* INPUT DE EVASÃO EDITÁVEL */}
+                    <input 
+                        type="number"
+                        value={sheetData.stats.evasion}
+                        onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            const newStats = { ...sheetData.stats, evasion: val };
+                            updateSheet('stats', newStats);
+                        }}
+                        className="text-4xl font-bold text-cyan-400 bg-transparent text-center w-full outline-none p-0 leading-none drop-shadow-[0_0_10px_rgba(34,211,238,0.3)] z-10"
+                    />
+
                     <span className="text-[10px] uppercase text-white/40 tracking-[0.2em] mt-1 font-bold">Evasão</span>
                  </div>
                  <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg">

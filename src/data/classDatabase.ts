@@ -155,8 +155,8 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Por que a comunidade na qual você cresceu confiava tanto na natureza?",
-        "Qual foi o primeiro animal com o qual você teve uma conexão emocional? Por que acabou?",
+        "Por que a comunidade na qual você cresceu confiava tanto na natureza e em suas criaturas?",
+        "Qual foi o primeiro animal com o qual você teve uma conexão emocional? Por que essa conexão acabou?",
         "Quem está caçando você? O que essa pessoa quer de você?"
       ],
       bonds: [
@@ -203,9 +203,9 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Quem lhe ensinou a domar sua magia descontrolada?",
-        "O que fez com que as pessoas da sua comunidade desconfiassem de você?",
-        "Você teme algo profundamente e esconde isso de todos. O que é?"
+        "O que você fez que tornou as pessoas de sua comunidade desconfiadas de você?",
+        "Quem lhe ensinou a domar sua magia descontrolada e por que essa pessoa não pode mais orientar você?",
+        "Você teme algo profundamente e esconde isso de todos. O que é, e por que isso o aterroriza?"
       ],
       bonds: [
         "Por que você confia tanto em mim?",
@@ -247,14 +247,14 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Qual foi a primeira pessoa que você falhou em proteger?",
-        "Quem lhe deu sua armadura e o que ela significa para você?",
-        "De qual terrível ameaça você salvou sua comunidade?"
+        "Quem da sua comunidade você não conseguiu proteger e por que você ainda pensa nessa pessoa?",
+        "Você recebeu a missão de proteger e levar algo importante a um lugar perigoso. O que é e aonde você precisa ir?",
+        "Você acredita ter uma fraqueza. O que é, e como isso afeta você?"
       ],
       bonds: [
-        "Quantas vezes eu já tive que remendar seus ferimentos?",
-        "Qual promessa fizemos um ao outro?",
-        "Por que você se sente mais seguro quando estou por perto?"
+        "Como salvei sua vida quando nos conhecemos?",
+        "Que lembrança você me deu e percebeu que eu sempre carrego comigo?",
+        "Que mentira você me contou sobre você na qual eu caí completamente?"
       ]
     },
     startingInventory: ["Martelo de guerra", "Escudo Torre", "Cota de malha", "Insígnia"],
@@ -291,13 +291,13 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Anos atrás, você perdeu uma batalha que o deixou à beira da morte. Quem o derrotou?",
-        "Quem ensinou você a lutar e por que essa pessoa ficou para trás?",
-        "Qual cicatriz conta sua melhor história?"
+        "Quem ensinou você a lutar e por que essa pessoa ficou para trás quando você saiu de sua comunidade?",
+        "Anos atrás, uma pessoa o derrotou e o deixou à beira da morte. Quem é essa pessoa e como ela o traiu?",
+        "Que lugar lendário você sempre quis visitar e por que ele é tão especial?"
       ],
       bonds: [
-        "Nos conhecíamos bem antes do grupo. Como?",
-        "Com qual tarefa mundana você costuma me ajudar?",
+        "Nos conhecíamos bem antes do surgimento do grupo. Como?",
+        "Com qual tarefa mundana você costuma me ajudar, fora dos momentos de batalha?",
         "Que medos estou ajudando você a superar?"
       ]
     },
@@ -335,14 +335,14 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Qual foi a coisa mais valiosa que você roubou?",
-        "Você já foi pego? Quem te pegou e o que aconteceu?",
-        "Quem é o único membro da sua antiga gangue em quem você confia?"
+        "O que sua comunidade descobriu você fazendo que fez com que fosse expulso?",
+        "Você tinha uma vida diferente, mas tentou abandoná-la. Que figura do passado ainda o persegue?",
+        "Você ficou mais triste ao se despedir de quem?"
       ],
       bonds: [
-        "Qual é o segredo que eu sei sobre você?",
-        "Por que você sempre me vigia quando estamos na cidade?",
-        "O que fizemos juntos que nos colocou em apuros?"
+        "O que eu convenci você a fazer recentemente que nos deixou em apuros?",
+        "O que eu descobri sobre o seu passado e escondo dos outros?",
+        "Quem você conhece do meu passado e como essa pessoa influenciou o que você sente sobre mim?"
       ]
     },
     startingInventory: ["Adagas duplas", "Armadura de couro", "Ferramentas de ladrão", "Baralho viciado"],
@@ -379,14 +379,14 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Qual grande mistério mágico você está tentando resolver?",
-        "Quem foi seu mestre e por que você o deixou?",
-        "O que aconteceu quando você lançou seu primeiro feitiço?"
+        "Para quais responsabilidades sua comunidade já contou com você? Como você a decepcionou?",
+        "Você passou a vida em busca de um livro ou objeto importante. O que é, e por que é tão importante?",
+        "Você tem um rival poderoso. Quem é essa pessoa e por que você quer tanto derrotá-la?"
       ],
       bonds: [
-        "Qual experimento mágico meu deu errado e atingiu você?",
-        "Por que você acha que eu sou perigoso?",
-        "O que eu sei sobre o seu futuro que você não sabe?"
+        "Que favor eu pedi e você não sabe se conseguirá cumprir?",
+        "Que passatempo ou fascinação estranha nós compartilhamos?",
+        "Que segredo a seu respeito você confiou a mim?"
       ]
     },
     startingInventory: ["Grimório", "Cajado", "Manto simples", "Bolsa de componentes"],
@@ -419,14 +419,14 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Por que você prefere a companhia de animais à de pessoas?",
-        "Qual foi a criatura mais perigosa que você já caçou?",
-        "Quem você deixou para trás quando escolheu viver nos ermos?"
+        "Uma criatura terrível prejudicou sua comunidade e você jurou abatê-la. Que criatura é essa e qual é a trilha ou sinal que ela deixa para trás?",
+        "A primeira presa que você abateu quase o matou. Que criatura foi essa, e, desde então, que parte de você nunca mais foi a mesma?",
+        "Você já visitou muitos lugares perigosos, mas qual é o lugar aonde você jamais iria?"
       ],
       bonds: [
-        "Como eu salvei sua vida na floresta?",
-        "Por que você não confia no meu animal?",
-        "Qual lugar selvagem eu prometi te mostrar?"
+        "Qual é a rivalidade amigável que temos?",
+        "Por que você age de forma tão diferente quando estamos sozinhos e quando há outras pessoas junto?",
+        "Você me pediu para tomar cuidado com qual ameaça, e por que se preocupa com isso?"
       ]
     },
     startingInventory: ["Arco longo", "Aljava", "Armadura de couro", "Kit de sobrevivência"],
@@ -459,14 +459,14 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ],
     questions: {
       origin: [
-        "Qual divindade você serve e por quê?",
-        "Qual milagre você presenciou que mudou sua vida?",
-        "Quem você falhou em salvar e isso assombra você?"
+        "Que deus(a) você segue? Que façanha incrível essa divindade realizou em seu momento de desespero?",
+        "O que mudou em sua aparência após seu juramento?",
+        "De que forma estranha ou exclusiva você se comunica com a divindade que segue?"
       ],
       bonds: [
-        "Por que você acha que eu fui enviado pelos deuses?",
-        "Qual pecado meu você está tentando perdoar?",
-        "O que eu faço que testa sua fé?"
+        "O que você me fez prometer caso morra em batalha?",
+        "Por que pergunta tantas coisas sobre minha divindade?",
+        "Você me pediu para proteger um membro do grupo acima de todos, inclusive de você. Quem e por quê?"
       ]
     },
     startingInventory: ["Maça", "Escudo", "Símbolo sagrado", "Vestes litúrgicas"],
