@@ -265,7 +265,7 @@ export default function CharacterCreation() {
       </div>
 
       {/* Topo: Breadcrumbs */}
-      <div className="relative z-20 pt-6 px-8 flex items-center justify-between">
+      <div className="relative z-20 pt-6 px-8 flex items-center justify-between shrink-0 h-[80px]">
         <div>
           <h1 className="text-3xl text-gold font-rpg tracking-widest">Criação de Lenda</h1>
           <div className="flex items-center gap-2 text-xs text-purple-300/50 mt-1 uppercase tracking-wider font-bold">
@@ -284,11 +284,12 @@ export default function CharacterCreation() {
         )}
       </div>
 
-      <div className="relative z-10 w-full h-full flex items-center justify-center">
+      <div className="relative z-10 w-full h-[calc(100%-80px)] flex items-center justify-center overflow-hidden">
 
         {/* --- ESTÁGIO 0: CÍRCULO DE CLASSES --- */}
         {step === 0 && (
-          <div className="relative w-[650px] h-[650px] flex items-center justify-center animate-fade-in">
+          // Adicionada escala responsiva (scale-75 md:scale-90) para não cortar em notebooks/tablets
+          <div className="relative w-[650px] h-[650px] flex items-center justify-center animate-fade-in scale-[0.70] md:scale-[0.85] lg:scale-100 origin-center transition-transform duration-500">
             <div className="absolute w-[450px] h-[450px] border border-white/5 rounded-full animate-pulse"></div>
             <div className="absolute w-[250px] h-[250px] border border-gold/10 rounded-full"></div>
 
@@ -357,10 +358,10 @@ export default function CharacterCreation() {
 
         {/* --- ESTÁGIOS 1, 2, 3, 4 --- */}
         {step > 0 && (
-          <div className="flex w-full h-full px-4 md:px-10 items-center animate-fade-in gap-4 md:gap-12 pb-10">
+          <div className="flex w-full h-full px-4 md:px-10 items-start animate-fade-in gap-4 md:gap-12 pb-4 pt-4">
             
             {/* PAINEL ESQUERDO */}
-            <div className="hidden md:flex flex-col gap-6 items-center w-[320px] max-w-[320px] shrink-0 border-r border-white/10 pr-8 h-full justify-start pt-10 overflow-y-auto">
+            <div className="hidden md:flex flex-col gap-6 items-center w-[320px] max-w-[320px] shrink-0 border-r border-white/10 pr-8 h-full min-h-0 justify-start pt-2 overflow-y-auto custom-scrollbar pb-20">
               <div className="text-center group w-full">
                 <div className="w-32 h-32 rounded-full border-2 border-gold overflow-hidden mx-auto shadow-[0_0_30px_rgba(212,175,55,0.3)] bg-black mb-4">
                   <img 
@@ -380,10 +381,10 @@ export default function CharacterCreation() {
                 </div>
               </div>
               
-              <div className={`w-[2px] h-12 bg-gradient-to-b from-gold to-white/10`}></div>
+              <div className={`w-[2px] h-12 bg-gradient-to-b from-gold to-white/10 shrink-0`}></div>
 
               {/* LISTA DE HABILIDADES DE CLASSE */}
-              <div className="w-full flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+              <div className="w-full flex flex-col gap-2 shrink-0">
                  {CLASS_DATABASE[charData.classId] && CLASS_DATABASE[charData.classId].startingFeatures ? (
                     CLASS_DATABASE[charData.classId].startingFeatures.map((feat: any, i: number) => (
                       <div key={i} className="bg-white/5 p-3 rounded border border-white/10 text-center shrink-0">
@@ -395,7 +396,7 @@ export default function CharacterCreation() {
                     ))
                  ) : (
                     // Fallback
-                    <div className="bg-white/5 p-3 rounded border border-white/10 text-center">
+                    <div className="bg-white/5 p-3 rounded border border-white/10 text-center shrink-0">
                        <p className="text-[10px] text-gold uppercase tracking-widest mb-1">Habilidade de Classe</p>
                        <p className="text-purple-200 font-bold text-sm">{RPG_DATA.classes[charData.classId].ability.name}</p>
                        <p className="text-xs text-white/50 mt-1 italic">"{RPG_DATA.classes[charData.classId].ability.text}"</p>
@@ -404,7 +405,7 @@ export default function CharacterCreation() {
               </div>
 
               {step > 1 && (
-                <div className="text-center animate-fade-in w-full pt-4 border-t border-white/5">
+                <div className="text-center animate-fade-in w-full pt-4 border-t border-white/5 shrink-0">
                    <div className="w-12 h-12 rounded-full border border-purple-400/50 bg-purple-900/20 flex items-center justify-center mx-auto text-purple-300 mb-2">
                      <MagicWand size={20} />
                    </div>
@@ -414,7 +415,7 @@ export default function CharacterCreation() {
               )}
 
                {step > 2 && (
-                <div className="text-center animate-fade-in w-full pt-4 border-t border-white/5">
+                <div className="text-center animate-fade-in w-full pt-4 border-t border-white/5 shrink-0">
                     <div className="w-12 h-12 rounded-full border border-green-400/50 bg-green-900/20 flex items-center justify-center mx-auto text-green-300 mb-2">
                       <Users size={20} />
                     </div>
@@ -424,7 +425,7 @@ export default function CharacterCreation() {
               )}
 
               {step > 3 && (
-                <div className="text-center animate-fade-in w-full pt-4 border-t border-white/5">
+                <div className="text-center animate-fade-in w-full pt-4 border-t border-white/5 shrink-0">
                     <div className="w-12 h-12 rounded-full border border-blue-400/50 bg-blue-900/20 flex items-center justify-center mx-auto text-blue-300 mb-2">
                       <Compass size={20} />
                     </div>
@@ -435,11 +436,11 @@ export default function CharacterCreation() {
             </div>
 
             {/* PAINEL DIREITO */}
-            <div className="flex-1 h-full overflow-y-auto custom-scrollbar p-2">
+            <div className="flex-1 h-full min-h-0 overflow-y-auto custom-scrollbar p-2">
               
               {/* SELEÇÃO DE SUBCLASSE */}
               {step === 1 && (
-                <div className="h-full flex flex-col justify-center max-w-4xl mx-auto">
+                <div className="flex flex-col justify-center max-w-4xl mx-auto min-h-full py-10">
                   <h2 className="text-4xl text-white font-rpg mb-4 text-center drop-shadow-lg">Escolha sua Especialização</h2>
                   <p className="text-center text-white/50 mb-10 max-w-lg mx-auto">
                     Como você aplica os talentos de {RPG_DATA.classes[charData.classId].label}? Escolha o caminho que definirá seu estilo de jogo.
@@ -479,7 +480,7 @@ export default function CharacterCreation() {
 
               {/* SELEÇÃO DE ANCESTRALIDADE */}
               {step === 2 && (
-                <div>
+                <div className="py-4">
                    <h2 className="text-4xl text-white font-rpg mb-8 text-center sticky top-0 bg-black/90 py-4 z-20 backdrop-blur border-b border-white/10">Sua Origem Ancestral</h2>
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
                       {RPG_DATA.ancestries.map((anc: any) => (
@@ -522,7 +523,7 @@ export default function CharacterCreation() {
 
               {/* SELEÇÃO DE COMUNIDADE */}
               {step === 3 && (
-                <div>
+                <div className="py-4">
                   <h2 className="text-4xl text-white font-rpg mb-8 text-center sticky top-0 bg-black/90 py-4 z-20 backdrop-blur border-b border-white/10">Sua Comunidade</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
                     {RPG_DATA.communities.map((com: any) => (
@@ -557,7 +558,7 @@ export default function CharacterCreation() {
 
               {/* FINALIZAÇÃO */}
               {step === 4 && (
-                <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto animate-fade-in">
+                <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto animate-fade-in py-10">
                   <h2 className="text-5xl text-gold font-rpg mb-2 drop-shadow-lg">Quem é você?</h2>
                   <p className="text-white/50 mb-8 text-center">Os últimos detalhes da sua lenda.</p>
                   
