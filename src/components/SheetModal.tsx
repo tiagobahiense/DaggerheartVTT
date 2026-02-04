@@ -53,17 +53,17 @@ const ExperienceItem = ({ item, onChange, onDelete }: any) => {
                 value={item.name} 
                 onChange={(e) => onChange({...item, name: e.target.value})}
                 placeholder="Experiência..." 
-                className="flex-1 bg-transparent text-xs font-bold text-white placeholder-white/20 outline-none w-full border-b border-transparent focus:border-white/20 pb-0.5" 
+                className="flex-1 bg-transparent text-xs font-bold text-white placeholder-white/20 outline-none w-full border-b border-transparent focus:border-white/20 pb-0.5 min-w-0" 
             />
             <input 
                 type="text" 
                 value={localValue}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                className="w-10 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-xs font-bold text-white outline-none focus:border-gold"
+                className="w-10 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-xs font-bold text-white outline-none focus:border-gold shrink-0"
                 style={{ borderColor: item.value !== 0 ? (item.value > 0 ? '#fbbf24' : '#ef4444') : 'transparent' }}
             />
-            <button onClick={onDelete} className="p-1 text-white/20 hover:text-red-400 transition-colors"><Trash size={14} /></button>
+            <button onClick={onDelete} className="p-1 text-white/20 hover:text-red-400 transition-colors shrink-0"><Trash size={14} /></button>
         </div>
     );
 };
@@ -92,7 +92,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
         hope: { current: 0, max: 0 },
         evasion: 0 
     },
-    experiences: [] as { name: string, value: number }[], // ADICIONADO: Lista de experiências
+    experiences: [] as { name: string, value: number }[],
     inventory: [] as { name: string, quantity: number }[],
     evolution: {} as Record<string, number>,
     proficiency: 0,
@@ -128,7 +128,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                 },
                 evasion: character.stats?.evasion ?? classData.stats.evasion ?? 10
             },
-            experiences: character.experiences || [], // Carrega experiências
+            experiences: character.experiences || [],
             inventory: character.inventory || [],
             evolution: character.evolution || {},
             proficiency: character.proficiency || 0,
@@ -142,7 +142,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
   if (!isOpen || !character) return null;
   
-  // --- LÓGICA DE CÁLCULO DOS LIMIARES ---
   const userBaseMajor = sheetData.armor?.baseMajor || 0;
   const userBaseSevere = sheetData.armor?.baseSevere || 0;
   
@@ -160,10 +159,8 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   }
   
   const maxPA = sheetData.armor?.baseSlots > 0 ? sheetData.armor.baseSlots : classData.stats.baseArmorPoints;
-  
   const getAttr = (key: string) => (sheetData.attributes as any)?.[key]?.value ?? (character.attributes as any)?.[key]?.value ?? 0;
   
-  // --- SALVAR NO FIREBASE ---
   const saveCharacterData = async (newData: any) => {
       if (!character.id) return;
       try {
@@ -201,7 +198,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     updateSheet('attributes', newAttrs);
 };
 
-  // --- FUNÇÕES DE EXPERIÊNCIA ---
   const addExperience = () => {
     const newExp = [...(sheetData.experiences || []), { name: '', value: 0 }];
     updateSheet('experiences', newExp);
@@ -256,9 +252,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
       const current = prev[category] || [];
       const updated = current.includes(trait) ? current.filter(t => t !== trait) : [...current, trait];
       const newState = { ...prev, [category]: updated };
-      
       saveCharacterData({ selectedTraits: newState });
-      
       return newState;
     });
   };
@@ -267,7 +261,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
       const currentGuide = sheetData.guide || { origin: [], bonds: [] };
       const currentSection = currentGuide[section] ? [...currentGuide[section]] : [];
       currentSection[index] = value;
-      
       const newGuide = { ...currentGuide, [section]: currentSection };
       updateSheet('guide', newGuide);
   };
@@ -282,7 +275,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 animate-fade-in p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 animate-fade-in p-2 md:p-4" onClick={onClose}>
       <ImageUrlModal 
         isOpen={isImageModalOpen} 
         onClose={() => setIsImageModalOpen(false)} 
@@ -290,56 +283,64 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
         currentUrl={characterImage} 
       />
 
-      <div className="relative w-full max-w-6xl h-[90vh] bg-[#120f16] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="relative w-full max-w-6xl h-full md:h-[90vh] bg-[#120f16] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
         
         {/* HEADER */}
-        <div className="bg-[#1a1520] border-b border-white/10 px-6 py-3 flex justify-between items-center shrink-0" style={{ borderTop: `4px solid ${classData.color}` }}>
-          <div className="flex items-center gap-3">
-          <div className="relative w-8 h-8">
-    <select
-        value={character.level}
-        onChange={(e) => saveCharacterData({ level: parseInt(e.target.value) })}
-        className="w-full h-full bg-black border border-white/20 rounded font-bold text-white text-sm text-center appearance-none outline-none focus:border-gold cursor-pointer"
-        style={{ textAlignLast: 'center' }}
-    >
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(lvl => (
-            <option key={lvl} value={lvl} className="bg-[#1a1520] text-white">
-                {lvl}
-            </option>
-        ))}
-    </select>
-</div>
-             <div>
-                <h2 className="text-lg font-rpg font-bold text-white leading-none">{character.name}</h2>
-                <span className="text-[10px] text-white/50 uppercase tracking-widest">{classData.label} • {character.subclass}</span>
+        <div className="bg-[#1a1520] border-b border-white/10 px-4 py-3 flex flex-col md:flex-row justify-between items-center shrink-0 gap-3 md:gap-0" style={{ borderTop: `4px solid ${classData.color}` }}>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative w-8 h-8 shrink-0">
+                <select
+                    value={character.level}
+                    onChange={(e) => saveCharacterData({ level: parseInt(e.target.value) })}
+                    className="w-full h-full bg-black border border-white/20 rounded font-bold text-white text-sm text-center appearance-none outline-none focus:border-gold cursor-pointer"
+                    style={{ textAlignLast: 'center' }}
+                >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(lvl => (
+                        <option key={lvl} value={lvl} className="bg-[#1a1520] text-white">
+                            {lvl}
+                        </option>
+                    ))}
+                </select>
+            </div>
+             <div className="overflow-hidden">
+                <h2 className="text-lg font-rpg font-bold text-white leading-none truncate">{character.name}</h2>
+                <span className="text-[10px] text-white/50 uppercase tracking-widest truncate block">{classData.label} • {character.subclass}</span>
              </div>
           </div>
-          <div className="flex bg-black/40 rounded-full p-1 border border-white/5 overflow-x-auto gap-1">
-            {tabs.map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-black' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
-                    {tab.icon} {tab.label}
-                </button>
-            ))}
+          
+          <div className="flex items-center justify-between w-full md:w-auto gap-3">
+            <div className="flex bg-black/40 rounded-full p-1 border border-white/5 overflow-x-auto gap-1 max-w-[280px] sm:max-w-none no-scrollbar">
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-black' : 'text-white/50 hover:text-white hover:bg-white/10'}`}>
+                        {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                ))}
+            </div>
+            <button onClick={onClose} className="p-1.5 hover:bg-red-900/20 rounded-full transition-colors group shrink-0"><X size={18} className="text-white/50 group-hover:text-red-400" /></button>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-red-900/20 rounded-full transition-colors group"><X size={18} className="text-white/50 group-hover:text-red-400" /></button>
         </div>
 
         {/* BODY */}
-        <div className="flex-1 overflow-hidden p-6 bg-[url('/texture-noise.png')] bg-repeat relative">
+        <div className="flex-1 overflow-hidden p-3 md:p-6 bg-[url('/texture-noise.png')] bg-repeat relative">
           
           {/* === ABA GERAL === */}
           {activeTab === 'principal' && (
-            <div className="h-full flex flex-col gap-6">
-              <div className="flex flex-1 gap-6 min-h-0">
-                  {/* ATRIBUTOS & EXPERIÊNCIAS (COLUNA ESQUERDA ALTERADA) */}
-                  <div className="w-1/4 flex flex-col h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg">
-                    {/* Header Atributos */}
+            <div className="h-full flex flex-col gap-4 md:gap-6 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
+              
+              {/* CORREÇÃO DE SOBREPOSIÇÃO:
+                  No mobile, removemos 'flex-1' e 'min-h-0'. Usamos 'shrink-0' e 'h-auto'.
+                  Isso permite que o conteúdo cresça o quanto precisar dentro do scroll, empurrando o footer para baixo.
+                  No desktop (lg), mantemos o layout flexível (flex-1) com scroll interno nas colunas.
+              */}
+              <div className="flex flex-col lg:flex-row shrink-0 lg:flex-1 gap-6 h-auto lg:min-h-0 lg:overflow-hidden">
+                  
+                  {/* ATRIBUTOS & EXPERIÊNCIAS */}
+                  <div className="w-full lg:w-1/4 flex flex-col h-auto lg:h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg shrink-0">
                     <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2 shrink-0">
                         <PersonSimpleRun className="text-white/50" />
                         <h3 className="text-xs font-bold text-white uppercase tracking-widest">Atributos</h3>
                     </div>
                     
-                    {/* Lista de Atributos (Todos Juntos) - Sem Scroll Próprio */}
                     <div className="p-4 space-y-2 shrink-0 border-b border-white/5 pb-4">
                          <AttributeBox label="Agilidade" value={getAttr('agility')} onChange={(v: number) => updateAttribute('agility', v)} icon={<PersonSimpleRun />} color={classData.color} />
                          <AttributeBox label="Força" value={getAttr('strength')} onChange={(v: number) => updateAttribute('strength', v)} icon={<Sword />} color={classData.color} />
@@ -349,7 +350,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                          <AttributeBox label="Conhec." value={getAttr('knowledge')} onChange={(v: number) => updateAttribute('knowledge', v)} icon={<Scroll />} color={classData.color} />
                     </div>
 
-                    {/* Header Experiências */}
                     <div className="bg-[#1a1520]/50 p-3 border-b border-white/5 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-2">
                             <Scroll className="text-white/50" />
@@ -358,8 +358,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                         <button onClick={addExperience} className="text-gold hover:text-white transition-colors"><Plus /></button>
                     </div>
 
-                    {/* Lista de Experiências (Com Scroll) */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar min-h-0 bg-black/10">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar min-h-[150px] lg:min-h-0 bg-black/10">
                         {sheetData.experiences?.map((exp, i) => (
                             <ExperienceItem 
                                 key={i} 
@@ -374,9 +373,9 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                     </div>
                   </div>
 
-                  {/* CENTRO */}
-                  <div className="flex-1 flex flex-col items-center">
-                      <div className="flex gap-4 mb-6 w-full justify-center shrink-0">
+                  {/* CENTRO (STATS + FOTO) */}
+                  <div className="flex-1 flex flex-col items-center order-first lg:order-none mb-4 lg:mb-0 shrink-0">
+                      <div className="flex gap-2 md:gap-4 mb-6 w-full justify-center shrink-0">
                          <div className="flex-1 max-w-[100px]">
                              <ResourceDisplay 
                                 label="Vida (PV)" 
@@ -412,18 +411,17 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                          </div>
                       </div>
 
-                      <div className="group relative cursor-pointer w-full max-w-[260px] aspect-[3/4] rounded-[50%] border-[6px] border-[#1a1520] ring-1 ring-white/10 bg-black overflow-hidden shadow-2xl shrink-0 transition-transform hover:scale-[1.02]" onClick={() => setIsImageModalOpen(true)}>
+                      <div className="group relative cursor-pointer w-full max-w-[200px] md:max-w-[260px] aspect-[3/4] rounded-[50%] border-[6px] border-[#1a1520] ring-1 ring-white/10 bg-black overflow-hidden shadow-2xl shrink-0 transition-transform hover:scale-[1.02]" onClick={() => setIsImageModalOpen(true)}>
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 z-10"></div>
                             {characterImage ? <img src={characterImage} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-white/20 bg-[#0f0c13]"><User size={64} weight="thin" /><span className="text-xs uppercase mt-3 tracking-widest">Sem Imagem</span></div>}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20"><span className="flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-full backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest"><PencilSimple /> Alterar</span></div>
                       </div>
                   </div>
 
-                  {/* HABILIDADES (LISTA COMPLETA) */}
-                  <div className="w-1/4 flex flex-col h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg">
+                  {/* HABILIDADES */}
+                  <div className="w-full lg:w-1/4 flex flex-col h-[300px] lg:h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg shrink-0">
                       <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2 shrink-0"><Scroll className="text-gold" /><h3 className="text-xs font-bold text-white uppercase tracking-widest">Habilidades</h3></div>
                       <div className="p-4 overflow-y-auto custom-scrollbar space-y-4 flex-1">
-                          {/* Renderiza todas as habilidades iniciais da classe */}
                           {classData.startingFeatures && classData.startingFeatures.map((feature: any, i: number) => (
                               <div key={i} className="bg-black/20 p-3 rounded border border-white/5">
                                   <h4 className="text-sm font-bold text-gold mb-2 border-b border-white/5 pb-1">{feature.title}</h4>
@@ -434,12 +432,11 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                   </div>
               </div>
 
-              {/* FOOTER */}
-              <div className="h-24 shrink-0 flex gap-6">
-                 <div className="w-1/4 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg relative overflow-hidden group">
+              {/* FOOTER (Evasão, Limiares, Armadura) */}
+              <div className="h-auto lg:h-24 shrink-0 flex flex-col md:flex-row gap-4 md:gap-6 pb-4 lg:pb-0 mt-4 lg:mt-0">
+                 <div className="w-full md:w-1/4 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg relative overflow-hidden group min-h-[80px]">
                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={48} /></div>
                     
-                    {/* INPUT DE EVASÃO EDITÁVEL */}
                     <input 
                         type="number"
                         value={sheetData.stats.evasion}
@@ -453,15 +450,15 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
                     <span className="text-[10px] uppercase text-white/40 tracking-[0.2em] mt-1 font-bold">Evasão</span>
                  </div>
-                 <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg">
+                 <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg min-h-[80px]">
                     <div className="flex items-center gap-2 mb-2 opacity-50"><Skull size={14} /><span className="text-[10px] uppercase tracking-widest font-bold">Limiares de Dano</span></div>
-                    <div className="flex justify-center gap-6 w-full px-4">
+                    <div className="flex justify-center gap-4 md:gap-6 w-full px-2 md:px-4">
                         <ThresholdBox label="Menor" range={thresholdRangeText.minor} />
                         <ThresholdBox label="Maior" range={thresholdRangeText.major} highlight />
                         <ThresholdBox label="Grave" range={thresholdRangeText.severe} />
                     </div>
                  </div>
-                 <div className="w-1/4 bg-[#1a1520] border border-white/10 rounded-xl p-2 shadow-lg flex items-center justify-center">
+                 <div className="w-full md:w-1/4 bg-[#1a1520] border border-white/10 rounded-xl p-2 shadow-lg flex items-center justify-center min-h-[80px]">
                     <ArmorWidget maxPA={maxPA} currentPA={paSpent} name="Armadura" onUpdatePA={handleUpdatePA} />
                  </div>
               </div>
@@ -470,7 +467,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
           {/* === ABA COMBATE === */}
           {activeTab === 'combate' && (
-            <div className="space-y-4 h-full overflow-y-auto custom-scrollbar pr-1">
+            <div className="space-y-4 h-full overflow-y-auto custom-scrollbar pr-1 pb-4">
                 <ProficiencyWidget 
                     value={sheetData.proficiency} 
                     onChange={(v: number) => updateSheet('proficiency', v)} 
@@ -509,7 +506,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                         <Plus weight="bold" /> Novo Item
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-4">
                     {sheetData.inventory.length === 0 && (
                         <p className="text-center text-white/20 text-xs py-10">Sua mochila está vazia.</p>
                     )}
@@ -527,9 +524,11 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
           {/* === ABA GUIA === */}
           {activeTab === 'guia' && (
-            <div className="grid grid-cols-2 gap-4 h-full overflow-y-auto custom-scrollbar">
+            // Grid de 2 colunas no Desktop (organizado, não enorme) e 1 coluna no Mobile (organizado, legível)
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-y-auto custom-scrollbar pb-4 pr-1">
+                {/* Seção Origem */}
                 <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-gold uppercase">Origem</h3>
+                    <h3 className="text-sm font-bold text-gold uppercase border-b border-white/10 pb-2">Origem</h3>
                     {classData.questions.origin.map((q: string, i: number) => (
                         <TextAreaQuestion 
                             key={`origin-${i}`} 
@@ -540,8 +539,10 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                         />
                     ))}
                 </div>
+                
+                {/* Seção Vínculos */}
                 <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-gold uppercase">Vínculos</h3>
+                    <h3 className="text-sm font-bold text-gold uppercase border-b border-white/10 pb-2">Vínculos</h3>
                     {classData.questions.bonds.map((q: string, i: number) => (
                         <TextAreaQuestion 
                             key={`bonds-${i}`} 
@@ -557,7 +558,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
           {/* === ABA EVOLUÇÃO === */}
           {activeTab === 'evolucao' && (
-            <div className="grid grid-cols-3 gap-4 h-full overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full overflow-y-auto custom-scrollbar pb-4">
                 <EvolutionColumn data={classData.evolution.tier2} tierId="tier2" savedValues={sheetData.evolution} onToggle={updateEvolution} />
                 <EvolutionColumn data={classData.evolution.tier3} tierId="tier3" savedValues={sheetData.evolution} onToggle={updateEvolution} />
                 <EvolutionColumn data={classData.evolution.tier4} tierId="tier4" savedValues={sheetData.evolution} onToggle={updateEvolution} />
@@ -566,7 +567,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
           {/* === ABA DESCRIÇÃO === */}
           {activeTab === 'descricao' && (
-            <div className="grid grid-cols-3 gap-4 h-full overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full overflow-y-auto custom-scrollbar pb-4">
                 {Object.entries(classData.traits).map(([category, options]: [string, any]) => (
                     <div key={category} className="bg-black/20 p-3 rounded border border-white/5">
                         <h4 className="text-white/60 text-[10px] uppercase tracking-widest mb-2 border-b border-white/10 pb-1">{category}</h4>
