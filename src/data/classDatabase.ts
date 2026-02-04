@@ -22,7 +22,11 @@ export interface ClassDefinition {
     name: string;
     description: string;
   };
-  // Adicionado para suportar a exibição na ficha (SheetModal)
+  // Nova propriedade adicionada
+  hopeAbility: {
+    name: string;
+    description: string;
+  };
   startingFeatures: {
     title: string;
     description: string;
@@ -103,6 +107,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
       name: "Inspiração",
       description: "Uma vez por sessão, conceda a você e aliados um Dado de Inspiração (d6 no 1º nível, d8 no 5º) para somar a testes, dano ou recuperar PF."
     },
+    hopeAbility: {
+        name: "Fazer uma Cena",
+        description: "Gaste 3 Pontos de Esperança para distrair temporariamente um alvo próximo, aplicando uma penalidade de –2 à Dificuldade dele."
+    },
     startingFeatures: [
       {
         title: "Inspiração",
@@ -142,6 +150,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ability: {
       name: "Forma de Fera",
       description: "Marque 1 PF para se transformar em uma criatura de patamar igual ou menor ao seu. Use as habilidades, Evasão e ataque da forma."
+    },
+    hopeAbility: {
+        name: "Evolução",
+        description: "Gaste 3 Pontos de Esperança para usar Forma de Fera sem marcar Pontos de Fadiga. Ao fazer isso, aumente um atributo em +1 até sair da Forma de Fera."
     },
     startingFeatures: [
       {
@@ -186,6 +198,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ability: {
       name: "Poder Arcano",
       description: "Possui Sentido Arcano, Ilusão Menor e Canalizar Poder Bruto (use cartas de domínio para ganhar Esperança ou dobrar dano de feitiços)."
+    },
+    hopeAbility: {
+        name: "Magia Volátil",
+        description: "Gaste 3 Pontos de Esperança para rolar novamente uma quantidade qualquer de dados de dano em um ataque que causa dano mágico."
     },
     startingFeatures: [
       {
@@ -235,6 +251,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
       name: "Determinação",
       description: "1 vez por descanso longo, receba um Dado de Determinação (d4, sobe no nível 5). Enquanto Determinado, reduz dano físico e soma o dado ao dano causado."
     },
+    hopeAbility: {
+        name: "Linha de Frente",
+        description: "Gaste 3 Pontos de Esperança para recuperar 2 Pontos de Armadura."
+    },
     startingFeatures: [
       {
         title: "Determinação",
@@ -278,6 +298,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ability: {
       name: "Combate Tático",
       description: "Realize Ataques de Oportunidade contra inimigos que fogem. Receba bônus de dano físico igual ao seu nível e ignore tipos de empunhadura."
+    },
+    hopeAbility: {
+        name: "Sem Piedade",
+        description: "Gaste 3 Pontos de Esperança para receber um bônus de +1 em testes de ataque até seu próximo descanso."
     },
     startingFeatures: [
       {
@@ -323,6 +347,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
       name: "Furtividade",
       description: "Permanece Oculto ao se esconder. Causa Ataque Furtivo (dano extra de +d6 por patamar) ao atacar Oculto ou com aliado próximo ao alvo."
     },
+    hopeAbility: {
+        name: "Esquiva de Ladino",
+        description: "Gaste 3 Pontos de Esperança para receber um bônus de +2 na Evasão até o próximo ataque que acertar você. Caso contrário, esse bônus dura até seu próximo descanso."
+    },
     startingFeatures: [
       {
         title: "Oculto",
@@ -366,6 +394,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ability: {
       name: "Alta Magia",
       description: "Padrões Estranhos: Escolha um nº da sorte para ganhar Esperança/PF. Prestidigitação: Efeitos mágicos menores à vontade."
+    },
+    hopeAbility: {
+        name: "Não Dessa Vez",
+        description: "Gaste 3 Pontos de Esperança para forçar um adversário distante ou mais próximo a refazer um teste de ataque ou uma rolagem de dano."
     },
     startingFeatures: [
       {
@@ -411,6 +443,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
       name: "Marca da Presa",
       description: "Gaste 1 Esperança para marcar um alvo. Você sabe a direção dele e causa 1 PF ao causar dano."
     },
+    hopeAbility: {
+        name: "Segurem Eles",
+        description: "Quando acerta um ataque com uma arma, você pode gastar 3 Pontos de Esperança para usar o mesmo teste contra dois adversários adicionais no alcance."
+    },
     startingFeatures: [
       {
         title: "Marca da Presa",
@@ -450,6 +486,10 @@ export const CLASS_DATABASE: Record<string, ClassDefinition> = {
     ability: {
       name: "Dados de Oração",
       description: "No início da sessão, role d4s baseados em conjuração. Gaste esses dados para reduzir dano, somar a rolagens ou ganhar Esperança."
+    },
+    hopeAbility: {
+        name: "Alicerce da Vida",
+        description: "Gaste 3 Pontos de Esperança para recuperar 1 Ponto de Vida de um aliado próximo."
     },
     startingFeatures: [
       {

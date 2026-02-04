@@ -428,6 +428,15 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                                   <p className="text-xs text-white/80 leading-relaxed text-justify">{feature.description}</p>
                               </div>
                           ))}
+                          {/* NOVA SEÇÃO: HABILIDADE DE ESPERANÇA */}
+                          {classData.hopeAbility && (
+                              <div className="bg-blue-900/20 p-3 rounded border border-blue-500/30">
+                                  <h4 className="text-sm font-bold text-blue-300 mb-2 border-b border-blue-500/20 pb-1 flex items-center gap-2">
+                                      <Coins size={14} weight="fill" /> {classData.hopeAbility.name}
+                                  </h4>
+                                  <p className="text-xs text-white/80 leading-relaxed text-justify">{classData.hopeAbility.description}</p>
+                              </div>
+                          )}
                       </div>
                   </div>
               </div>

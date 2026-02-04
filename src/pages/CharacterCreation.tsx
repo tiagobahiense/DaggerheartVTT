@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { ArrowRight, CaretLeft, MagicWand, Users, Crown, Compass } from '@phosphor-icons/react';
+import { ArrowRight, CaretLeft, MagicWand, Users, Crown, Compass, Coins } from '@phosphor-icons/react';
 import { CLASS_DATABASE } from '../data/classDatabase'; 
 
 // --- BANCO DE DADOS DO SISTEMA ---
@@ -138,24 +138,24 @@ const RPG_DATA: any = {
 
   // DADOS DE ANCESTRALIDADE
   ancestries: [
-    { name: "Anão", height: "1,2m - 1,65m", life: "250 anos", ability: "Pele Espessa", abilityDesc: "Ao sofrer dano menor, marca 2 Fadiga em vez de perder Vida.", imgName: "Ancestralidades_anao.png", position: "center 25%" },
-    { name: "Clank", height: "Variável", life: "Indefinida", ability: "Projeto Intencional", abilityDesc: "+1 permanente em uma Experiência ligada ao seu propósito.", imgName: "Ancestralidades_clank.png", position: "center 15%" },
-    { name: "Drakona", height: "1,5m - 2,1m", life: "350 anos", ability: "Sopro Elemental", abilityDesc: "Ataque de alcance muito próximo (d8 dano mágico).", imgName: "Ancestralidades_drakona.png", position: "center 30%" },
-    { name: "Elfo", height: "1,8m - 1,95m", life: "350 anos", ability: "Reação Rápida", abilityDesc: "Marque 1 Fadiga para ter vantagem em testes de reação.", imgName: "Ancestralidades_elfo.png", position: "center 10%" },
-    { name: "Fada", height: "60cm - 2,1m", life: "50 anos", ability: "Asas", abilityDesc: "Capacidade de voar inerente.", imgName: "Ancestralidades_fada.png", position: "center 40%" },
-    { name: "Fauno", height: "Médio", life: "Longo", ability: "Salto Caprino", abilityDesc: "Salta para qualquer ponto próximo ignorando obstáculos.", imgName: "Ancestralidades_fauno.png", position: "center 15%" },
-    { name: "Firbolg", height: "1,5m - 2,1m", life: "150 anos", ability: "Investida", abilityDesc: "Ao se mover para combate, cause 1d12 de dano extra.", imgName: "Ancestralidades_firbolg.png", position: "center 15%" },
-    { name: "Fungril", height: "60cm - 2,1m", life: "300+ anos", ability: "Conexão Fungril", abilityDesc: "Comunica-se mentalmente com outros fungris.", imgName: "Ancestralidades_fungril.png", position: "center 20%" },
-    { name: "Galapa", height: "1,2m - 1,8m", life: "150 anos", ability: "Carapaça", abilityDesc: "Bônus nos limiares de dano igual à Proficiência.", imgName: "Ancestralidades_galapa.png", position: "center 25%" },
-    { name: "Gigante", height: "1,8m - 2,55m", life: "75 anos", ability: "Alcance", abilityDesc: "Considera alcance corpo a corpo como muito próximo.", imgName: "Ancestralidades_gigante.png", position: "center 10%" },
-    { name: "Goblin", height: "90cm - 1,2m", life: "100 anos", ability: "Passo Firme", abilityDesc: "Ignora desvantagem em testes de Agilidade.", imgName: "Ancestralidades_goblin.png", position: "center 25%" },
-    { name: "Humano", height: "1,5m - 1,95m", life: "100 anos", ability: "Resiliência", abilityDesc: "Começa com +1 espaço de Ponto de Fadiga.", imgName: "Ancestralidades_humano.png", position: "center 15%" },
-    { name: "Infernis", height: "1,5m - 2,1m", life: "Médio", ability: "Aspecto Apavorante", abilityDesc: "Vantagem em testes para intimidar.", imgName: "Ancestralidades_infernis.png", position: "center 15%" },
-    { name: "Katari", height: "1,5m - 1,95m", life: "150 anos", ability: "Instinto Felino", abilityDesc: "Gaste 2 Esperança para rolar novamente testes de Agilidade.", imgName: "Ancestralidades_katari.png", position: "center 15%" },
-    { name: "Orc", height: "1,5m - 1,95m", life: "125 anos", ability: "Presas", abilityDesc: "Gaste 1 Esperança ao acertar ataque corpo a corpo para causar +1d6 de dano.", imgName: "Ancestralidades_orc.png", position: "center 15%" },
-    { name: "Pequenino", height: "90cm - 1,2m", life: "150 anos", ability: "Talismã da Sorte", abilityDesc: "Todo o grupo recebe 1 Ponto de Esperança no início da sessão.", imgName: "Ancestralidades_pequenino.png", position: "center 30%" },
-    { name: "Quacho", height: "90cm - 1,35m", life: "100 anos", ability: "Linguarudo", abilityDesc: "Usa língua como arma de alcance próximo (d12 dano).", imgName: "Ancestralidades_quacho.png", position: "center 25%" },
-    { name: "Símio", height: "60cm - 1,8m", life: "100 anos", ability: "Escalador Natural", abilityDesc: "Vantagem em Agilidade para escalar e equilibrar.", imgName: "Ancestralidades_simio.png", position: "center 20%" }
+    { name: "Anão", height: "1,2m - 1,65m", life: "250 anos", ability: "Pele Espessa", abilityDesc: "Ao sofrer dano menor, marca 2 Fadiga em vez de perder Vida.", imgName: "Ancestralidades_anao.png" },
+    { name: "Clank", height: "Variável", life: "Indefinida", ability: "Projeto Intencional", abilityDesc: "+1 permanente em uma Experiência ligada ao seu propósito.", imgName: "Ancestralidades_clank.png" },
+    { name: "Drakona", height: "1,5m - 2,1m", life: "350 anos", ability: "Sopro Elemental", abilityDesc: "Ataque de alcance muito próximo (d8 dano mágico).", imgName: "Ancestralidades_drakona.png" },
+    { name: "Elfo", height: "1,8m - 1,95m", life: "350 anos", ability: "Reação Rápida", abilityDesc: "Marque 1 Fadiga para ter vantagem em testes de reação.", imgName: "Ancestralidades_elfo.png" },
+    { name: "Fada", height: "60cm - 2,1m", life: "50 anos", ability: "Asas", abilityDesc: "Capacidade de voar inerente.", imgName: "Ancestralidades_fada.png" },
+    { name: "Fauno", height: "Médio", life: "Longo", ability: "Salto Caprino", abilityDesc: "Salta para qualquer ponto próximo ignorando obstáculos.", imgName: "Ancestralidades_fauno.png" },
+    { name: "Firbolg", height: "1,5m - 2,1m", life: "150 anos", ability: "Investida", abilityDesc: "Ao se mover para combate, cause 1d12 de dano extra.", imgName: "Ancestralidades_firbolg.png" },
+    { name: "Fungril", height: "60cm - 2,1m", life: "300+ anos", ability: "Conexão Fungril", abilityDesc: "Comunica-se mentalmente com outros fungris.", imgName: "Ancestralidades_fungril.png" },
+    { name: "Galapa", height: "1,2m - 1,8m", life: "150 anos", ability: "Carapaça", abilityDesc: "Bônus nos limiares de dano igual à Proficiência.", imgName: "Ancestralidades_galapa.png" },
+    { name: "Gigante", height: "1,8m - 2,55m", life: "75 anos", ability: "Alcance", abilityDesc: "Considera alcance corpo a corpo como muito próximo.", imgName: "Ancestralidades_gigante.png" },
+    { name: "Goblin", height: "90cm - 1,2m", life: "100 anos", ability: "Passo Firme", abilityDesc: "Ignora desvantagem em testes de Agilidade.", imgName: "Ancestralidades_goblin.png" },
+    { name: "Humano", height: "1,5m - 1,95m", life: "100 anos", ability: "Resiliência", abilityDesc: "Começa com +1 espaço de Ponto de Fadiga.", imgName: "Ancestralidades_humano.png" },
+    { name: "Infernis", height: "1,5m - 2,1m", life: "Médio", ability: "Aspecto Apavorante", abilityDesc: "Vantagem em testes para intimidar.", imgName: "Ancestralidades_infernis.png" },
+    { name: "Katari", height: "1,5m - 1,95m", life: "150 anos", ability: "Instinto Felino", abilityDesc: "Gaste 2 Esperança para rolar novamente testes de Agilidade.", imgName: "Ancestralidades_katari.png" },
+    { name: "Orc", height: "1,5m - 1,95m", life: "125 anos", ability: "Presas", abilityDesc: "Gaste 1 Esperança ao acertar ataque corpo a corpo para causar +1d6 de dano.", imgName: "Ancestralidades_orc.png" },
+    { name: "Pequenino", height: "90cm - 1,2m", life: "150 anos", ability: "Talismã da Sorte", abilityDesc: "Todo o grupo recebe 1 Ponto de Esperança no início da sessão.", imgName: "Ancestralidades_pequenino.png" },
+    { name: "Quacho", height: "90cm - 1,35m", life: "100 anos", ability: "Linguarudo", abilityDesc: "Usa língua como arma de alcance próximo (d12 dano).", imgName: "Ancestralidades_quacho.png" },
+    { name: "Símio", height: "60cm - 1,8m", life: "100 anos", ability: "Escalador Natural", abilityDesc: "Vantagem em Agilidade para escalar e equilibrar.", imgName: "Ancestralidades_simio.png" }
   ],
 
   communities: [
@@ -191,6 +191,9 @@ export default function CharacterCreation() {
 
   const classKeys = Object.keys(RPG_DATA.classes);
   const angleStep = 360 / classKeys.length;
+
+  // Acesso direto ao CLASS_DATABASE para garantir as habilidades mais recentes
+  const classDbData = charData.classId ? CLASS_DATABASE[charData.classId] : null;
 
   useEffect(() => {
     if (step === 0 && !hoverClass) {
@@ -288,8 +291,15 @@ export default function CharacterCreation() {
 
         {/* --- ESTÁGIO 0: CÍRCULO DE CLASSES --- */}
         {step === 0 && (
-          // Adicionada escala responsiva (scale-75 md:scale-90) para não cortar em notebooks/tablets
-          <div className="relative w-[650px] h-[650px] flex items-center justify-center animate-fade-in scale-[0.70] md:scale-[0.85] lg:scale-100 origin-center transition-transform duration-500">
+          // MODIFICAÇÕES RESPONSIVAS:
+          // 1. Escala ajustada para diversos tamanhos (scale-0.65 inicial, até 2xl:scale-100)
+          // 2. Translação vertical negativa (-translate-y-12) em telas menores para "subir" o círculo e evitar corte embaixo
+          // 3. Em telas grandes (2xl), volta ao centro normal (translate-y-0)
+          <div className="
+            relative w-[650px] h-[650px] flex items-center justify-center animate-fade-in origin-center transition-transform duration-500
+            scale-[0.65] md:scale-75 lg:scale-90 xl:scale-95 2xl:scale-100
+            -translate-y-12 md:-translate-y-8 lg:translate-y-0
+          ">
             <div className="absolute w-[450px] h-[450px] border border-white/5 rounded-full animate-pulse"></div>
             <div className="absolute w-[250px] h-[250px] border border-gold/10 rounded-full"></div>
 
@@ -385,8 +395,8 @@ export default function CharacterCreation() {
 
               {/* LISTA DE HABILIDADES DE CLASSE */}
               <div className="w-full flex flex-col gap-2 shrink-0">
-                 {CLASS_DATABASE[charData.classId] && CLASS_DATABASE[charData.classId].startingFeatures ? (
-                    CLASS_DATABASE[charData.classId].startingFeatures.map((feat: any, i: number) => (
+                 {classDbData && classDbData.startingFeatures ? (
+                    classDbData.startingFeatures.map((feat: any, i: number) => (
                       <div key={i} className="bg-white/5 p-3 rounded border border-white/10 text-center shrink-0">
                          <p className="text-[10px] text-gold uppercase tracking-widest mb-1">{feat.title}</p>
                          <p className="text-xs text-white/70 italic leading-relaxed whitespace-pre-line">
@@ -400,6 +410,17 @@ export default function CharacterCreation() {
                        <p className="text-[10px] text-gold uppercase tracking-widest mb-1">Habilidade de Classe</p>
                        <p className="text-purple-200 font-bold text-sm">{RPG_DATA.classes[charData.classId].ability.name}</p>
                        <p className="text-xs text-white/50 mt-1 italic">"{RPG_DATA.classes[charData.classId].ability.text}"</p>
+                    </div>
+                 )}
+
+                 {/* NOVA SEÇÃO: HABILIDADE DE ESPERANÇA */}
+                 {classDbData && classDbData.hopeAbility && (
+                    <div className="bg-blue-900/20 p-3 rounded border border-blue-500/30 text-center shrink-0 mt-2">
+                       <p className="text-[10px] text-blue-300 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+                          <Coins size={12} weight="fill" /> Habilidade de Esperança
+                       </p>
+                       <p className="text-purple-200 font-bold text-sm">{classDbData.hopeAbility.name}</p>
+                       <p className="text-xs text-white/50 mt-1 italic">"{classDbData.hopeAbility.description}"</p>
                     </div>
                  )}
               </div>
@@ -493,13 +514,10 @@ export default function CharacterCreation() {
                           "
                         >
                           <div className="w-1/3 relative overflow-hidden bg-gray-900/50">
+                             {/* MODIFICAÇÃO: Removido objectPosition dinâmico para garantir centralização uniforme */}
                              <img 
                                 src={`/ancestralidade/${anc.imgName}`} 
-                                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                                style={{ 
-                                  objectPosition: anc.position,
-                                  transformOrigin: anc.position
-                                }}
+                                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
                              />
                              <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-20 transition-opacity"></div>
                           </div>
