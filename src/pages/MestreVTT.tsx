@@ -8,7 +8,7 @@ import {
   Users, Eye, Skull, Campfire, MoonStars, 
   Dna, X, Cube, Coins, Sparkle, HandPalm, 
   MapTrifold, UserCircle, Stack, Scroll, Image as ImageIcon,
-  Fire
+  Fire, UsersThree, CaretDown, Check, Trash, Plus
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
 
@@ -64,8 +64,14 @@ interface RollLog {
   type: 'DUALITY' | 'STANDARD';
 }
 
+interface PlayerGroup {
+    id: string;
+    name: string;
+    memberIds: string[];
+}
+
 // ============================================================================
-// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES
+// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES (INDIVIDUAL - ATÉ 6)
 // ============================================================================
 const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
   return (
@@ -108,6 +114,253 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
     </div>
   );
 };
+
+// ============================================================================
+// 1.1 COMPONENTE AUXILIAR: LISTA DE JOGADORES AGRUPADA (MAIS DE 6)
+// ============================================================================
+const CollapsedPlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="absolute top-6 left-6 z-[900] animate-slide-right pointer-events-auto">
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-900 to-black border border-purple-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform backdrop-blur-md"
+            >
+                <div className="bg-purple-500/20 p-2 rounded-full text-purple-300">
+                    <UsersThree size={24} weight="fill" />
+                </div>
+                <div className="text-left">
+                    <span className="block font-bold text-white text-lg leading-none">Jogadores</span>
+                    <span className="text-[10px] text-white/50 uppercase tracking-widest">{players.length} Fichas</span>
+                </div>
+                <CaretDown size={20} className={`text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute top-full left-0 mt-2 w-72 bg-[#1a120b]/95 border border-white/10 rounded-xl shadow-2xl p-2 max-h-[60vh] overflow-y-auto custom-scrollbar flex flex-col gap-2">
+                    {players.map((char) => {
+                        const isOnline = char.isOnline !== false;
+                        return (
+                            <button 
+                                key={char.id}
+                                onClick={() => { onSelectPlayer(char); setIsOpen(false); }}
+                                className={`flex items-center gap-3 p-2 rounded hover:bg-white/10 transition-colors text-left w-full border border-transparent hover:border-white/5
+                                    ${!isOnline ? 'opacity-50 grayscale' : ''}
+                                `}
+                            >
+                                <div className="w-8 h-8 rounded-full bg-black/40 overflow-hidden shrink-0">
+                                    {char.imageUrl ? <img src={char.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">{char.level}</div>}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-sm font-bold text-white truncate">{char.name}</div>
+                                    <div className="text-[10px] text-white/50 truncate">{char.class}</div>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ============================================================================
+// 1.2 COMPONENTE AUXILIAR: MODAL DE GERENCIAMENTO DE GRUPOS
+// ============================================================================
+const GroupManagerModal = ({ 
+    isOpen, onClose, allCharacters, sessionData 
+}: { 
+    isOpen: boolean; 
+    onClose: () => void; 
+    allCharacters: Character[];
+    sessionData: any;
+}) => {
+    const [groups, setGroups] = useState<PlayerGroup[]>([]);
+    const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+    const [newGroupName, setNewGroupName] = useState('');
+
+    useEffect(() => {
+        if (sessionData) {
+            setGroups(sessionData.player_groups || []);
+            setActiveGroupId(sessionData.active_group_id || null);
+        }
+    }, [sessionData]);
+
+    const handleSaveGroups = async (updatedGroups: PlayerGroup[], newActiveId: string | null) => {
+        if (!sessionData?.id) return;
+        try {
+            await updateDoc(doc(db, 'sessoes', sessionData.id), {
+                player_groups: updatedGroups,
+                active_group_id: newActiveId
+            });
+            setGroups(updatedGroups);
+            setActiveGroupId(newActiveId);
+        } catch (e) {
+            console.error("Erro ao salvar grupos:", e);
+        }
+    };
+
+    const addGroup = () => {
+        if (!newGroupName.trim()) return;
+        const newGroup: PlayerGroup = {
+            id: Date.now().toString(),
+            name: newGroupName,
+            memberIds: []
+        };
+        const updated = [...groups, newGroup];
+        handleSaveGroups(updated, activeGroupId);
+        setNewGroupName('');
+        setSelectedGroup(newGroup.id);
+    };
+
+    const removeGroup = (groupId: string) => {
+        const updated = groups.filter(g => g.id !== groupId);
+        const newActive = activeGroupId === groupId ? null : activeGroupId;
+        handleSaveGroups(updated, newActive);
+        if (selectedGroup === groupId) setSelectedGroup(null);
+    };
+
+    const toggleMember = (charId: string) => {
+        if (!selectedGroup) return;
+        const updated = groups.map(g => {
+            if (g.id === selectedGroup) {
+                const isMember = g.memberIds.includes(charId);
+                return {
+                    ...g,
+                    memberIds: isMember 
+                        ? g.memberIds.filter(id => id !== charId) 
+                        : [...g.memberIds, charId]
+                };
+            }
+            return g;
+        });
+        handleSaveGroups(updated, activeGroupId);
+    };
+
+    const toggleActiveGroup = (groupId: string) => {
+        const newActive = activeGroupId === groupId ? null : groupId;
+        handleSaveGroups(groups, newActive);
+    };
+
+    if (!isOpen) return null;
+
+    const currentGroup = groups.find(g => g.id === selectedGroup);
+
+    return (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-[#1a120b] border border-gold/30 w-full max-w-4xl h-[600px] rounded-2xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                
+                {/* Header */}
+                <div className="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center shrink-0">
+                    <h2 className="text-xl font-rpg text-gold flex items-center gap-2">
+                        <UsersThree size={24} weight="fill"/> Gerenciador de Mesas (Instâncias)
+                    </h2>
+                    <button onClick={onClose}><X size={24} className="text-white/50 hover:text-red-400"/></button>
+                </div>
+
+                {/* Body */}
+                <div className="flex flex-1 overflow-hidden">
+                    
+                    {/* Sidebar: Lista de Grupos */}
+                    <div className="w-1/3 border-r border-white/10 flex flex-col bg-black/20">
+                        <div className="p-3 border-b border-white/10 flex gap-2">
+                            <input 
+                                type="text" 
+                                value={newGroupName} 
+                                onChange={e => setNewGroupName(e.target.value)}
+                                placeholder="Nome do Grupo..." 
+                                className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-white focus:border-gold outline-none"
+                            />
+                            <button onClick={addGroup} className="bg-gold/20 hover:bg-gold/40 text-gold p-1 rounded border border-gold/30">
+                                <Plus size={18} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                            {groups.map(group => (
+                                <div 
+                                    key={group.id} 
+                                    onClick={() => setSelectedGroup(group.id)}
+                                    className={`p-3 rounded border cursor-pointer transition-all flex items-center justify-between group
+                                        ${selectedGroup === group.id ? 'bg-white/10 border-gold/50' : 'bg-transparent border-white/5 hover:bg-white/5'}
+                                    `}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className={`font-bold text-sm ${selectedGroup === group.id ? 'text-white' : 'text-white/70'}`}>{group.name}</span>
+                                        <span className="text-[10px] text-white/30">{group.memberIds.length} Personagens</span>
+                                    </div>
+                                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                        {/* Toggle Active */}
+                                        <div className="flex items-center gap-1">
+                                             <span className={`text-[9px] uppercase font-bold tracking-widest ${activeGroupId === group.id ? 'text-green-400' : 'text-white/20'}`}>
+                                                 {activeGroupId === group.id ? 'ATIVO' : 'OFF'}
+                                             </span>
+                                             <button 
+                                                onClick={() => toggleActiveGroup(group.id)}
+                                                className={`w-8 h-4 rounded-full p-0.5 flex transition-colors ${activeGroupId === group.id ? 'bg-green-600 justify-end' : 'bg-white/10 justify-start'}`}
+                                             >
+                                                 <div className="w-3 h-3 bg-white rounded-full shadow-md" />
+                                             </button>
+                                        </div>
+                                        <button onClick={() => removeGroup(group.id)} className="text-white/20 hover:text-red-400 ml-2">
+                                            <Trash size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {groups.length === 0 && <p className="text-xs text-white/30 text-center mt-4">Nenhum grupo criado.</p>}
+                        </div>
+                    </div>
+
+                    {/* Main: Seleção de Personagens */}
+                    <div className="flex-1 flex flex-col bg-[#1a120b]">
+                        {currentGroup ? (
+                            <>
+                                <div className="p-4 border-b border-white/10 bg-black/20">
+                                    <h3 className="text-gold font-bold text-lg">Editando: {currentGroup.name}</h3>
+                                    <p className="text-xs text-white/50">Selecione os personagens que pertencem a esta mesa.</p>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start custom-scrollbar">
+                                    {allCharacters.map(char => {
+                                        const isMember = currentGroup.memberIds.includes(char.id);
+                                        return (
+                                            <div 
+                                                key={char.id} 
+                                                onClick={() => toggleMember(char.id)}
+                                                className={`
+                                                    flex items-center gap-3 p-2 rounded border cursor-pointer transition-all
+                                                    ${isMember ? 'bg-green-900/20 border-green-500/50' : 'bg-white/5 border-white/10 hover:border-white/30'}
+                                                `}
+                                            >
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${isMember ? 'bg-green-500 border-green-500' : 'border-white/30'}`}>
+                                                    {isMember && <Check size={12} weight="bold" className="text-black" />}
+                                                </div>
+                                                <div className="w-8 h-8 rounded bg-black overflow-hidden shrink-0">
+                                                    <img src={char.imageUrl || ''} className="w-full h-full object-cover opacity-80" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className={`text-sm font-bold truncate ${isMember ? 'text-green-100' : 'text-white/70'}`}>{char.name}</p>
+                                                    <p className="text-[10px] text-white/30 truncate">{char.class}</p>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-white/20">
+                                <UsersThree size={48} className="mb-2" />
+                                <p>Selecione ou crie um grupo ao lado.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 // ============================================================================
 // 2. COMPONENTE AUXILIAR: SISTEMA DE DADOS DO MESTRE
@@ -490,6 +743,7 @@ export default function MestreVTT() {
   // Estados dos Gerenciadores
   const [showSceneryManager, setShowSceneryManager] = useState(false);
   const [showTabletopManager, setShowTabletopManager] = useState(false);
+  const [showGroupManager, setShowGroupManager] = useState(false);
 
   // --- MEDO (FEAR) SYSTEM ---
   const [showFearModal, setShowFearModal] = useState(false);
@@ -563,7 +817,9 @@ export default function MestreVTT() {
                         maps: [],
                         saved_maps: [],
                         saved_enemies: [],
-                        fear_data: { tokens: 0, last_trigger: 0 }
+                        fear_data: { tokens: 0, last_trigger: 0 },
+                        player_groups: [],
+                        active_group_id: null
                     });
                 } catch (e) { console.error("Erro ao criar sessão inicial", e); }
             }
@@ -632,6 +888,19 @@ export default function MestreVTT() {
       }
   };
 
+  // --- FILTRO DE GRUPOS ---
+  const getVisibleCharacters = () => {
+      if (!sessaoData?.active_group_id || !sessaoData.player_groups) return characters;
+      
+      const activeGroup = sessaoData.player_groups.find((g: PlayerGroup) => g.id === sessaoData.active_group_id);
+      if (!activeGroup) return characters;
+
+      return characters.filter(c => activeGroup.memberIds.includes(c.id));
+  };
+
+  const visibleCharacters = getVisibleCharacters();
+  const useCollapsedView = visibleCharacters.length > 6;
+
   return (
     <div className="h-screen w-screen bg-black relative overflow-hidden select-none">
        <style>{styles}</style>
@@ -691,9 +960,23 @@ export default function MestreVTT() {
        {/* ========================================= */}
        
        <DiceToast />
-       <PlayerList players={characters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} />
+       
+       {/* Renderização Condicional da Lista de Jogadores */}
+       {useCollapsedView ? (
+           <CollapsedPlayerList 
+                players={visibleCharacters} 
+                onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} 
+           />
+       ) : (
+           <PlayerList 
+                players={visibleCharacters} 
+                onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} 
+           />
+       )}
+
        <SheetModal character={selectedChar} isOpen={isSheetOpen} onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} />
        <CardsMonitorModal isOpen={showCardsMonitor} onClose={() => setShowCardsMonitor(false)} players={characters} />
+       <GroupManagerModal isOpen={showGroupManager} onClose={() => setShowGroupManager(false)} allCharacters={characters} sessionData={sessaoData} />
        {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}
 
        {/* HUD DO MESTRE (Botões de Ação) */}
@@ -711,6 +994,10 @@ export default function MestreVTT() {
 
            {/* Botões de Gerenciamento (EMBAIXO) */}
            <div className="flex gap-3 mb-2">
+               <button onClick={() => setShowGroupManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-400 hover:text-green-300 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Grupos">
+                   <UsersThree size={24} />
+               </button>
+
                <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas">
                    <MapTrifold size={24} />
                </button>
