@@ -1,3 +1,5 @@
+import { DruidMorphModal } from '../components/DruidMorphModal'; 
+import { PawPrint } from '@phosphor-icons/react'; 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit } from 'firebase/firestore';
@@ -6,7 +8,7 @@ import {
   X, Shield, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Scroll, Plus, 
   ArrowsLeftRight, Coin, Skull, Sparkle, Campfire, MoonStars,
-  Dna, Coins, Cube, ArrowUUpLeft
+  Dna, Coins, Cube, ArrowUUpLeft, List
 } from '@phosphor-icons/react';
 
 // --- IMPORTAÇÕES DE DADOS E COMPONENTES ---
@@ -41,6 +43,7 @@ interface Character {
   community: string;
   heritage: string;
   level: number;
+  unlockedTier?: number; // Adicionado para o Druida
   attributes?: any;
   weapons?: any;
   armor?: any;
@@ -223,22 +226,22 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="flex gap-4">
-                     <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
+                      <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
                         <label className="text-xs uppercase text-white/50 mb-1 block">Quantidade</label>
                         <div className="flex items-center gap-3 justify-center">
                             <button onClick={() => setDiceCount(c => Math.max(1, c - 1))} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
                             <span className="text-xl font-bold text-white w-8 text-center">{diceCount}</span>
                             <button onClick={() => setDiceCount(c => c + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
                         </div>
-                     </div>
-                     <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
+                      </div>
+                      <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
                         <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
                         <div className="flex items-center gap-3 justify-center">
                             <button onClick={() => setStandardMod(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
                             <span className="text-xl font-bold text-white w-8 text-center">{standardMod >= 0 ? `+${standardMod}` : standardMod}</span>
                             <button onClick={() => setStandardMod(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
                         </div>
-                     </div>
+                      </div>
                 </div>
 
                 <button onClick={rollStandard} className="w-full py-4 bg-gradient-to-r from-purple-800 to-indigo-900 hover:from-purple-700 hover:to-indigo-800 text-white font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3">
@@ -750,6 +753,10 @@ export default function JogadorVTT() {
   const [sessaoData, setSessaoData] = useState<any>(null); // Sincronização de Sessão
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
+  // Estados DRUIDA
+  const [showDruidModal, setShowDruidModal] = useState(false);
+  const [transformAlert, setTransformAlert] = useState<any>(null);
+
   // --- BUSCA DO PERSONAGEM (EM TEMPO REAL) ---
   useEffect(() => {
     const user = auth.currentUser;
@@ -792,6 +799,35 @@ export default function JogadorVTT() {
     });
     return () => unsubscribe();
   }, []);
+
+  // --- LISTENER GLOBAL: TRANSFORMAÇÃO DRUIDA ---
+  useEffect(() => {
+    if (!sessaoData?.id) return; // Aguarda o ID da sessão carregar
+
+    // Escuta o documento da sessão correta para alertas globais de transformação
+    const unsub = onSnapshot(doc(db, "sessoes", sessaoData.id), (snapshot) => {
+      const data = snapshot.data();
+      
+      if (data?.latestTransformation) {
+        // Verifica se a transformação aconteceu nos últimos 8 segundos
+        const now = Date.now();
+        const timeDiff = now - (data.latestTransformation.id || 0);
+
+        if (timeDiff < 8000) {
+          setTransformAlert(data.latestTransformation);
+
+          // Remove o alerta da tela após 6 segundos
+          const timer = setTimeout(() => {
+            setTransformAlert(null);
+          }, 6000);
+
+          return () => clearTimeout(timer);
+        }
+      }
+    });
+
+    return () => unsub();
+  }, [sessaoData?.id]); // Re-executa apenas quando o ID da sessão mudar (carregar)
 
   // --- CONTROLE ALERTA MEDO ---
   useEffect(() => {
@@ -840,7 +876,7 @@ export default function JogadorVTT() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
 
       {/* ============================== */}
-      {/* HUD (Interface)                */}
+      {/* HUD (Interface)                */}
       {/* ============================== */}
 
       {/* PERFIL (Topo Esquerdo) */}
@@ -868,6 +904,19 @@ export default function JogadorVTT() {
         </button>
       </div>
 
+      {/* --- BOTÃO DE TRANSFORMAÇÃO (APENAS DRUIDA) --- */}
+      {character.class === "Druida" && (
+        <div className="absolute bottom-56 right-8 z-40 pointer-events-auto">
+            <button 
+              onClick={() => setShowDruidModal(true)}
+              className="w-16 h-16 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500 text-green-400 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] hover:scale-110 hover:rotate-12 transition-all group"
+              title="Forma Selvagem"
+            >
+              <PawPrint size={32} weight="fill" className="group-hover:text-white transition-colors" />
+            </button>
+        </div>
+      )}
+
       {/* SISTEMA DE CARTAS INTEGRADO */}
       <InternalCardSystem character={character} allCards={CARTAS_JSON as any} />
 
@@ -881,8 +930,52 @@ export default function JogadorVTT() {
         onClose={() => setSheetOpen(false)} 
       />
 
+      {/* MODAL DE DRUIDA */}
+      {/* AGORA RECEBE O ID DA SESSÃO PARA O ALERTA FUNCIONAR */}
+      {character.class === "Druida" && (
+        <DruidMorphModal 
+          character={character}
+          isOpen={showDruidModal}
+          onClose={() => setShowDruidModal(false)}
+          sessionId={sessaoData?.id} 
+        />
+      )}
+
       {/* ========================================= */}
-      {/* ALERTA DE MEDO (GLOBAL OVERLAY)           */}
+      {/* ALERTA DE TRANSFORMAÇÃO (DRUIDA)          */}
+      {/* ========================================= */}
+      {transformAlert && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4">
+            <div className="relative w-full max-w-5xl flex flex-col items-center justify-center text-center animate-fade-in-up">
+                
+                {/* Faixa de Fundo com Blur e Gradiente da Classe */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${transformAlert.gradientClass || 'from-gray-800 to-black'} opacity-90 blur-xl h-40 top-1/2 -translate-y-1/2 rounded-full transform scale-x-110 -z-10`}></div>
+                
+                {/* Nome do Personagem que se transformou */}
+                <h2 className="text-3xl md:text-5xl font-rpg uppercase text-white drop-shadow-[0_4px_4px_rgba(0,0,0,1)] relative z-10 animate-slide-in-left">
+                    {transformAlert.charName}
+                </h2>
+                
+                {/* Texto de conexão */}
+                <p className="text-sm md:text-xl text-white/90 font-light tracking-[0.3em] uppercase my-3 relative z-10 bg-black/60 px-6 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                    Se transformou em
+                </p>
+                
+                {/* Nome da Nova Forma (O animal escolhido) */}
+                <h1 className="text-5xl md:text-8xl font-black uppercase relative z-10 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] animate-zoom-in font-rpg leading-none pb-2">
+                    {transformAlert.formName}
+                </h1>
+
+                 {/* Nome da Forma Base e Patamar (ex: Predador • 1º Patamar) */}
+                 <span className="relative z-10 text-green-400 text-sm md:text-lg uppercase tracking-widest mt-2 font-bold bg-black/40 px-4 py-1 rounded border border-green-500/30">
+                    {transformAlert.baseForm} • {transformAlert.tierLabel || "Forma Selvagem"}
+                 </span>
+            </div>
+        </div>
+      )}
+
+      {/* ========================================= */}
+      {/* ALERTA DE MEDO (GLOBAL OVERLAY)           */}
       {/* ========================================= */}
       {fearAlertVisible && (
            <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
