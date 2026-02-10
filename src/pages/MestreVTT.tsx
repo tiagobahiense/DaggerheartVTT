@@ -49,6 +49,10 @@ interface Character {
   community: string;
   level: number;
   imageUrl?: string;
+  // Propriedades do Companheiro (Patrulheiro/Treinador)
+  companionName?: string;
+  companionImageUrl?: string;
+  
   isOnline?: boolean;
   unlockedTier?: number; // Propriedade do Druida
   cards?: {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { ArrowRight, CaretLeft, MagicWand, Users, Crown, Compass, Coins } from '@phosphor-icons/react';
-import { CLASS_DATABASE } from '../data/classDatabase'; 
+import { CLASS_DATABASE, ANCESTRIES, COMMUNITIES } from '../data/classDatabase'; 
 
 // --- BANCO DE DADOS DO SISTEMA ---
 const RPG_DATA: any = {
@@ -137,38 +137,9 @@ const RPG_DATA: any = {
   },
 
   // DADOS DE ANCESTRALIDADE
-  ancestries: [
-    { name: "Anão", height: "1,2m - 1,65m", life: "250 anos", ability: "Pele Espessa", abilityDesc: "Ao sofrer dano menor, marca 2 Fadiga em vez de perder Vida.", imgName: "Ancestralidades_anao.png" },
-    { name: "Clank", height: "Variável", life: "Indefinida", ability: "Projeto Intencional", abilityDesc: "+1 permanente em uma Experiência ligada ao seu propósito.", imgName: "Ancestralidades_clank.png" },
-    { name: "Drakona", height: "1,5m - 2,1m", life: "350 anos", ability: "Sopro Elemental", abilityDesc: "Ataque de alcance muito próximo (d8 dano mágico).", imgName: "Ancestralidades_drakona.png" },
-    { name: "Elfo", height: "1,8m - 1,95m", life: "350 anos", ability: "Reação Rápida", abilityDesc: "Marque 1 Fadiga para ter vantagem em testes de reação.", imgName: "Ancestralidades_elfo.png" },
-    { name: "Fada", height: "60cm - 2,1m", life: "50 anos", ability: "Asas", abilityDesc: "Capacidade de voar inerente.", imgName: "Ancestralidades_fada.png" },
-    { name: "Fauno", height: "Médio", life: "Longo", ability: "Salto Caprino", abilityDesc: "Salta para qualquer ponto próximo ignorando obstáculos.", imgName: "Ancestralidades_fauno.png" },
-    { name: "Firbolg", height: "1,5m - 2,1m", life: "150 anos", ability: "Investida", abilityDesc: "Ao se mover para combate, cause 1d12 de dano extra.", imgName: "Ancestralidades_firbolg.png" },
-    { name: "Fungril", height: "60cm - 2,1m", life: "300+ anos", ability: "Conexão Fungril", abilityDesc: "Comunica-se mentalmente com outros fungris.", imgName: "Ancestralidades_fungril.png" },
-    { name: "Galapa", height: "1,2m - 1,8m", life: "150 anos", ability: "Carapaça", abilityDesc: "Bônus nos limiares de dano igual à Proficiência.", imgName: "Ancestralidades_galapa.png" },
-    { name: "Gigante", height: "1,8m - 2,55m", life: "75 anos", ability: "Alcance", abilityDesc: "Considera alcance corpo a corpo como muito próximo.", imgName: "Ancestralidades_gigante.png" },
-    { name: "Goblin", height: "90cm - 1,2m", life: "100 anos", ability: "Passo Firme", abilityDesc: "Ignora desvantagem em testes de Agilidade.", imgName: "Ancestralidades_goblin.png" },
-    { name: "Humano", height: "1,5m - 1,95m", life: "100 anos", ability: "Resiliência", abilityDesc: "Começa com +1 espaço de Ponto de Fadiga.", imgName: "Ancestralidades_humano.png" },
-    { name: "Infernis", height: "1,5m - 2,1m", life: "Médio", ability: "Aspecto Apavorante", abilityDesc: "Vantagem em testes para intimidar.", imgName: "Ancestralidades_infernis.png" },
-    { name: "Katari", height: "1,5m - 1,95m", life: "150 anos", ability: "Instinto Felino", abilityDesc: "Gaste 2 Esperança para rolar novamente testes de Agilidade.", imgName: "Ancestralidades_katari.png" },
-    { name: "Orc", height: "1,5m - 1,95m", life: "125 anos", ability: "Presas", abilityDesc: "Gaste 1 Esperança ao acertar ataque corpo a corpo para causar +1d6 de dano.", imgName: "Ancestralidades_orc.png" },
-    { name: "Pequenino", height: "90cm - 1,2m", life: "150 anos", ability: "Talismã da Sorte", abilityDesc: "Todo o grupo recebe 1 Ponto de Esperança no início da sessão.", imgName: "Ancestralidades_pequenino.png" },
-    { name: "Quacho", height: "90cm - 1,35m", life: "100 anos", ability: "Linguarudo", abilityDesc: "Usa língua como arma de alcance próximo (d12 dano).", imgName: "Ancestralidades_quacho.png" },
-    { name: "Símio", height: "60cm - 1,8m", life: "100 anos", ability: "Escalador Natural", abilityDesc: "Vantagem em Agilidade para escalar e equilibrar.", imgName: "Ancestralidades_simio.png" }
-  ],
+  ancestries: ANCESTRIES,
 
-  communities: [
-    { name: "Aristocrática", ability: "Privilégio", abilityDesc: "Vantagem para negociar ou usar reputação.", imgName: "comunidade-aristocrata.png" },
-    { name: "Disciplinada", ability: "Princípios", abilityDesc: "Uma vez por descanso, role 1d20 como Esperança ao seguir seus princípios.", imgName: "comunidade-disciplinada.png" },
-    { name: "Erudita", ability: "Culto", abilityDesc: "Vantagem em testes de cultura, história ou política.", imgName: "comunidade-erudita.png" },
-    { name: "Fora da Lei", ability: "Malandro", abilityDesc: "Vantagem para negociar com criminosos ou perceber mentiras.", imgName: "comunidade-fora-da-lei.png" },
-    { name: "Marítima", ability: "Conhecer a Maré", abilityDesc: "Acumule marcadores de Medo para ganhar bônus em testes futuros.", imgName: "comunidade-maritima.png" },
-    { name: "Montanhesa", ability: "Firme", abilityDesc: "Vantagem para cruzar abismos e sobrevivência em locais inóspitos.", imgName: "comunidade-montanhesa.png" },
-    { name: "Nômade", ability: "Mochila de Nômade", abilityDesc: "Gaste 1 Esperança para tirar um item útil da mochila (1x/sessão).", imgName: "comunidade-nomade.png" },
-    { name: "Silvestre", ability: "Pés Leves", abilityDesc: "Vantagem em testes para se mover sem ser ouvido.", imgName: "comunidade-silvestre.png" },
-    { name: "Subterrânea", ability: "Engenharia Obscura", abilityDesc: "Vantagem para navegar e sobreviver no escuro.", imgName: "comunidade-subterranea.png" }
-  ]
+  communities: COMMUNITIES
 };
 
 export default function CharacterCreation() {

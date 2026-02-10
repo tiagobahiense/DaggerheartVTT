@@ -1,11 +1,12 @@
 import { auth } from '../lib/firebase';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { db } from '../lib/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { 
   X, MapTrifold, Plus, Trash, 
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  Ruler, Minus, FloppyDisk, Upload, GridFour
+  Ruler, Minus, FloppyDisk, Upload, GridFour,
+  PawPrint
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
 
@@ -13,13 +14,13 @@ import DraggableWindow from './DraggableWindow';
 interface Token {
   id: string;
   charId?: string;
-  ownerId?: string; // NOVO: ID do Jogador dono do token (para permissão direta)
+  ownerId?: string;
   name: string;
   img: string;
   x: number;
   y: number;
   size: number;
-  type: 'player' | 'enemy';
+  type: 'player' | 'enemy' | 'companion'; 
   visible: boolean;
   imgOffX: number;
   imgOffY: number;
@@ -50,6 +51,15 @@ interface SavedEnemy {
 }
 
 export default function Tabletop({ sessaoData, isMaster, charactersData, showManager, onCloseManager }: any) {
+  // --- OTIMIZAÇÃO: MAPA DE PERSONAGENS (Lookup O(1)) ---
+  const charMap = useMemo(() => {
+      const map: Record<string, any> = {};
+      if(charactersData && Array.isArray(charactersData)) {
+          charactersData.forEach((c: any) => { map[c.id] = c; });
+      }
+      return map;
+  }, [charactersData]);
+
   // --- ESTADOS GLOBAIS ---
   const [activeMap, setActiveMap] = useState<MapData | null>(null);
   const [localTokens, setLocalTokens] = useState<Token[]>([]);
@@ -126,31 +136,42 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   // --- HELPER DE PERMISSÃO ---
   const isTokenOwner = (token: Token) => {
-      // 1. Mestre tem permissão total
       if (isMaster) return true;
-      
-      // 2. Jogador nunca move inimigo
       if (token.type === 'enemy') return false;
       
       const currentUserId = auth.currentUser?.uid;
       if (!currentUserId) return false;
 
-      // 3. Permissão Direta (Se o token já tiver o ID do dono gravado)
       if (token.ownerId && token.ownerId === currentUserId) return true;
 
-      // 4. Permissão via Lista de Personagens (Fallback)
+      if (token.charId && charMap[token.charId]) {
+          const char = charMap[token.charId];
+          if (char.playerId === currentUserId) return true;
+      }
+      
       if (charactersData && Array.isArray(charactersData)) {
-          // Tenta achar pelo ID do personagem
-          const charById = charactersData.find((c: any) => c.id === token.charId);
-          if (charById && charById.playerId === currentUserId) return true;
-
-          // Tenta achar pelo Nome (Caso o ID tenha mudado ou esteja bugado)
           const charByName = charactersData.find((c: any) => c.name === token.name && c.playerId === currentUserId);
           if (charByName) return true;
       }
-      
-      // Se chegou aqui, não é dono
       return false;
+  };
+
+  // --- HELPER DE ERRO DE IMAGEM ---
+  const handleImageError = (e: any, token: Token) => {
+      const target = e.target;
+      if (target.getAttribute('data-error-handled')) return;
+      target.setAttribute('data-error-handled', 'true');
+
+      // Estratégia de Fallback: Se a imagem quebrar, tenta voltar para a imagem do personagem principal
+      // Isso é útil se o link do companion estiver quebrado, pelo menos mostra o dono.
+      let fallbackUrl = '/default-token.png';
+      if (token.charId && charMap[token.charId]) {
+          const char = charMap[token.charId];
+          if (char.imageUrl) {
+              fallbackUrl = char.imageUrl;
+          }
+      }
+      target.src = fallbackUrl;
   };
 
   // --- FIREBASE UPDATES ---
@@ -245,8 +266,10 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
       if (draggingTokenId) {
           const coords = getSceneCoord(e.clientX, e.clientY);
-          const gridX = Math.floor((coords.x - dragOffset.current.x) / activeMap.gridSizePx);
-          const gridY = Math.floor((coords.y - dragOffset.current.y) / activeMap.gridSizePx);
+          
+          // Math.round para melhor precisão e evitar pulos na grade
+          const gridX = Math.round((coords.x - dragOffset.current.x) / activeMap.gridSizePx);
+          const gridY = Math.round((coords.y - dragOffset.current.y) / activeMap.gridSizePx);
           
           setLocalTokens(prev => prev.map(t => {
               if (t.id === draggingTokenId) return { ...t, x: gridX, y: gridY };
@@ -285,12 +308,10 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
   // --- TOKEN HANDLERS ---
   const handleTokenMouseDown = (e: React.MouseEvent, token: Token) => {
       e.stopPropagation();
-      if (isRulerMode) return;
+      e.preventDefault(); // Impede ghosting nativo do navegador
       
-      if (!isTokenOwner(token)) {
-          console.warn(`[Tabletop] Bloqueado: ${token.name}. User: ${auth.currentUser?.uid}, Owner: ${token.ownerId}`);
-          return;
-      }
+      if (isRulerMode) return;
+      if (!isTokenOwner(token)) return;
 
       const coords = getSceneCoord(e.clientX, e.clientY);
       dragOffset.current = {
@@ -366,12 +387,36 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                     const width = token.size * activeMap.gridSizePx;
                     const height = token.size * activeMap.gridSizePx;
 
+                    // Cores da borda
+                    const borderClass = token.type === 'player' ? 'border-green-500' :
+                                        token.type === 'companion' ? 'border-cyan-400' :
+                                        'border-red-500';
+
+                    const shapeClass = (token.type === 'player' || token.type === 'companion') ? 'rounded-full' : 'rounded-sm';
+
+                    // --- LÓGICA DE IMAGEM CORRIGIDA PARA JOGADOR ---
+                    const foundChar = token.charId ? charMap[token.charId] : null;
+                    let displayImg = token.img;
+
+                    if (foundChar) {
+                        if (token.type === 'companion') {
+                            // CORREÇÃO CRÍTICA:
+                            // 1. Tenta pegar a imagem live do companion na ficha (companion.image)
+                            // 2. SE NÃO TIVER, mantém a imagem do token (token.img - que deve ser o Lobo salvo pelo mestre)
+                            // 3. SÓ ENTÃO, se tudo falhar, usa a imagem do Dono (imageUrl)
+                            // A versão anterior priorizava imageUrl sobre token.img, por isso o jogador via a própria cara.
+                            displayImg = foundChar.companion?.image || token.img || foundChar.imageUrl || '/default-token.png';
+                        } else if (token.type === 'player') {
+                            displayImg = foundChar.imageUrl || token.img;
+                        }
+                    }
+
                     return (
                         <div
                             key={token.id}
                             className={`
                                 absolute z-[10] group transition-opacity 
-                                ${isEditing ? 'z-[20] ring-2 ring-gold' : ''}
+                                ${isEditing ? 'z-[30] ring-2 ring-gold' : ''}
                                 ${canMove ? 'cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-white/50' : 'cursor-default'} 
                             `}
                             style={{
@@ -383,16 +428,22 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                             }}
                             onMouseDown={(e) => handleTokenMouseDown(e, token)}
                             onDoubleClick={(e) => handleTokenDoubleClick(e, token)}
+                            onDragStart={(e) => e.preventDefault()} // Impede ghosting nativo
                         >
-                            <div className={`w-full h-full overflow-hidden shadow-lg ${token.type === 'player' ? 'rounded-full border-2 border-green-500' : 'rounded-sm border-2 border-red-500'} bg-black`}>
+                            <div className={`w-full h-full overflow-hidden shadow-lg ${shapeClass} border-2 ${borderClass} bg-black relative`}>
                                 <img 
-                                    src={token.img} 
+                                    src={displayImg}
+                                    onError={(e) => handleImageError(e, token)}
                                     className="max-w-none w-full h-full object-contain pointer-events-none select-none"
                                     style={{ transform: `scale(${token.imgScale}) translate(${token.imgOffX}px, ${token.imgOffY}px)` }}
                                     draggable={false}
                                 />
+                                {token.type === 'companion' && (
+                                    <div className="absolute bottom-0 right-0 p-0.5 bg-cyan-900/80 rounded-tl">
+                                        <PawPrint size={10} className="text-cyan-200" weight="fill" />
+                                    </div>
+                                )}
                             </div>
-                            {/* Nome ao passar o mouse */}
                             <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none border border-white/20 z-[30]">
                                 {token.name}
                             </div>
@@ -411,7 +462,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                 )}
             </div>
 
-            {/* HUD JOGADOR/MESTRE */}
+            {/* HUD */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 bg-black/80 p-2 rounded border border-white/20 z-[500]">
                 <button onClick={() => setIsRulerMode(!isRulerMode)} className={`p-2 rounded ${isRulerMode ? 'bg-gold text-black' : 'text-white hover:bg-white/10'}`} title="Régua"><Ruler size={24} /></button>
                 <div className="h-[1px] bg-white/20 my-1"></div>
@@ -423,7 +474,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
             {/* EDITOR DE TOKEN */}
             {editingToken && (
                 <div 
-                    className="fixed z-[9999] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-64"
+                    className="fixed z-[9999999] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-64"
                     style={{ left: editingToken.screenX, top: editingToken.screenY }}
                     onMouseDown={(e) => e.stopPropagation()} 
                 >
@@ -484,7 +535,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
         )}
 
         {isMaster && showManager && (
-             <div className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+             <div className="fixed inset-0 z-[10000000] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                  <div className="w-[900px] h-[700px] bg-[#1a120b] border border-gold/30 rounded-xl shadow-2xl flex flex-col p-4 animate-scale-up">
                      <div className="flex justify-between mb-4 border-b border-white/10 pb-2">
                          <div className="flex gap-4">
@@ -532,16 +583,38 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                             {charactersData.map((c:any) => (
                                                 <button key={c.id} onClick={async () => {
                                                     if (!activeMap) return alert("Projete um mapa primeiro");
-                                                    // CRIAÇÃO DO TOKEN COM OWNER ID (PERMISSÃO DIRETA)
+                                                    
+                                                    // TOKEN JOGADOR
                                                     const newToken: Token = { 
                                                         id: crypto.randomUUID(), 
                                                         charId: c.id, 
-                                                        ownerId: c.playerId, // <--- AQUI ESTÁ A CORREÇÃO PRINCIPAL
+                                                        ownerId: c.playerId,
                                                         name: c.name, 
                                                         img: c.imageUrl || '/default-token.png', 
                                                         x: 2, y: 2, size: 1, type: 'player', visible: true, imgOffX: 0, imgOffY: 0, imgScale: 1 
                                                     };
-                                                    const newTokens = [...localTokens, newToken];
+
+                                                    let tokensToAdd = [newToken];
+
+                                                    // TOKEN COMPANHEIRO
+                                                    if (c.class === 'Patrulheiro' && c.subclass === 'Treinador') {
+                                                        const companionToken: Token = {
+                                                            id: crypto.randomUUID(),
+                                                            charId: c.id,
+                                                            ownerId: c.playerId,
+                                                            name: c.companionName || `${c.name} (Comp.)`,
+                                                            // BUSCA A IMAGEM CORRETAMENTE DA ESTRUTURA ANINHADA
+                                                            img: c.companion?.image || c.imageUrl || '/default-token.png',
+                                                            x: 3, y: 2,
+                                                            size: 1,
+                                                            type: 'companion',
+                                                            visible: true,
+                                                            imgOffX: 0, imgOffY: 0, imgScale: 1
+                                                        };
+                                                        tokensToAdd.push(companionToken);
+                                                    }
+                                                    
+                                                    const newTokens = [...localTokens, ...tokensToAdd];
                                                     setLocalTokens(newTokens);
                                                     await pushTokensUpdate(newTokens);
                                                 }} className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 py-1 rounded hover:border-gold">

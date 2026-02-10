@@ -4,12 +4,13 @@ import {
   Coins, Scroll, Backpack, Lightning, 
   TrendUp, PersonSimpleRun, BookOpen, 
   CaretUp, User, PencilSimple, Target,
-  Plus, Trash
+  Plus, Trash, Fingerprint, PawPrint,
+  Info
 } from '@phosphor-icons/react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-import { CLASS_DATABASE } from '../data/classDatabase';
+import { CLASS_DATABASE, ANCESTRIES } from '../data/classDatabase';
 import { 
     AttributeBox, ResourceDisplay, ThresholdBox, 
     TextAreaQuestion, EvolutionColumn, ArmorWidget,
@@ -68,6 +69,66 @@ const ExperienceItem = ({ item, onChange, onDelete }: any) => {
     );
 };
 
+// --- DADOS DE TREINAMENTO DO COMPANHEIRO ---
+const COMPANION_TRAINING_OPTIONS = [
+    { 
+        id: "afago", 
+        label: "Afago", 
+        max: 1, 
+        desc: "Uma vez por descanso, ao passar um momento dando carinho e atenção a seu companheiro, você pode receber 1 Ponto de Esperança ou cada um de vocês pode recuperar 1 PF." 
+    },
+    { 
+        id: "apegado", 
+        label: "Apegado", 
+        max: 1, 
+        desc: "Quando você marca seu último Ponto de Vida, seu companheiro animal vem rapidamente para socorrê-lo. Role um número de d6 igual ao número de PF que ele ainda tem disponível e marque-os. Se tirar 6 em qualquer uma dessas rolagens, seu companheiro o ajuda. Recupere seu último PV e volte à cena." 
+    },
+    { 
+        id: "atento", 
+        label: "Atento", 
+        max: 3, 
+        desc: "Seu companheiro animal recebe um bônus permanente de +2 na Evasão." 
+    },
+    { 
+        id: "blindado", 
+        label: "Blindado", 
+        max: 1, 
+        desc: "Quando seu companheiro animal sofre dano, você pode marcar um de seus Pontos de Armadura em vez de marcar 1 Ponto de Fadiga dele." 
+    },
+    { 
+        id: "feroz", 
+        label: "Feroz", 
+        max: 3, 
+        desc: "Aumente o dado de dano ou alcance de seu companheiro em um passo (d6 para d8, Próximo para Distante etc.)." 
+    },
+    { 
+        id: "inteligente", 
+        label: "Inteligente", 
+        max: 3, 
+        desc: "Seu companheiro recebe um bônus permanente de +1 em uma Experiência de companheiro à sua escolha." 
+    },
+    { 
+        id: "luz", 
+        label: "Luz no Fim do Túnel", 
+        max: 1, 
+        desc: "Use esse espaço para marcar 1 Ponto de Esperança adicional do seu personagem." 
+    },
+    { 
+        id: "resiliente", 
+        label: "Resiliente", 
+        max: 3, 
+        desc: "Seu companheiro recebe 1 PF adicional." 
+    }
+];
+
+// --- TEXTOS DE REGRAS (MODAL) ---
+const RULES_TEXTS = {
+    attack: "Ao mandar o companheiro animal atacar, ele recebe todos os benefícios que você receberia (como os efeitos de Marca da Presa). Em um sucesso, a rolagem de dano dele usa sua Proficiência e o dado de dano dele.",
+    fatigue: "Quando seu companheiro sofre qualquer quantidade de dano, ele marca 1 PF. Ao marcar o último PF, ele sai de cena (escondendo-se, fugindo ou algo parecido). Ele fica indisponível até o início do seu próximo descanso longo, quando retorna recuperado com Fadiga 1. Quando você escolhe um movimento de repouso para recuperar sua Fadiga, seu companheiro recupera a mesma quantidade.",
+    connection: "Faça um teste de conjuração para criar um elo com seu companheiro animal e mandá-lo agir. Gaste 1 Ponto de Esperança para somar uma Experiência do companheiro aplicável ao teste dele. Em um sucesso com Esperança, se seu próximo movimento se relacionar ao sucesso dele, você faz o teste com vantagem.",
+    trainingHeader: "Quando seu personagem sobe de nível, escolha uma opção disponível abaixo para seu companheiro e anote-a na ficha."
+};
+
 interface SheetModalProps {
   character: any;
   isOpen: boolean;
@@ -80,6 +141,10 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   const [paSpent, setPaSpent] = useState(0);
   const [characterImage, setCharacterImage] = useState(''); 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [editingImageTarget, setEditingImageTarget] = useState<'character' | 'companion'>('character');
+  
+  // Estado para o modal de informações (texto 'i')
+  const [infoModalContent, setInfoModalContent] = useState<string | null>(null);
 
   // Estado local para edição
   const [sheetData, setSheetData] = useState({
@@ -96,11 +161,25 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     inventory: [] as { name: string, quantity: number }[],
     evolution: {} as Record<string, number>,
     proficiency: 0,
-    guide: { origin: [] as string[], bonds: [] as string[] }
+    guide: { origin: [] as string[], bonds: [] as string[] },
+    // DADOS DO COMPANHEIRO
+    companion: {
+        name: '',
+        image: '',
+        concept: '', // Descrição do ataque padrão
+        evasion: 10,
+        pf: { current: 0, max: 6 },
+        damageDie: 'd6',
+        range: 'Corpo a Corpo',
+        experiences: [{name: '', value: 2}, {name: '', value: 2}],
+        trainingCounts: {} as Record<string, number> // Armazena quantos checks tem cada treinamento
+    }
   });
 
   const classKey = character?.class?.toLowerCase().replace(' ', '') || "mago";
   const classData = CLASS_DATABASE[classKey] || CLASS_DATABASE["mago"];
+  const isBeastbound = character?.class === 'Patrulheiro' && character?.subclass === 'Treinador';
+  const ancestryData = ANCESTRIES.find(a => a.name === character?.ancestry);
 
   // --- PERSISTÊNCIA E INICIALIZAÇÃO ---
   useEffect(() => {
@@ -132,7 +211,18 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
             inventory: character.inventory || [],
             evolution: character.evolution || {},
             proficiency: character.proficiency || 0,
-            guide: character.guide || { origin: [], bonds: [] }
+            guide: character.guide || { origin: [], bonds: [] },
+            companion: character.companion || {
+                name: '',
+                image: '',
+                concept: '',
+                evasion: 10,
+                pf: { current: 0, max: 6 },
+                damageDie: 'd6',
+                range: 'Corpo a Corpo',
+                experiences: [{name: '', value: 2}, {name: '', value: 2}],
+                trainingCounts: {}
+            }
         });
         setCharacterImage(character.imageUrl || '');
         setPaSpent(character.paSpent || 0);
@@ -144,20 +234,12 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   
   const userBaseMajor = sheetData.armor?.baseMajor || 0;
   const userBaseSevere = sheetData.armor?.baseSevere || 0;
-  
   let thresholdRangeText = { minor: "-", major: "-", severe: "-" };
-
   if (userBaseMajor > 0 && userBaseSevere > 0) {
       const finalMajor = userBaseMajor + character.level;
       const finalSevere = userBaseSevere + character.level;
-
-      thresholdRangeText = {
-          minor: `1 - ${finalMajor - 1}`,
-          major: `${finalMajor} - ${finalSevere - 1}`,
-          severe: `${finalSevere}+`
-      };
+      thresholdRangeText = { minor: `1 - ${finalMajor - 1}`, major: `${finalMajor} - ${finalSevere - 1}`, severe: `${finalSevere}+` };
   }
-  
   const maxPA = sheetData.armor?.baseSlots > 0 ? sheetData.armor.baseSlots : classData.stats.baseArmorPoints;
   const getAttr = (key: string) => (sheetData.attributes as any)?.[key]?.value ?? (character.attributes as any)?.[key]?.value ?? 0;
   
@@ -179,24 +261,15 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
   const updateStat = (statName: 'hp' | 'stress' | 'hope', field: 'current' | 'max', value: number) => {
       const currentStats = sheetData.stats;
-      const newStats = {
-          ...currentStats,
-          [statName]: {
-              ...currentStats[statName],
-              [field]: value
-          }
-      };
+      const newStats = { ...currentStats, [statName]: { ...currentStats[statName], [field]: value } };
       updateSheet('stats', newStats);
   };
 
   const updateAttribute = (attrName: string, val: number) => {
     const currentAttrs = (sheetData.attributes || {}) as any;
-    const newAttrs = { 
-        ...currentAttrs, 
-        [attrName]: { ...currentAttrs[attrName], value: val } 
-    };
+    const newAttrs = { ...currentAttrs, [attrName]: { ...currentAttrs[attrName], value: val } };
     updateSheet('attributes', newAttrs);
-};
+  };
 
   const addExperience = () => {
     const newExp = [...(sheetData.experiences || []), { name: '', value: 0 }];
@@ -243,8 +316,13 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   };
 
   const handleImageUpdate = (newUrl: string) => {
-    setCharacterImage(newUrl);
-    saveCharacterData({ imageUrl: newUrl });
+    if (editingImageTarget === 'character') {
+        setCharacterImage(newUrl);
+        saveCharacterData({ imageUrl: newUrl });
+    } else {
+        const newComp = { ...sheetData.companion, image: newUrl };
+        updateSheet('companion', newComp);
+    }
   };
 
   const toggleTrait = (category: string, trait: string) => {
@@ -265,6 +343,34 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
       updateSheet('guide', newGuide);
   };
 
+  // --- FUNÇÕES DO COMPANHEIRO ---
+  const updateCompanion = (field: string, value: any) => {
+      const newComp = { ...sheetData.companion, [field]: value };
+      updateSheet('companion', newComp);
+  };
+
+  const updateCompanionTraining = (id: string, count: number) => {
+      const currentCounts = sheetData.companion.trainingCounts || {};
+      const newCounts = { ...currentCounts, [id]: count };
+      updateCompanion('trainingCounts', newCounts);
+  };
+
+  const addCompanionExp = () => {
+    const newExps = [...sheetData.companion.experiences, { name: '', value: 2 }];
+    updateCompanion('experiences', newExps);
+  };
+
+  const updateCompanionExp = (index: number, val: any) => {
+      const newExps = [...sheetData.companion.experiences];
+      newExps[index] = val;
+      updateCompanion('experiences', newExps);
+  };
+
+  const deleteCompanionExp = (index: number) => {
+      const newExps = sheetData.companion.experiences.filter((_, i) => i !== index);
+      updateCompanion('experiences', newExps);
+  };
+
   const tabs = [
     { id: 'principal', label: 'Geral', icon: <User /> },
     { id: 'combate', label: 'Combate', icon: <Target /> },
@@ -274,14 +380,31 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     { id: 'descricao', label: 'Descrição', icon: <Scroll /> } 
   ];
 
+  if (isBeastbound) {
+      tabs.push({ id: 'companheiro', label: 'Companheiro', icon: <PawPrint weight="fill" /> });
+  }
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 animate-fade-in p-2 md:p-4" onClick={onClose}>
       <ImageUrlModal 
         isOpen={isImageModalOpen} 
         onClose={() => setIsImageModalOpen(false)} 
         onConfirm={handleImageUpdate} 
-        currentUrl={characterImage} 
+        currentUrl={editingImageTarget === 'character' ? characterImage : sheetData.companion.image} 
       />
+
+      {/* INFO MODAL OVERLAY */}
+      {infoModalContent && (
+          <div className="absolute inset-0 z-[300] flex items-center justify-center bg-black/80 p-4" onClick={() => setInfoModalContent(null)}>
+              <div className="bg-[#1a1520] border border-gold/50 p-6 rounded-xl max-w-lg w-full shadow-[0_0_30px_rgba(251,191,36,0.2)] animate-fade-in" onClick={e => e.stopPropagation()}>
+                  <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-gold font-rpg text-xl flex items-center gap-2"><Info weight="fill"/> Informação</h3>
+                      <button onClick={() => setInfoModalContent(null)} className="text-white/50 hover:text-white"><X size={20}/></button>
+                  </div>
+                  <p className="text-white/90 leading-relaxed text-sm whitespace-pre-line">{infoModalContent}</p>
+              </div>
+          </div>
+      )}
 
       <div className="relative w-full max-w-6xl h-full md:h-[90vh] bg-[#120f16] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
         
@@ -327,11 +450,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
           {activeTab === 'principal' && (
             <div className="h-full flex flex-col gap-4 md:gap-6 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
               
-              {/* CORREÇÃO DE SOBREPOSIÇÃO:
-                  No mobile, removemos 'flex-1' e 'min-h-0'. Usamos 'shrink-0' e 'h-auto'.
-                  Isso permite que o conteúdo cresça o quanto precisar dentro do scroll, empurrando o footer para baixo.
-                  No desktop (lg), mantemos o layout flexível (flex-1) com scroll interno nas colunas.
-              */}
               <div className="flex flex-col lg:flex-row shrink-0 lg:flex-1 gap-6 h-auto lg:min-h-0 lg:overflow-hidden">
                   
                   {/* ATRIBUTOS & EXPERIÊNCIAS */}
@@ -367,9 +485,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                                 onDelete={() => deleteExperience(i)} 
                             />
                         ))}
-                        {(!sheetData.experiences || sheetData.experiences.length === 0) && (
-                            <p className="text-[10px] text-white/20 text-center italic mt-2">Nenhuma experiência.</p>
-                        )}
                     </div>
                   </div>
 
@@ -411,7 +526,11 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                          </div>
                       </div>
 
-                      <div className="group relative cursor-pointer w-full max-w-[200px] md:max-w-[260px] aspect-[3/4] rounded-[50%] border-[6px] border-[#1a1520] ring-1 ring-white/10 bg-black overflow-hidden shadow-2xl shrink-0 transition-transform hover:scale-[1.02]" onClick={() => setIsImageModalOpen(true)}>
+                      <div className="group relative cursor-pointer w-full max-w-[200px] md:max-w-[260px] aspect-[3/4] rounded-[50%] border-[6px] border-[#1a1520] ring-1 ring-white/10 bg-black overflow-hidden shadow-2xl shrink-0 transition-transform hover:scale-[1.02]" 
+                        onClick={() => {
+                            setEditingImageTarget('character');
+                            setIsImageModalOpen(true);
+                        }}>
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 z-10"></div>
                             {characterImage ? <img src={characterImage} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-white/20 bg-[#0f0c13]"><User size={64} weight="thin" /><span className="text-xs uppercase mt-3 tracking-widest">Sem Imagem</span></div>}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20"><span className="flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-full backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest"><PencilSimple /> Alterar</span></div>
@@ -428,7 +547,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                                   <p className="text-xs text-white/80 leading-relaxed text-justify">{feature.description}</p>
                               </div>
                           ))}
-                          {/* NOVA SEÇÃO: HABILIDADE DE ESPERANÇA */}
                           {classData.hopeAbility && (
                               <div className="bg-blue-900/20 p-3 rounded border border-blue-500/30">
                                   <h4 className="text-sm font-bold text-blue-300 mb-2 border-b border-blue-500/20 pb-1 flex items-center gap-2">
@@ -437,11 +555,19 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                                   <p className="text-xs text-white/80 leading-relaxed text-justify">{classData.hopeAbility.description}</p>
                               </div>
                           )}
+                          {ancestryData && (
+                              <div className="bg-green-900/20 p-3 rounded border border-green-500/30">
+                                  <h4 className="text-sm font-bold text-green-300 mb-2 border-b border-green-500/20 pb-1 flex items-center gap-2">
+                                      <Fingerprint size={14} weight="fill" /> {ancestryData.ability}
+                                  </h4>
+                                  <p className="text-xs text-white/80 leading-relaxed text-justify">{ancestryData.abilityDesc}</p>
+                              </div>
+                          )}
                       </div>
                   </div>
               </div>
 
-              {/* FOOTER (Evasão, Limiares, Armadura) */}
+              {/* FOOTER */}
               <div className="h-auto lg:h-24 shrink-0 flex flex-col md:flex-row gap-4 md:gap-6 pb-4 lg:pb-0 mt-4 lg:mt-0">
                  <div className="w-full md:w-1/4 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg relative overflow-hidden group min-h-[80px]">
                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={48} /></div>
@@ -456,7 +582,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                         }}
                         className="text-4xl font-bold text-cyan-400 bg-transparent text-center w-full outline-none p-0 leading-none drop-shadow-[0_0_10px_rgba(34,211,238,0.3)] z-10"
                     />
-
                     <span className="text-[10px] uppercase text-white/40 tracking-[0.2em] mt-1 font-bold">Evasão</span>
                  </div>
                  <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg min-h-[80px]">
@@ -471,6 +596,193 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                     <ArmorWidget maxPA={maxPA} currentPA={paSpent} name="Armadura" onUpdatePA={handleUpdatePA} />
                  </div>
               </div>
+            </div>
+          )}
+
+          {/* === ABA COMPANHEIRO ANIMAL === */}
+          {activeTab === 'companheiro' && (
+            <div className="h-full overflow-y-auto custom-scrollbar flex flex-col gap-6 pr-2">
+                
+                {/* CABEÇALHO DO COMPANHEIRO */}
+                <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0">
+                    <div 
+                        className="w-full h-64 bg-black/50 relative group cursor-pointer"
+                        onClick={() => {
+                            setEditingImageTarget('companion');
+                            setIsImageModalOpen(true);
+                        }}
+                    >
+                        {sheetData.companion.image ? (
+                            <img src={sheetData.companion.image} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
+                                <PawPrint size={48} />
+                                <span className="text-xs uppercase mt-2 tracking-widest">Adicionar Imagem</span>
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1520] to-transparent"></div>
+                        
+                        {/* Ícone de Editar (Visual Hint) */}
+                        <div className="absolute top-4 right-4 text-white/20 group-hover:text-white transition-colors">
+                            <PencilSimple size={24} />
+                        </div>
+
+                        {/* Inputs de Texto (Click Propagation Stopped) */}
+                        <div 
+                            className="absolute bottom-4 left-6 flex flex-col gap-1 z-10 w-full max-w-lg"
+                            onClick={(e) => e.stopPropagation()} 
+                        >
+                            <input 
+                                type="text"
+                                value={sheetData.companion.name}
+                                onChange={e => updateCompanion('name', e.target.value)}
+                                placeholder="NOME DO COMPANHEIRO"
+                                className="bg-transparent text-3xl font-rpg font-bold text-white outline-none placeholder-white/30 uppercase"
+                            />
+                            <input 
+                                type="text"
+                                value={sheetData.companion.concept}
+                                onChange={e => updateCompanion('concept', e.target.value)}
+                                placeholder="Descreva aqui o ataque padrão dele (método que ele usa para causar dano)..."
+                                className="bg-transparent text-sm text-white/60 outline-none w-full placeholder-white/20 italic"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* CORPO DO COMPANHEIRO */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    {/* COLUNA 1: ESTATÍSTICAS E COMBATE */}
+                    <div className="space-y-4">
+                        {/* FADIGA */}
+                        <div className="bg-[#1a1520]/50 p-4 rounded-xl border border-white/5 relative">
+                             <div className="flex justify-between items-center mb-3">
+                                <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Lightning weight="fill" /> Pontos de Fadiga
+                                </h3>
+                                <button onClick={() => setInfoModalContent(RULES_TEXTS.fatigue)} className="text-purple-400/50 hover:text-purple-300"><Info size={16}/></button>
+                             </div>
+                            
+                            <div className="flex gap-2 justify-center">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <button 
+                                        key={i}
+                                        onClick={() => updateCompanion('pf', { ...sheetData.companion.pf, current: i < sheetData.companion.pf.current ? i : i + 1 })}
+                                        className={`w-8 h-8 rounded border transition-all ${i < sheetData.companion.pf.current ? 'bg-purple-600 border-purple-400 shadow-[0_0_10px_#9333ea]' : 'bg-black/40 border-white/10 hover:border-white/30'}`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                         {/* EVASÃO */}
+                         <div className="bg-[#1a1520]/50 p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center">
+                             <h3 className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-1">Evasão</h3>
+                             <input 
+                                type="number"
+                                value={sheetData.companion.evasion}
+                                onChange={(e) => updateCompanion('evasion', parseInt(e.target.value))}
+                                className="text-4xl font-bold text-white bg-transparent text-center w-full outline-none p-0 leading-none"
+                             />
+                         </div>
+
+                        {/* COMBATE */}
+                        <div className="bg-[#1a1520]/50 p-4 rounded-xl border border-white/5">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Sword weight="fill" /> Ataque & Dano
+                                </h3>
+                                <button onClick={() => setInfoModalContent(RULES_TEXTS.attack)} className="text-red-400/50 hover:text-red-300"><Info size={16}/></button>
+                            </div>
+                            
+                            <div className="flex gap-4 mb-2">
+                                <div className="flex-1">
+                                    <label className="text-[10px] text-white/40 uppercase block mb-1">Dado</label>
+                                    <select 
+                                        value={sheetData.companion.damageDie}
+                                        onChange={e => updateCompanion('damageDie', e.target.value)}
+                                        className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm outline-none focus:border-red-400"
+                                    >
+                                        <option value="d6">d6</option>
+                                        <option value="d8">d8</option>
+                                        <option value="d10">d10</option>
+                                        <option value="d12">d12</option>
+                                    </select>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="text-[10px] text-white/40 uppercase block mb-1">Alcance</label>
+                                    <input 
+                                        type="text"
+                                        value={sheetData.companion.range}
+                                        onChange={e => updateCompanion('range', e.target.value)}
+                                        className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-white text-sm outline-none focus:border-red-400"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* COLUNA 2: EXPERIÊNCIAS */}
+                    <div className="bg-[#1a1520]/50 p-4 rounded-xl border border-white/5 h-fit min-h-[300px] flex flex-col">
+                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
+                            <h3 className="text-xs font-bold text-gold uppercase tracking-widest flex items-center gap-2">
+                                <Scroll weight="fill" /> Experiências
+                            </h3>
+                             <button onClick={() => setInfoModalContent(RULES_TEXTS.connection)} className="text-gold/50 hover:text-gold"><Info size={16}/></button>
+                        </div>
+                        
+                        <div className="space-y-2 flex-1">
+                            {sheetData.companion.experiences.map((exp, i) => (
+                                <ExperienceItem 
+                                    key={i} 
+                                    item={exp} 
+                                    onChange={(val: any) => updateCompanionExp(i, val)}
+                                    onDelete={() => deleteCompanionExp(i)} 
+                                />
+                            ))}
+                        </div>
+                        <button onClick={addCompanionExp} className="w-full mt-4 py-2 border border-white/10 rounded text-xs text-white/50 hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center gap-2">
+                            <Plus /> Nova Experiência
+                        </button>
+                    </div>
+
+                    {/* COLUNA 3: TREINAMENTO */}
+                    <div className="bg-[#1a1520]/50 p-4 rounded-xl border border-white/5 h-fit">
+                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
+                            <h3 className="text-xs font-bold text-green-400 uppercase tracking-widest flex items-center gap-2">
+                                <Fingerprint weight="fill" /> Treinamento
+                            </h3>
+                            <button onClick={() => setInfoModalContent(RULES_TEXTS.trainingHeader)} className="text-green-400/50 hover:text-green-300"><Info size={16}/></button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {COMPANION_TRAINING_OPTIONS.map((opt) => {
+                                const currentCount = sheetData.companion.trainingCounts?.[opt.id] || 0;
+                                return (
+                                    <div key={opt.id} className="border-b border-white/5 last:border-0 pb-2">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-sm font-bold text-white/80">{opt.label}</span>
+                                            <button onClick={() => setInfoModalContent(opt.desc)} className="text-white/20 hover:text-white"><Info size={12} weight="bold"/></button>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {Array.from({ length: opt.max }).map((_, idx) => {
+                                                const isActive = idx < currentCount;
+                                                return (
+                                                    <button 
+                                                        key={idx}
+                                                        onClick={() => updateCompanionTraining(opt.id, isActive ? idx : idx + 1)} 
+                                                        className={`w-4 h-4 rounded border transition-all ${isActive ? 'bg-green-600 border-green-400' : 'bg-transparent border-white/20 hover:border-white/50'}`}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                </div>
             </div>
           )}
 
@@ -533,9 +845,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
 
           {/* === ABA GUIA === */}
           {activeTab === 'guia' && (
-            // Grid de 2 colunas no Desktop (organizado, não enorme) e 1 coluna no Mobile (organizado, legível)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-y-auto custom-scrollbar pb-4 pr-1">
-                {/* Seção Origem */}
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-gold uppercase border-b border-white/10 pb-2">Origem</h3>
                     {classData.questions.origin.map((q: string, i: number) => (
@@ -549,7 +859,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                     ))}
                 </div>
                 
-                {/* Seção Vínculos */}
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-gold uppercase border-b border-white/10 pb-2">Vínculos</h3>
                     {classData.questions.bonds.map((q: string, i: number) => (
