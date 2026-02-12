@@ -142,6 +142,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   const [characterImage, setCharacterImage] = useState(''); 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [editingImageTarget, setEditingImageTarget] = useState<'character' | 'companion'>('character');
+  const [compDrag, setCompDrag] = useState({ isDragging: false, startY: 0, startOffset: 50, currentOffset: 50, isMoved: false });
   
   // Estado para o modal de informações (texto 'i')
   const [infoModalContent, setInfoModalContent] = useState<string | null>(null);
@@ -610,37 +611,68 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
             </div>
           )}
 
-          {/* === ABA COMPANHEIRO ANIMAL === */}
-          {activeTab === 'companheiro' && (
-            <div className="h-full overflow-y-auto custom-scrollbar flex flex-col gap-6 pr-2">
-                
-                {/* CABEÇALHO DO COMPANHEIRO */}
-                <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0">
+          {/* CABEÇALHO DO COMPANHEIRO */}
+          <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0">
                     <div 
-                        className="w-full h-64 bg-black/50 relative group cursor-pointer"
-                        onClick={() => {
-                            setEditingImageTarget('companion');
-                            setIsImageModalOpen(true);
+                        className="w-full h-64 bg-black/50 relative group cursor-ns-resize"
+                        onMouseDown={(e) => {
+                            setCompDrag({
+                                isDragging: true,
+                                startY: e.clientY,
+                                startOffset: sheetData.companion.imageOffsetY ?? 50,
+                                currentOffset: sheetData.companion.imageOffsetY ?? 50,
+                                isMoved: false
+                            });
+                        }}
+                        onMouseMove={(e) => {
+                            if (!compDrag.isDragging) return;
+                            const delta = e.clientY - compDrag.startY;
+                            if (Math.abs(delta) > 5) {
+                                const newOffset = Math.max(0, Math.min(100, compDrag.startOffset - (delta * 0.5)));
+                                setCompDrag(prev => ({ ...prev, currentOffset: newOffset, isMoved: true }));
+                            }
+                        }}
+                        onMouseUp={() => {
+                            if (!compDrag.isDragging) return;
+                            if (compDrag.isMoved) {
+                                updateCompanion('imageOffsetY', compDrag.currentOffset);
+                            } else {
+                                setEditingImageTarget('companion');
+                                setIsImageModalOpen(true);
+                            }
+                            setCompDrag(prev => ({ ...prev, isDragging: false }));
+                        }}
+                        onMouseLeave={() => {
+                            if (!compDrag.isDragging) return;
+                            if (compDrag.isMoved) {
+                                updateCompanion('imageOffsetY', compDrag.currentOffset);
+                            }
+                            setCompDrag(prev => ({ ...prev, isDragging: false }));
                         }}
                     >
                         {sheetData.companion.image ? (
-                            <img src={sheetData.companion.image} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
+                            <img 
+                                src={sheetData.companion.image} 
+                                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity pointer-events-none" 
+                                style={{ objectPosition: `center ${compDrag.isDragging ? compDrag.currentOffset : (sheetData.companion.imageOffsetY ?? 50)}%` }}
+                            />
                         ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
+                            <div className="w-full h-full flex flex-col items-center justify-center text-white/20 pointer-events-none">
                                 <PawPrint size={48} />
                                 <span className="text-xs uppercase mt-2 tracking-widest">Adicionar Imagem</span>
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1520] to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1520] to-transparent pointer-events-none"></div>
                         
                         {/* Ícone de Editar (Visual Hint) */}
-                        <div className="absolute top-4 right-4 text-white/20 group-hover:text-white transition-colors">
+                        <div className="absolute top-4 right-4 text-white/20 group-hover:text-white transition-colors pointer-events-none">
                             <PencilSimple size={24} />
                         </div>
 
                         {/* Inputs de Texto (Click Propagation Stopped) */}
                         <div 
-                            className="absolute bottom-4 left-6 flex flex-col gap-1 z-10 w-full max-w-lg"
+                            className="absolute bottom-4 left-6 flex flex-col gap-1 z-10 w-full max-w-lg cursor-auto"
+                            onMouseDown={(e) => e.stopPropagation()}
                             onClick={(e) => e.stopPropagation()} 
                         >
                             <input 
