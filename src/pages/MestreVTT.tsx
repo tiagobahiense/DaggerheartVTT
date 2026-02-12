@@ -116,11 +116,17 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                         <span className="absolute -bottom-1 text-[8px] uppercase tracking-widest text-white/60 bg-black/60 px-1 rounded z-10">{isOnline ? 'LVL' : 'OFF'}</span>
                     </div>
                     
-                    <div className="flex flex-col items-start min-w-0 overflow-hidden flex-1">
+                    <div className="flex flex-col items-start min-w-0 overflow-hidden flex-1 py-1">
                         <h2 className="font-rpg text-sm font-bold leading-none text-white truncate w-full group-hover:text-gold transition-colors">{char.name}</h2>
-                        <div className="flex items-center gap-1 text-[10px] text-white/90 mt-0.5 truncate w-full">
+                        <div className="flex flex-wrap items-center gap-1 text-[10px] text-white/90 mt-1 w-full leading-tight">
+                            <span className="font-bold uppercase tracking-wide text-gold/80">{char.ancestry}</span>
+                            <span className="text-white/30">•</span>
                             <span className="font-bold uppercase tracking-wide">{char.class}</span>
+                            <span className="italic opacity-70">({char.subclass})</span>
                         </div>
+                        {char.heritage && (
+                            <p className="text-[9px] text-white/40 w-full truncate italic mt-0.5 border-t border-white/5 pt-0.5">"{char.heritage}"</p>
+                        )}
                     </div>
                 </button>
 
@@ -864,19 +870,28 @@ export default function MestreVTT() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Busca Personagens
-  useEffect(() => {
+// 2. Busca Personagens (Listener Fixo - Roda apenas uma vez)
+useEffect(() => {
     const q = query(collection(db, 'characters'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chars = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Character));
       setCharacters(chars);
-      if (selectedChar) {
-          const updated = chars.find(c => c.id === selectedChar.id);
-          if (updated) setSelectedChar(updated);
-      }
     });
     return () => unsubscribe();
-  }, [selectedChar]);
+  }, []); // Dependência vazia: O listener NÃO é recriado quando o state muda
+
+  // 2.1 Sincroniza Personagem Selecionado (Roda apenas quando necessário)
+  useEffect(() => {
+      if (selectedChar) {
+          const updated = characters.find(c => c.id === selectedChar.id);
+          
+          // Verifica se realmente houve mudança nos dados antes de atualizar o state
+          // Isso previne o loop "update depth exceeded" comparando o conteúdo
+          if (updated && JSON.stringify(updated) !== JSON.stringify(selectedChar)) {
+              setSelectedChar(updated);
+          }
+      }
+  }, [characters, selectedChar]);
 
   const handleRestAll = async (type: 'short' | 'long') => {
       if (!window.confirm("Aplicar descanso?")) return;

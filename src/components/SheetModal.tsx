@@ -176,7 +176,8 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     }
   });
 
-  const classKey = character?.class?.toLowerCase().replace(' ', '') || "mago";
+  // CORREÇÃO: Normaliza removendo acentos (ex: Guardião -> guardiao) para bater com o CLASS_DATABASE
+  const classKey = character?.class?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, '') || "mago";
   const classData = CLASS_DATABASE[classKey] || CLASS_DATABASE["mago"];
   const isBeastbound = character?.class === 'Patrulheiro' && character?.subclass === 'Treinador';
   const ancestryData = ANCESTRIES.find(a => a.name === character?.ancestry);
@@ -230,19 +231,29 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
     }
   }, [character]);
 
+  // CORREÇÃO DO ERRO: Return early deve vir ANTES de qualquer cálculo que use character.level ou sheetData que dependa dele
   if (!isOpen || !character) return null;
   
-  const userBaseMajor = sheetData.armor?.baseMajor || 0;
-  const userBaseSevere = sheetData.armor?.baseSevere || 0;
-  let thresholdRangeText = { minor: "-", major: "-", severe: "-" };
-  if (userBaseMajor > 0 && userBaseSevere > 0) {
-      const finalMajor = userBaseMajor + character.level;
-      const finalSevere = userBaseSevere + character.level;
-      thresholdRangeText = { minor: `1 - ${finalMajor - 1}`, major: `${finalMajor} - ${finalSevere - 1}`, severe: `${finalSevere}+` };
-  }
+  // --- CÁLCULOS SEGUROS APÓS VERIFICAÇÃO ---
   const maxPA = sheetData.armor?.baseSlots > 0 ? sheetData.armor.baseSlots : classData.stats.baseArmorPoints;
   const getAttr = (key: string) => (sheetData.attributes as any)?.[key]?.value ?? (character.attributes as any)?.[key]?.value ?? 0;
   
+  // CORREÇÃO VISUAL DOS LIMIARES: Movido para cá para evitar erro de leitura de 'level' de null
+  let thresholdRangeText = { minor: "-", major: "-", severe: "-" };
+  const userBaseMajor = sheetData.armor?.baseMajor || 0;
+  const userBaseSevere = sheetData.armor?.baseSevere || 0;
+  
+  if (userBaseMajor > 0 && userBaseSevere > 0) {
+      const finalMajor = userBaseMajor + character.level;
+      const finalSevere = userBaseSevere + character.level;
+      // Ajuste visual: Mostra até o valor de finalSevere no Major, e Severe começa em +1
+      thresholdRangeText = { 
+          minor: `1 - ${finalMajor - 1}`, 
+          major: `${finalMajor} - ${finalSevere}`, 
+          severe: `${finalSevere + 1}+` 
+      };
+  }
+
   const saveCharacterData = async (newData: any) => {
       if (!character.id) return;
       try {
