@@ -822,11 +822,30 @@ export default function MestreVTT() {
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
   const styles = `
-        @keyframes spell-cast { 0% { transform: translateY(40vh) scale(0.5); opacity: 1; } 100% { transform: translateY(-50vh) scale(1.5); opacity: 0; } }
-        .animate-cast-spell { animation: spell-cast 1.5s forwards; }
-        .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
-        @keyframes ds-fade-in { 0% { opacity: 0; transform: scale(1.2); } 15% { opacity: 1; transform: scale(1); } 85% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.9); } }
-  `;
+  @keyframes spell-cast { 0% { transform: translateY(40vh) scale(0.5); opacity: 1; } 100% { transform: translateY(-50vh) scale(1.5); opacity: 0; } }
+  .animate-cast-spell { animation: spell-cast 1.5s forwards; }
+  
+  .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
+  @keyframes ds-fade-in { 0% { opacity: 0; transform: scale(1.2); } 15% { opacity: 1; transform: scale(1); } 85% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.9); } }
+
+  /* ANIMAÇÕES DOS DADOS RECUPERADAS */
+  @keyframes tumble-3d {
+      0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+      25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
+      50% { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg); }
+      75% { transform: rotateX(540deg) rotateY(270deg) rotateZ(135deg); }
+      100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg); }
+  }
+  @keyframes tumble-3d-reverse {
+      0% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+      100% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  }
+  .animate-tumble-3d { animation: tumble-3d 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+  .animate-tumble-3d-reverse { animation: tumble-3d-reverse 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+  .perspective-1000 { perspective: 1000px; }
+  .animate-spin-slow { animation: spin 3s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+`;
 
   // 1. Inicializa Sessão e Listeners Globais
   useEffect(() => {
