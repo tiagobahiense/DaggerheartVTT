@@ -173,7 +173,9 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
         damageDie: 'd6',
         range: 'Corpo a Corpo',
         experiences: [{name: '', value: 2}, {name: '', value: 2}],
-        trainingCounts: {} as Record<string, number> // Armazena quantos checks tem cada treinamento
+        trainingCounts: {} as Record<string, number>,
+        imageOffsetX: 50,
+        imageOffsetY: 50
     }
   });
 
@@ -223,7 +225,9 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                 damageDie: 'd6',
                 range: 'Corpo a Corpo',
                 experiences: [{name: '', value: 2}, {name: '', value: 2}],
-                trainingCounts: {}
+                trainingCounts: {},
+                imageOffsetX: 50,
+                imageOffsetY: 50
             }
         });
         setCharacterImage(character.imageUrl || '');
@@ -239,7 +243,7 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   const maxPA = sheetData.armor?.baseSlots > 0 ? sheetData.armor.baseSlots : classData.stats.baseArmorPoints;
   const getAttr = (key: string) => (sheetData.attributes as any)?.[key]?.value ?? (character.attributes as any)?.[key]?.value ?? 0;
   
-  // CORREÇÃO VISUAL DOS LIMIARES: Movido para cá para evitar erro de leitura de 'level' de null
+  // CORREÇÃO VISUAL DOS LIMIARES
   let thresholdRangeText = { minor: "-", major: "-", severe: "-" };
   const userBaseMajor = sheetData.armor?.baseMajor || 0;
   const userBaseSevere = sheetData.armor?.baseSevere || 0;
@@ -247,7 +251,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
   if (userBaseMajor > 0 && userBaseSevere > 0) {
       const finalMajor = userBaseMajor + character.level;
       const finalSevere = userBaseSevere + character.level;
-      // Ajuste visual: Mostra até o valor de finalSevere no Major, e Severe começa em +1
       thresholdRangeText = { 
           minor: `1 - ${finalMajor - 1}`, 
           major: `${finalMajor} - ${finalSevere}`, 
@@ -611,8 +614,12 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
             </div>
           )}
 
-          {/* CABEÇALHO DO COMPANHEIRO */}
-          <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0 relative">
+          {/* === ABA COMPANHEIRO ANIMAL === */}
+          {activeTab === 'companheiro' && (
+            <div className="h-full overflow-y-auto custom-scrollbar flex flex-col gap-6 pr-2">
+                
+                {/* CABEÇALHO DO COMPANHEIRO */}
+                <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0 relative">
                     <div 
                         className="w-full h-64 bg-black/50 relative group cursor-move"
                         onMouseDown={(e) => {
