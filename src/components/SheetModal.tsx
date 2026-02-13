@@ -612,11 +612,11 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
           )}
 
           {/* CABEÇALHO DO COMPANHEIRO */}
-          <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0">
+          <div className="w-full bg-[#1a1520] border border-white/10 rounded-xl overflow-hidden shrink-0 relative">
                     <div 
                         className="w-full h-64 bg-black/50 relative group cursor-move"
                         onMouseDown={(e) => {
-                            e.preventDefault(); // Impede o drag fantasma do navegador e seleção de texto
+                            e.preventDefault(); // Impede o drag fantasma
                             setCompDrag({
                                 isDragging: true,
                                 startX: e.clientX,
@@ -627,46 +627,6 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                                 currentOffsetY: sheetData.companion.imageOffsetY ?? 50,
                                 isMoved: false
                             });
-                        }}
-                        onMouseMove={(e) => {
-                            if (!compDrag.isDragging) return;
-                            const deltaX = e.clientX - compDrag.startX;
-                            const deltaY = e.clientY - compDrag.startY;
-                            
-                            // Tolerância pequena para não confundir com o clique rápido
-                            if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-                                const newOffsetX = Math.max(0, Math.min(100, compDrag.startOffsetX - (deltaX * 0.5)));
-                                const newOffsetY = Math.max(0, Math.min(100, compDrag.startOffsetY - (deltaY * 0.5)));
-                                setCompDrag(prev => ({ ...prev, currentOffsetX: newOffsetX, currentOffsetY: newOffsetY, isMoved: true }));
-                            }
-                        }}
-                        onMouseUp={() => {
-                            if (!compDrag.isDragging) return;
-                            if (compDrag.isMoved) {
-                                // Salva as duas direções
-                                const newComp = { 
-                                    ...sheetData.companion, 
-                                    imageOffsetX: compDrag.currentOffsetX,
-                                    imageOffsetY: compDrag.currentOffsetY 
-                                };
-                                updateSheet('companion', newComp);
-                            } else {
-                                setEditingImageTarget('companion');
-                                setIsImageModalOpen(true);
-                            }
-                            setCompDrag(prev => ({ ...prev, isDragging: false }));
-                        }}
-                        onMouseLeave={() => {
-                            if (!compDrag.isDragging) return;
-                            if (compDrag.isMoved) {
-                                const newComp = { 
-                                    ...sheetData.companion, 
-                                    imageOffsetX: compDrag.currentOffsetX,
-                                    imageOffsetY: compDrag.currentOffsetY 
-                                };
-                                updateSheet('companion', newComp);
-                            }
-                            setCompDrag(prev => ({ ...prev, isDragging: false }));
                         }}
                     >
                         {sheetData.companion.image ? (
@@ -685,12 +645,12 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#1a1520] to-transparent pointer-events-none"></div>
                         
-                        {/* Ícone de Editar (Visual Hint) */}
+                        {/* Ícone de Editar */}
                         <div className="absolute top-4 right-4 text-white/20 group-hover:text-white transition-colors pointer-events-none">
                             <PencilSimple size={24} />
                         </div>
 
-                        {/* Inputs de Texto (Click Propagation Stopped para não arrastar quando clica no texto) */}
+                        {/* Inputs de Texto */}
                         <div 
                             className="absolute bottom-4 left-6 flex flex-col gap-1 z-10 w-full max-w-lg cursor-auto"
                             onMouseDown={(e) => e.stopPropagation()}
@@ -712,6 +672,37 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                             />
                         </div>
                     </div>
+
+                    {/* TELA INVISÍVEL DE DRAG GLOBAL (Garante que o mouse não escape) */}
+                    {compDrag.isDragging && (
+                        <div 
+                            className="fixed inset-0 z-[9999] cursor-move"
+                            onMouseMove={(e) => {
+                                const deltaX = e.clientX - compDrag.startX;
+                                const deltaY = e.clientY - compDrag.startY;
+                                if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                                    // Multiplicador 0.3 ajusta a sensibilidade do arraste
+                                    const newOffsetX = Math.max(0, Math.min(100, compDrag.startOffsetX - (deltaX * 0.3))); 
+                                    const newOffsetY = Math.max(0, Math.min(100, compDrag.startOffsetY - (deltaY * 0.3)));
+                                    setCompDrag(prev => ({ ...prev, currentOffsetX: newOffsetX, currentOffsetY: newOffsetY, isMoved: true }));
+                                }
+                            }}
+                            onMouseUp={() => {
+                                if (compDrag.isMoved) {
+                                    const newComp = { 
+                                        ...sheetData.companion, 
+                                        imageOffsetX: compDrag.currentOffsetX,
+                                        imageOffsetY: compDrag.currentOffsetY 
+                                    };
+                                    updateSheet('companion', newComp);
+                                } else {
+                                    setEditingImageTarget('companion');
+                                    setIsImageModalOpen(true);
+                                }
+                                setCompDrag(prev => ({ ...prev, isDragging: false }));
+                            }}
+                        />
+                    )}
                 </div>
 
                 {/* CORPO DO COMPANHEIRO */}
