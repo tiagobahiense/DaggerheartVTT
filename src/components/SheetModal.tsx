@@ -7,7 +7,7 @@ import {
   Plus, Trash, Fingerprint, PawPrint,
   Info
 } from '@phosphor-icons/react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 import { CLASS_DATABASE, ANCESTRIES } from '../data/classDatabase';
@@ -130,12 +130,13 @@ const RULES_TEXTS = {
 };
 
 interface SheetModalProps {
-  character: any;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
+    character: any;
+    isOpen: boolean;
+    onClose: () => void;
+    groupCharacters?: any[]; // Lista de personagens do grupo para menção
+  }
+  
+  export const SheetModal = ({ character, isOpen, onClose, groupCharacters = [] }: SheetModalProps) => {
   const [activeTab, setActiveTab] = useState('principal');
   const [selectedTraits, setSelectedTraits] = useState<Record<string, string[]>>({});
   const [paSpent, setPaSpent] = useState(0);
@@ -923,15 +924,77 @@ export const SheetModal = ({ character, isOpen, onClose }: SheetModalProps) => {
                 
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-gold uppercase border-b border-white/10 pb-2">Vínculos</h3>
-                    {classData.questions.bonds.map((q: string, i: number) => (
-                        <TextAreaQuestion 
-                            key={`bonds-${i}`} 
-                            label={`Vínculo ${i+1}`} 
-                            placeholder={q}
-                            value={sheetData.guide?.bonds?.[i] || ''}
-                            onChange={(val: string) => handleGuideChange('bonds', i, val)}
-                        />
-                    ))}
+                    {classData.questions.bonds.map((q: string, i: number) => {
+                        const currentText = sheetData.guide?.bonds?.[i] || '';
+                        
+                        // Função para mencionar alguém
+                        const addMention = (targetName: string) => {
+                            const newText = currentText + (currentText.length > 0 && !currentText.endsWith(' ') ? ' ' : '') + `@${targetName} `;
+                            handleGuideChange('bonds', i, newText);
+                        };
+
+                        // Função para enviar solicitação
+                        const sendBondRequest = async (targetChar: any) => {
+                            if (!targetChar?.id) return;
+                            try {
+                                await updateDoc(doc(db, 'characters', targetChar.id), {
+                                    bondRequests: arrayUnion({
+                                        fromId: character.id,
+                                        fromName: character.name,
+                                        questionIndex: i,
+                                        questionText: q,
+                                        timestamp: Date.now()
+                                    })
+                                });
+                                alert(`Solicitação enviada para ${targetChar.name}!`);
+                            } catch (error) {
+                                console.error("Erro ao enviar solicitação:", error);
+                                alert("Erro ao enviar solicitação.");
+                            }
+                        };
+
+                        return (
+                            <div key={`bonds-${i}`} className="bg-white/5 rounded p-3 border border-white/10 w-full relative group/box">
+                                <label className="block text-xs text-gold mb-2 font-bold uppercase">{`Vínculo ${i+1}`}</label>
+                                <textarea 
+                                    className="w-full bg-black/50 border border-white/10 rounded p-2 text-white/80 text-xs resize-none min-h-[80px] focus:border-gold outline-none" 
+                                    placeholder={q}
+                                    value={currentText}
+                                    onChange={(e) => handleGuideChange('bonds', i, e.target.value)}
+                                />
+                                
+                                {/* Área de Menções e Ações */}
+                                <div className="mt-2 flex flex-wrap gap-2 items-center">
+                                    <span className="text-[10px] text-white/30 uppercase tracking-widest mr-1">Mencionar:</span>
+                                    {groupCharacters
+                                        .filter(c => c.id !== character.id) // Não mostrar a si mesmo
+                                        .map(c => {
+                                            const isMentioned = currentText.includes(`@${c.name}`);
+                                            return (
+                                                <div key={c.id} className="flex items-center gap-1">
+                                                    <button 
+                                                        onClick={() => addMention(c.name)}
+                                                        className="px-2 py-1 rounded bg-white/10 text-[10px] text-white hover:bg-white/20 transition-colors border border-white/5"
+                                                    >
+                                                        @{c.name}
+                                                    </button>
+                                                    {isMentioned && (
+                                                        <button 
+                                                            onClick={() => sendBondRequest(c)}
+                                                            className="px-2 py-1 rounded bg-gold/20 text-[10px] text-gold hover:bg-gold/30 transition-colors border border-gold/30 flex items-center gap-1 animate-pulse"
+                                                            title="Solicitar que este jogador responda"
+                                                        >
+                                                            <Target size={12} /> Solicitar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
           )}

@@ -999,7 +999,12 @@ useEffect(() => {
        
        {useCollapsedView ? <CollapsedPlayerList players={visibleCharacters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} /> : <PlayerList players={visibleCharacters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} />}
 
-       <SheetModal character={selectedChar} isOpen={isSheetOpen} onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} />
+       <SheetModal 
+           character={selectedChar} 
+           isOpen={isSheetOpen} 
+           onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} 
+           groupCharacters={visibleCharacters} 
+       />
        <CardsMonitorModal isOpen={showCardsMonitor} onClose={() => setShowCardsMonitor(false)} players={visibleCharacters} />
        <GroupManagerModal isOpen={showGroupManager} onClose={() => setShowGroupManager(false)} allCharacters={characters} sessionData={sessaoData} />
        {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}

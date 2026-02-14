@@ -8,7 +8,7 @@ import {
   X, Shield, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Scroll, Plus, 
   ArrowsLeftRight, Coin, Skull, Sparkle, Campfire, MoonStars,
-  Dna, Coins, Cube, ArrowUUpLeft, List
+  Dna, Coins, Cube, ArrowUUpLeft, List, ChatTeardropText, PaperPlaneRight
 } from '@phosphor-icons/react';
 
 // --- IMPORTAÇÕES DE DADOS E COMPONENTES ---
@@ -49,6 +49,7 @@ interface Character {
   armor?: any;
   imageUrl?: string;
   paSpent?: number;
+  bondRequests?: any[]; // Lista de solicitações de vínculo
   // Persistência das cartas
   cards?: {
     hand: ActiveCard[];
@@ -757,6 +758,11 @@ export default function JogadorVTT() {
   const [showDruidModal, setShowDruidModal] = useState(false);
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
+  // ESTADOS DE VÍNCULO (NOVO)
+  const [groupCharacters, setGroupCharacters] = useState<Character[]>([]); 
+  const [bondRequests, setBondRequests] = useState<any[]>([]); // Lista de solicitações
+  const [isNotifOpen, setIsNotifOpen] = useState(false); // Estado do menu de notificações
+
   // --- BUSCA DO PERSONAGEM (EM TEMPO REAL) ---
   useEffect(() => {
     const user = auth.currentUser;
@@ -764,7 +770,7 @@ export default function JogadorVTT() {
 
     const q = query(collection(db, 'characters'), where('playerId', '==', user.uid));
     
-    // CORREÇÃO: Usando onSnapshot para ouvir atualizações do Mestre em tempo real
+    // Listener para ouvir atualizações do Mestre em tempo real
     const unsubscribe = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
@@ -785,7 +791,7 @@ export default function JogadorVTT() {
         setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // CORREÇÃO: "unsubscribe" no singular, igual à declaração
   }, [navigate]);
 
   // Listener para dados da Sessão (Mapa/Cenário)
@@ -799,6 +805,78 @@ export default function JogadorVTT() {
     });
     return () => unsubscribe();
   }, []);
+
+  // --- BUSCA GRUPO E MONITORAMENTO DE SOLICITAÇÕES ---
+  useEffect(() => {
+    if (!sessaoData?.active_group_id) return;
+
+    // 1. Buscar personagens do mesmo grupo para popular a lista de menções
+    const qGroup = query(collection(db, 'characters'));
+    const unsubGroup = onSnapshot(qGroup, (snapshot) => {
+        const allChars = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Character));
+        // Filtra apenas quem está no grupo ativo
+        const activeGroup = sessaoData.player_groups?.find((g: any) => g.id === sessaoData.active_group_id);
+        if (activeGroup) {
+            setGroupCharacters(allChars.filter(c => activeGroup.memberIds.includes(c.id)));
+        } else {
+            setGroupCharacters(allChars); // Fallback
+        }
+    });
+
+    return () => unsubGroup();
+  }, [sessaoData]);
+
+  // Monitorar Solicitações de Vínculo no próprio personagem
+  useEffect(() => {
+      if (character?.bondRequests) {
+          setBondRequests(character.bondRequests);
+      } else {
+          setBondRequests([]);
+      }
+  }, [character]);
+
+  const handleAnswerBond = async (req: any, answerText: string) => {
+      if (!character || !answerText.trim()) return;
+      
+      try {
+          // 1. Atualizar o personagem que perguntou (sender)
+          const senderDoc = await getDocs(query(collection(db, 'characters'), where('__name__', '==', req.fromId)));
+          
+          if (!senderDoc.empty) {
+              const senderData = senderDoc.docs[0].data();
+              const currentGuide = senderData.guide || { origin: [], bonds: [] };
+              const currentBonds = [...(currentGuide.bonds || [])];
+              
+              // Garante que o array tenha tamanho suficiente
+              while (currentBonds.length <= req.questionIndex) currentBonds.push("");
+
+              const previousText = currentBonds[req.questionIndex] || "";
+              const formattedAnswer = `\n\n[${req.questionText}]\n@${character.name} - ${answerText}`;
+              
+              currentBonds[req.questionIndex] = previousText + formattedAnswer;
+
+              await updateDoc(doc(db, 'characters', req.fromId), {
+                  "guide.bonds": currentBonds
+              });
+          }
+
+          // 2. Remover a solicitação deste personagem (Optimistic UI)
+          const myRef = doc(db, 'characters', character.id);
+          // Filtra removendo exatamente este request (pelo timestamp para garantir unicidade)
+          const safeNewRequests = (character.bondRequests || []).filter((r: any) => r.timestamp !== req.timestamp);
+          
+          await updateDoc(myRef, {
+              bondRequests: safeNewRequests
+          });
+
+          // Fecha se não houver mais requests
+          if (safeNewRequests.length === 0) setIsNotifOpen(false);
+
+      } catch (error) {
+          console.error("Erro ao responder vínculo:", error);
+          alert("Erro ao enviar resposta.");
+      }
+  };
 
   // --- LISTENER GLOBAL: TRANSFORMAÇÃO DRUIDA ---
   useEffect(() => {
@@ -880,7 +958,7 @@ export default function JogadorVTT() {
       {/* ============================== */}
 
       {/* PERFIL (Topo Esquerdo) */}
-      <div className="absolute top-6 left-6 z-50 animate-fade-in pointer-events-auto">
+      <div className="absolute top-6 left-6 z-50 animate-fade-in pointer-events-auto flex items-center gap-4">
         <button onClick={() => setSheetOpen(true)} className="group relative flex items-center gap-4 pr-8 pl-2 py-2 rounded-full border border-white/20 shadow-xl transition-all hover:scale-[1.02]" style={{ background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' }}>
           <div className="relative w-14 h-14 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0">
             <span className="text-xl font-rpg text-white font-bold">{character.level}</span>
@@ -895,6 +973,80 @@ export default function JogadorVTT() {
           </div>
           <div className="absolute right-3 opacity-0 group-hover:opacity-50 transition-opacity"><Scroll size={20} className="text-white" /></div>
         </button>
+      </div>
+
+      {/* --- CENTRAL DE NOTIFICAÇÕES (VÍNCULOS) --- */}
+      <div className="absolute top-6 right-6 z-[60] pointer-events-auto flex flex-col items-end">
+          {/* Botão de Notificação */}
+          <button 
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className="relative w-12 h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/10 hover:border-gold transition-all shadow-lg backdrop-blur-md"
+          >
+              <ChatTeardropText size={24} weight={bondRequests.length > 0 ? "fill" : "regular"} className={bondRequests.length > 0 ? "text-gold" : "text-white/60"} />
+              
+              {/* Badge Vermelho */}
+              {bondRequests.length > 0 && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-black shadow-md animate-bounce">
+                      {bondRequests.length}
+                  </div>
+              )}
+          </button>
+
+          {/* Painel Expansível */}
+          {isNotifOpen && (
+              <div className="mt-3 w-80 max-h-[70vh] overflow-y-auto custom-scrollbar bg-[#1a120b]/95 border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-4 animate-scale-up origin-top-right backdrop-blur-md">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                          <ChatTeardropText size={16} className="text-gold"/> Perguntas de Vínculo
+                      </h3>
+                      <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/30 hover:text-white"/></button>
+                  </div>
+
+                  {bondRequests.length === 0 ? (
+                      <div className="text-center py-8 text-white/30 text-xs italic">
+                          Nenhuma pergunta pendente.
+                      </div>
+                  ) : (
+                      bondRequests.map((req, index) => (
+                          <div key={index} className="bg-white/5 border border-white/10 rounded p-3 relative animate-fade-in-up">
+                              <div className="flex justify-between items-start mb-2">
+                                  <span className="text-[10px] text-gold font-bold uppercase tracking-wider">{req.fromName} perguntou:</span>
+                                  <span className="text-[9px] text-white/30">{new Date(req.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              </div>
+                              
+                              <p className="text-xs text-white italic mb-3 bg-black/30 p-2 rounded border border-white/5">
+                                  "{req.questionText}"
+                              </p>
+
+                              <div className="flex gap-2">
+                                  <input 
+                                      type="text" 
+                                      placeholder="Sua resposta..." 
+                                      className="flex-1 bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-gold outline-none"
+                                      onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                              handleAnswerBond(req, e.currentTarget.value);
+                                              e.currentTarget.value = "";
+                                          }
+                                      }}
+                                      id={`reply-${req.timestamp}`}
+                                  />
+                                  <button 
+                                      onClick={() => {
+                                          const input = document.getElementById(`reply-${req.timestamp}`) as HTMLInputElement;
+                                          handleAnswerBond(req, input.value);
+                                          input.value = "";
+                                      }}
+                                      className="bg-gold/20 text-gold hover:bg-gold/40 border border-gold/30 rounded px-2 flex items-center justify-center transition-colors"
+                                  >
+                                      <PaperPlaneRight size={14} weight="fill" />
+                                  </button>
+                              </div>
+                          </div>
+                      ))
+                  )}
+              </div>
+          )}
       </div>
 
       {/* BOTÃO FLUTUANTE DE DADOS (Canto Inferior Direito) */}
@@ -927,7 +1079,8 @@ export default function JogadorVTT() {
       <SheetModal 
         character={character} 
         isOpen={sheetOpen} 
-        onClose={() => setSheetOpen(false)} 
+        onClose={() => setSheetOpen(false)}
+        groupCharacters={groupCharacters} 
       />
 
       {/* MODAL DE DRUIDA */}
