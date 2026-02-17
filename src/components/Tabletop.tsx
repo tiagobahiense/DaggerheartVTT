@@ -25,7 +25,6 @@ interface Token {
   imgOffX: number;
   imgOffY: number;
   imgScale: number;
-  stats?: any; 
 }
 
 interface MapData {
@@ -49,7 +48,6 @@ interface SavedEnemy {
     name: string;
     img: string;
     defaultSize: number;
-    stats?: any;
 }
 
 export default function Tabletop({ sessaoData, isMaster, charactersData, showManager, onCloseManager }: any) {
@@ -163,7 +161,9 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       const target = e.target;
       if (target.getAttribute('data-error-handled')) return;
       target.setAttribute('data-error-handled', 'true');
-      
+
+      // Estratégia de Fallback: Se a imagem quebrar, tenta voltar para a imagem do personagem principal
+      // Isso é útil se o link do companion estiver quebrado, pelo menos mostra o dono.
       let fallbackUrl = '/default-token.png';
       if (token.charId && charMap[token.charId]) {
           const char = charMap[token.charId];
@@ -174,39 +174,10 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       target.src = fallbackUrl;
   };
 
-  // --- SYNC COM BANCO DE MAPAS (NOVO) ---
-  // Sincroniza as alterações do mapa ativo de volta para o mapa salvo correspondente
-  const syncWithSavedMaps = async (newTokens: Token[]) => {
-      if (!sessaoData?.saved_maps || !activeMap) return;
-      
-      // Procura o mapa salvo correspondente ao ativo
-      let hasChanges = false;
-      const updatedSavedMaps = sessaoData.saved_maps.map((m: any) => {
-          if (m.name === activeMap.name && m.url === activeMap.url) {
-              hasChanges = true;
-              // Atualiza apenas os tokens do tipo 'enemy' ou todos, dependendo da sua lógica.
-              // Como o 'saveMapToBank' salva apenas inimigos, aqui mantemos a consistência salvando os tokens atuais.
-              // Se quiser salvar TUDO (incluindo posição dos players), remova o filtro. 
-              // Mas geralmente posição de player é volátil. Vamos salvar apenas INIMIGOS para persistência de cenário.
-              return { ...m, tokens: newTokens.filter(t => t.type === 'enemy') }; 
-          }
-          return m;
-      });
-
-      if (hasChanges) {
-          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
-              saved_maps: updatedSavedMaps
-          });
-      }
-  };
-
   // --- FIREBASE UPDATES ---
   const pushTokensUpdate = async (newTokens: Token[]) => {
       if (!sessaoData?.id) return;
-      // 1. Atualiza o mapa ativo (Realtime)
       await updateDoc(doc(db, 'sessoes', sessaoData.id), { "active_map.tokens": newTokens });
-      // 2. Sincroniza com o banco para persistência
-      await syncWithSavedMaps(newTokens);
   };
 
   const saveMapToBank = async () => {
@@ -230,7 +201,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   const loadMapFromBank = async (savedMap: SavedMap) => {
       if(!confirm(`Carregar ${savedMap.name}? O mapa atual será substituído.`)) return;
-      // Ao carregar, mantemos os stats salvos
       const enemiesHidden = savedMap.tokens.map(t => ({ ...t, visible: false }));
       const newActiveMap = {
           url: savedMap.url,
@@ -242,31 +212,22 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       await updateDoc(doc(db, 'sessoes', sessaoData.id), { active_map: newActiveMap });
   };
 
-  // --- CORREÇÃO DO SPAWN ---
   const spawnSavedEnemy = (enemy: SavedEnemy) => {
-      // Usa setLocalTokens com callback para garantir o estado mais recente
-      setLocalTokens(currentTokens => {
-          const newToken: Token = {
-              id: crypto.randomUUID(),
-              name: enemy.name,
-              img: enemy.img,
-              x: 5, y: 5, size: 1,
-              type: 'enemy',
-              visible: true, // CORREÇÃO: Nasce visível para o Mestre não se perder
-              imgOffX: 0, imgOffY: 0, imgScale: 1,
-              stats: enemy.stats ? { ...enemy.stats } : undefined
-          };
-          
-          const updatedTokens = [...currentTokens, newToken];
-          
-          // Chama o update do banco com a lista NOVA
-          pushTokensUpdate(updatedTokens);
-          
-          return updatedTokens;
-      });
+      const newToken: Token = {
+          id: crypto.randomUUID(),
+          name: enemy.name,
+          img: enemy.img,
+          x: 5, y: 5, size: 1,
+          type: 'enemy',
+          visible: false,
+          imgOffX: 0, imgOffY: 0, imgScale: 1
+      };
+      const updatedTokens = [...localTokens, newToken];
+      setLocalTokens(updatedTokens);
+      pushTokensUpdate(updatedTokens);
   };
 
-  // --- MATEMÁTICA E INTERAÇÕES ---
+  // --- MATEMÁTICA ---
   const getSceneCoord = (clientX: number, clientY: number) => {
       if (!containerRef.current || !activeMap) return { x: 0, y: 0 };
       const rect = containerRef.current.getBoundingClientRect();
@@ -275,6 +236,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       return { x: worldX, y: worldY };
   };
 
+  // --- INTERAÇÕES MOUSE ---
   const handleMouseDown = (e: React.MouseEvent) => {
       if (!activeMap) return;
       if ((e.target as HTMLElement).closest('button')) return; 
@@ -304,6 +266,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
       if (draggingTokenId) {
           const coords = getSceneCoord(e.clientX, e.clientY);
+          
+          // Math.round para melhor precisão e evitar pulos na grade
           const gridX = Math.round((coords.x - dragOffset.current.x) / activeMap.gridSizePx);
           const gridY = Math.round((coords.y - dragOffset.current.y) / activeMap.gridSizePx);
           
@@ -341,9 +305,11 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       setLocalView(prev => ({ ...prev, zoom: newZoom }));
   };
 
+  // --- TOKEN HANDLERS ---
   const handleTokenMouseDown = (e: React.MouseEvent, token: Token) => {
       e.stopPropagation();
-      e.preventDefault(); 
+      e.preventDefault(); // Impede ghosting nativo do navegador
+      
       if (isRulerMode) return;
       if (!isTokenOwner(token)) return;
 
@@ -369,21 +335,16 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   const updateEditingToken = (updates: Partial<Token>) => {
       if (!editingToken) return;
-      // Também usa o functional update para segurança
-      setLocalTokens(currentTokens => {
-          const newTokens = currentTokens.map(t => t.id === editingToken.id ? { ...t, ...updates } : t);
-          pushTokensUpdate(newTokens);
-          return newTokens;
-      });
+      const newTokens = localTokens.map(t => t.id === editingToken.id ? { ...t, ...updates } : t);
+      setLocalTokens(newTokens);
+      pushTokensUpdate(newTokens);
   };
 
   const deleteEditingToken = () => {
       if (!editingToken) return;
-      setLocalTokens(currentTokens => {
-          const newTokens = currentTokens.filter(t => t.id !== editingToken.id);
-          pushTokensUpdate(newTokens);
-          return newTokens;
-      });
+      const newTokens = localTokens.filter(t => t.id !== editingToken.id);
+      setLocalTokens(newTokens);
+      pushTokensUpdate(newTokens);
       setEditingToken(null);
   };
 
@@ -426,17 +387,24 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                     const width = token.size * activeMap.gridSizePx;
                     const height = token.size * activeMap.gridSizePx;
 
+                    // Cores da borda
                     const borderClass = token.type === 'player' ? 'border-green-500' :
                                         token.type === 'companion' ? 'border-cyan-400' :
                                         'border-red-500';
 
                     const shapeClass = (token.type === 'player' || token.type === 'companion') ? 'rounded-full' : 'rounded-sm';
 
+                    // --- LÓGICA DE IMAGEM CORRIGIDA PARA JOGADOR ---
                     const foundChar = token.charId ? charMap[token.charId] : null;
                     let displayImg = token.img;
 
                     if (foundChar) {
                         if (token.type === 'companion') {
+                            // CORREÇÃO CRÍTICA:
+                            // 1. Tenta pegar a imagem live do companion na ficha (companion.image)
+                            // 2. SE NÃO TIVER, mantém a imagem do token (token.img - que deve ser o Lobo salvo pelo mestre)
+                            // 3. SÓ ENTÃO, se tudo falhar, usa a imagem do Dono (imageUrl)
+                            // A versão anterior priorizava imageUrl sobre token.img, por isso o jogador via a própria cara.
                             displayImg = foundChar.companion?.image || token.img || foundChar.imageUrl || '/default-token.png';
                         } else if (token.type === 'player') {
                             displayImg = foundChar.imageUrl || token.img;
@@ -460,7 +428,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                             }}
                             onMouseDown={(e) => handleTokenMouseDown(e, token)}
                             onDoubleClick={(e) => handleTokenDoubleClick(e, token)}
-                            onDragStart={(e) => e.preventDefault()} 
+                            onDragStart={(e) => e.preventDefault()} // Impede ghosting nativo
                         >
                             <div className={`w-full h-full overflow-hidden shadow-lg ${shapeClass} border-2 ${borderClass} bg-black relative`}>
                                 <img 
@@ -626,11 +594,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                                         x: 2, y: 2, size: 1, type: 'player', visible: true, imgOffX: 0, imgOffY: 0, imgScale: 1 
                                                     };
 
-                                                    setLocalTokens(prev => {
-                                                        const nt = [...prev, newToken];
-                                                        pushTokensUpdate(nt);
-                                                        return nt;
-                                                    });
+                                                    let tokensToAdd = [newToken];
 
                                                     // TOKEN COMPANHEIRO
                                                     if (c.class === 'Patrulheiro' && c.subclass === 'Treinador') {
@@ -639,6 +603,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                                             charId: c.id,
                                                             ownerId: c.playerId,
                                                             name: c.companionName || `${c.name} (Comp.)`,
+                                                            // BUSCA A IMAGEM CORRETAMENTE DA ESTRUTURA ANINHADA
                                                             img: c.companion?.image || c.imageUrl || '/default-token.png',
                                                             x: 3, y: 2,
                                                             size: 1,
@@ -646,13 +611,12 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                                             visible: true,
                                                             imgOffX: 0, imgOffY: 0, imgScale: 1
                                                         };
-                                                        
-                                                        setLocalTokens(prev => {
-                                                            const nt = [...prev, companionToken];
-                                                            pushTokensUpdate(nt);
-                                                            return nt;
-                                                        });
+                                                        tokensToAdd.push(companionToken);
                                                     }
+                                                    
+                                                    const newTokens = [...localTokens, ...tokensToAdd];
+                                                    setLocalTokens(newTokens);
+                                                    await pushTokensUpdate(newTokens);
                                                 }} className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 py-1 rounded hover:border-gold">
                                                     <img src={c.imageUrl} className="w-6 h-6 rounded-full"/> <span className="text-white text-xs">{c.name}</span>
                                                 </button>

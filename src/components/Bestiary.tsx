@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { 
   Skull, CaretUp, CaretDown, Plus, Trash, FloppyDisk, 
-  BookOpen, CaretRight, Sword, CloudArrowUp 
+  BookOpen, CaretRight, Sword, Copy 
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
 
@@ -44,7 +44,7 @@ interface Token {
   stats?: EnemyStats;
 }
 
-// --- VALORES PADRÃO ---
+// --- VALORES PADRÃO (Garante que nada fique "undefined") ---
 const DEFAULT_STATS: EnemyStats = {
     type: "Comum (1º Patamar)", 
     description: "", 
@@ -77,7 +77,73 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     }
   }, [sessaoData]);
 
-  // --- ATUALIZAÇÃO NO MAPA ATIVO ---
+  // --- SINCRONIZAÇÃO COM O BANCO DE MAPAS ---
+  // Atualiza também o mapa salvo para persistir os dados ao recarregar
+  const syncWithSavedMaps = async (newActiveTokens: Token[]) => {
+      if (!sessaoData?.saved_maps || !sessaoData.active_map) return;
+      
+      const currentMapName = sessaoData.active_map.name;
+      const currentMapUrl = sessaoData.active_map.url;
+
+      // Percorre os mapas salvos e atualiza aquele que corresponde ao mapa ativo
+      const updatedSavedMaps = sessaoData.saved_maps.map((m: any) => {
+          if (m.name === currentMapName && m.url === currentMapUrl) {
+              // Filtra apenas inimigos para atualizar seus stats, mantendo outros tokens se houver lógica específica
+              // Aqui assumimos que o estado atual dos tokens no mapa ativo é o "mais recente"
+              // Porém, para não perder tokens que possam estar ocultos ou em outra lógica, vamos atualizar os tokens correspondentes
+              
+              // Abordagem Segura: Substitui a lista de tokens do mapa salvo pela lista atual (se forem os mesmos)
+              // Ou melhor: Mapeia os tokens do mapa salvo e atualiza os stats se o ID bater? 
+              // Como os IDs são gerados no spawn, eles mudam. 
+              // A melhor forma de persistir "template" é salvar o estado atual do active_map.tokens dentro do saved_map
+              return { ...m, tokens: newActiveTokens.filter(t => t.type === 'enemy') }; 
+          }
+          return m;
+      });
+
+      // Atualiza no banco apenas se houver o mapa salvo correspondente
+      if (updatedSavedMaps.length > 0) {
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              saved_maps: updatedSavedMaps
+          });
+      }
+  };
+
+  // --- FUNÇÃO DE REPLICAÇÃO INTELIGENTE ---
+  const handleReplicateStats = async (sourceToken: Token) => {
+      if (!sessaoData?.id || !sessaoData.active_map || !sourceToken.stats) return;
+      
+      const confirmText = `Deseja copiar a ficha de "${sourceToken.name}" para TODOS os outros tokens com o mesmo nome e imagem?`;
+      if (!confirm(confirmText)) return;
+
+      const allTokens = [...sessaoData.active_map.tokens];
+      let count = 0;
+
+      const updatedTokens = allTokens.map(t => {
+          // Verifica se é inimigo, se tem o mesmo nome/imagem e se não é o próprio token original
+          if (t.type === 'enemy' && t.name === sourceToken.name && t.img === sourceToken.img && t.id !== sourceToken.id) {
+              count++;
+              // Copia os stats completos
+              return { ...t, stats: { ...sourceToken.stats } }; 
+          }
+          return t;
+      });
+
+      if (count > 0) {
+          // Atualiza Mapa Ativo
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              "active_map.tokens": updatedTokens
+          });
+          // Atualiza Mapa Salvo (Persistência)
+          await syncWithSavedMaps(updatedTokens);
+          
+          alert(`${count} fichas atualizadas com sucesso!`);
+      } else {
+          alert("Nenhum outro token igual encontrado.");
+      }
+  };
+
+  // Função Principal de Atualização
   const updateTokenInFirestore = async (tokenId: string, updates: any) => {
     if (!sessaoData?.id || !sessaoData.active_map) return;
 
@@ -86,6 +152,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     
     if (tokenIndex === -1) return;
 
+    // Mescla stats existentes com Default para evitar perda de dados
     const currentStats = allTokens[tokenIndex].stats ? { ...DEFAULT_STATS, ...allTokens[tokenIndex].stats } : { ...DEFAULT_STATS };
 
     let newStats;
@@ -97,39 +164,20 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
 
     allTokens[tokenIndex] = { ...allTokens[tokenIndex], stats: newStats };
 
+    // 1. Atualiza Mapa Ativo
     await updateDoc(doc(db, 'sessoes', sessaoData.id), {
         "active_map.tokens": allTokens
     });
-  };
 
-  // --- SALVAR FICHA NO BANCO DE INIMIGOS (GLOBAL DA SESSÃO) ---
-  const handleSaveToBank = async (token: Token) => {
-      if (!sessaoData?.saved_enemies) return;
-      if (!confirm(`Atualizar a ficha padrão de "${token.name}" no Banco de Inimigos? Todos os próximos spawns usarão esta ficha.`)) return;
-
-      const currentStats = token.stats || DEFAULT_STATS;
-      
-      // Atualiza a lista de saved_enemies
-      const updatedEnemies = sessaoData.saved_enemies.map((enemy: any) => {
-          // Encontra pelo nome e imagem (para diferenciar variantes)
-          if (enemy.name === token.name && enemy.img === token.img) {
-              return { 
-                  ...enemy, 
-                  stats: { ...currentStats, currentPV: currentStats.maxPV, currentPF: currentStats.maxPF } // Reseta HP/PF para o padrão cheio
-              };
-          }
-          return enemy;
-      });
-
-      await updateDoc(doc(db, 'sessoes', sessaoData.id), {
-          saved_enemies: updatedEnemies
-      });
-
-      alert("Ficha salva no Banco com sucesso!");
+    // 2. Sincroniza com Mapa Salvo (Auto-Save)
+    // Usamos um debounce simples ou chamamos direto (Firestore aguenta chamadas pequenas)
+    // Para garantir consistência imediata, chamamos direto.
+    await syncWithSavedMaps(allTokens);
   };
 
   const handleQuickStatChange = (token: Token, stat: 'currentPV' | 'currentPF', delta: number) => {
     const stats = token.stats || DEFAULT_STATS;
+    // Usa nullish coalescing (??) para garantir que 0 não seja tratado como falso
     const current = stats[stat] ?? (stat === 'currentPV' ? 10 : 5);
     const max = stat === 'currentPV' ? (stats.maxPV ?? 10) : (stats.maxPF ?? 5);
     
@@ -161,18 +209,24 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
         handleChange('abilities', newAbilities);
     };
 
+    // Identifica quantos tokens idênticos existem para o botão de replicação
+    const identicalCount = enemies.filter(e => e.name === token.name && e.img === token.img && e.id !== token.id).length;
+
     return (
         <div className="p-4 bg-black/40 border-t border-white/10 space-y-4 animate-fade-in text-sm">
             
-            <div className="flex justify-end border-b border-white/10 pb-2">
-                <button 
-                    onClick={() => handleSaveToBank(token)}
-                    className="flex items-center gap-2 bg-blue-900/40 hover:bg-blue-800 border border-blue-500/50 text-blue-200 text-xs px-3 py-1.5 rounded transition-all"
-                    title="Salva esta ficha como padrão para este inimigo no banco"
-                >
-                    <CloudArrowUp size={16} /> Salvar Ficha no Banco
-                </button>
-            </div>
+            {/* BOTÃO DE REPLICAÇÃO INTELIGENTE */}
+            {identicalCount > 0 && (
+                <div className="flex justify-end animate-pulse-slow">
+                    <button 
+                        onClick={() => handleReplicateStats(token)}
+                        className="flex items-center gap-2 bg-gradient-to-r from-purple-900 to-indigo-900 hover:from-purple-800 hover:to-indigo-800 border border-purple-500 text-white text-xs font-bold px-4 py-2 rounded shadow-lg transition-all transform hover:scale-105"
+                        title={`Copia esta ficha para outros ${identicalCount} tokens iguais`}
+                    >
+                        <Copy size={16} /> REPLICAR PARA {identicalCount} IGUAIS
+                    </button>
+                </div>
+            )}
 
             {/* Linha 1 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -279,7 +333,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
             </div>
             
             <div className="flex justify-end pt-2">
-                <p className="text-[10px] text-white/30 flex items-center gap-1"><FloppyDisk /> Salvo no Token.</p>
+                <p className="text-[10px] text-white/30 flex items-center gap-1"><FloppyDisk /> Salvo automaticamente no Mapa e no Banco.</p>
             </div>
         </div>
     );
@@ -295,6 +349,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
         minimizedPosition="bottom-left"
     >
         <div className="flex flex-col h-full bg-[#1a120b] overflow-hidden pointer-events-auto">
+            {/* Lista de Inimigos */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
                 {enemies.length === 0 && (
                     <div className="text-center text-white/30 mt-10">
@@ -313,17 +368,21 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                     return (
                         <div key={enemy.id} className={`bg-[#0a080c] border transition-all duration-300 rounded-lg overflow-hidden shadow-lg ${isExpanded ? 'border-gold' : 'border-white/20 hover:border-white/50'}`}>
                             
+                            {/* CABEÇALHO DO CARD (Sempre Visível) */}
                             <div className="p-3 flex gap-3 items-start relative">
+                                {/* Imagem */}
                                 <div className="w-16 h-16 rounded border border-white/20 overflow-hidden shrink-0 bg-black cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : enemy.id)}>
                                     <img src={enemy.img} className="w-full h-full object-cover" />
                                 </div>
 
+                                {/* Info Rápida */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : enemy.id)}>
                                         <h3 className="text-white font-bold font-rpg truncate text-lg leading-none mb-1">{enemy.name}</h3>
                                         <CaretRight size={16} className={`text-white/50 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                     </div>
 
+                                    {/* Barra PV */}
                                     <div className="flex items-center gap-2 mb-1">
                                         <div className="flex-1 h-3 bg-gray-900 rounded-full overflow-hidden border border-white/10 relative">
                                             <div className="absolute inset-y-0 left-0 bg-red-600 transition-all duration-300" style={{ width: `${pvPercent}%` }}></div>
@@ -337,6 +396,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                                         </div>
                                     </div>
 
+                                    {/* Barra PF */}
                                     <div className="flex items-center gap-2">
                                         <div className="flex-1 h-3 bg-gray-900 rounded-full overflow-hidden border border-white/10 relative">
                                             <div className="absolute inset-y-0 left-0 bg-blue-500 transition-all duration-300" style={{ width: `${pfPercent}%` }}></div>
@@ -352,6 +412,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                                 </div>
                             </div>
 
+                            {/* ÁREA EXPANDIDA (Detalhes e Edição) */}
                             {isExpanded && renderEnemyForm(enemy)}
                         </div>
                     );
