@@ -123,18 +123,22 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                  />
             </div>
 
-            {/* Nome e Linha Dourada (Estilo Atualizado: Sem rounded-full) */}
-            <div className="relative -mt-10 z-20 w-full flex flex-col items-center animate-fade-in-up delay-500">
-                <div className="relative w-full max-w-4xl flex items-center justify-center">
-                    <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent shadow-[0_0_15px_#ffd700]"></div>
-                    
-                    <h2 className="relative font-rpg text-6xl text-gold uppercase tracking-[0.2em] px-12 py-2 bg-black/80 border-y border-gold/20 shadow-2xl">
-                        {activeNPC.name}
-                    </h2>
-                </div>
+            {/* Nome e Linha Dourada (Ajuste Final: Linha abaixo do nome para visibilidade total) */}
+            <div className="relative -mt-10 z-20 w-full flex flex-col items-center animate-fade-in-up delay-500 px-4">
                 
+                {/* Nome (Fonte Dinâmica e Z-Index alto) */}
+                <h2 className={`relative font-rpg text-gold uppercase tracking-[0.2em] drop-shadow-[0_4px_4px_rgba(0,0,0,1)] text-center w-full leading-tight z-10
+                    ${activeNPC.name.length > 20 ? 'text-4xl' : activeNPC.name.length > 12 ? 'text-5xl' : 'text-6xl'}
+                `}>
+                    {activeNPC.name}
+                </h2>
+
+                {/* Linha Dourada (Agora posicionada abaixo do nome com margem vertical) */}
+                <div className="w-full max-w-4xl h-[1px] bg-gradient-to-r from-transparent via-[#ffd700] to-transparent shadow-[0_0_15px_#ffd700] opacity-80 my-3"></div>
+                
+                {/* Descrição */}
                 {activeNPC.description && (
-                    <p className="mt-4 text-white/80 font-serif italic text-2xl drop-shadow-md max-w-2xl text-center bg-black/40 px-4 py-2 rounded">
+                    <p className="text-white/90 font-serif italic text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,1)] max-w-3xl text-center px-4">
                         "{activeNPC.description}"
                     </p>
                 )}

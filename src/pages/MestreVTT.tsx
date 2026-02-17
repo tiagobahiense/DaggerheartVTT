@@ -8,13 +8,17 @@ import {
   Users, Eye, Skull, Campfire, MoonStars, 
   Dna, X, Cube, Coins, Sparkle, HandPalm, 
   MapTrifold, UserCircle, Stack, Scroll, Image as ImageIcon,
-  Fire, UsersThree, CaretDown, Check, Trash, Plus, PawPrint
+  Fire, UsersThree, CaretDown, Check, Trash, Plus, PawPrint, Clock,
+  BookOpen, ShieldCheck // <--- ADICIONADO
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
 
 // --- IMPORTAÇÃO DOS SEUS COMPONENTES ---
 import SceneryViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
+import TurnCounter from '../components/TurnCounter';
+import Bestiary from '../components/Bestiary';
+import MasterShield from '../components/MasterShield'; // <--- ADICIONADO
 
 // --- CONFIGURAÇÕES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
@@ -626,6 +630,11 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
                     {result.outcome === 'FEAR' && <Skull size={24} weight="fill" />}
                     {result.isSuccess ? "Sucesso" : "Falha"} com {result.outcome === 'CRITICAL' ? " CRÍTICO!" : result.outcome === 'HOPE' ? " ESPERANÇA" : " MEDO"}
                 </h3>
+                <p className="text-sm opacity-80 mt-1">
+                    {result.outcome === 'CRITICAL' && "Ganhe 1 Esperança E Limpe 1 Estresse."}
+                    {result.outcome === 'HOPE' && "Ganhe 1 Esperança. Você consegue."}
+                    {result.outcome === 'FEAR' && "O Mestre ganha 1 Medo. Prepare-se."}
+                </p>
             </div>
             <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
           </div>
@@ -813,6 +822,8 @@ export default function MestreVTT() {
   const [showSceneryManager, setShowSceneryManager] = useState(false);
   const [showTabletopManager, setShowTabletopManager] = useState(false);
   const [showGroupManager, setShowGroupManager] = useState(false);
+  const [showBestiary, setShowBestiary] = useState(false); 
+  const [showMasterShield, setShowMasterShield] = useState(false); // <--- NOVO ESTADO
 
   const [showFearModal, setShowFearModal] = useState(false);
   const [fearTokens, setFearTokens] = useState(0);
@@ -962,6 +973,15 @@ useEffect(() => {
        </div>
 
        {sessaoData && <SceneryViewer sessaoData={sessaoData} isMaster={true} showManager={showSceneryManager} onCloseManager={() => setShowSceneryManager(false)} />}
+       
+       {/* CONTADOR DE TURNOS */}
+       {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={true} />}
+
+       {/* BESTIÁRIO - NOVO */}
+       {showBestiary && sessaoData && <Bestiary sessaoData={sessaoData} onClose={() => setShowBestiary(false)} />}
+
+       {/* ESCUDO DO MESTRE - NOVO */}
+       {showMasterShield && <MasterShield onClose={() => setShowMasterShield(false)} />}
 
        <div className="absolute inset-0 z-[10] pointer-events-none">
            <div className="w-full h-full pointer-events-auto">
@@ -1019,6 +1039,47 @@ useEffect(() => {
                <button onClick={() => setShowGroupManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-400 hover:text-green-300 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Grupos"><UsersThree size={24} /></button>
                <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas"><MapTrifold size={24} /></button>
                <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Cenários/NPCs"><ImageIcon size={24} /></button>
+               
+               {/* BOTÃO: BESTIÁRIO */}
+               <button 
+                   onClick={() => setShowBestiary(!showBestiary)} 
+                   className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
+                       ${showBestiary ? 'bg-gold border-gold text-black' : 'bg-black/60 hover:border-gold hover:text-gold'}
+                   `}
+                   title="Bestiário"
+               >
+                   <BookOpen size={24} weight={showBestiary ? "fill" : "regular"} />
+               </button>
+
+               {/* BOTÃO: ESCUDO DO MESTRE (NOVO) */}
+               <button 
+                   onClick={() => setShowMasterShield(!showMasterShield)} 
+                   className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
+                       ${showMasterShield ? 'bg-purple-900 border-purple-500 text-purple-200' : 'bg-black/60 hover:border-purple-500 hover:text-purple-400'}
+                   `}
+                   title="Escudo do Mestre (Regras)"
+               >
+                   <ShieldCheck size={24} weight={showMasterShield ? "fill" : "regular"} />
+               </button>
+
+               {/* BOTÃO: CONTADOR DE TURNO */}
+               <button 
+                   onClick={async () => {
+                       if (sessaoData?.id) {
+                           const currentVis = sessaoData.turn_data?.visible || false;
+                           await updateDoc(doc(db, "sessoes", sessaoData.id), {
+                               "turn_data.visible": !currentVis,
+                               "turn_data.current": sessaoData.turn_data?.current || 1 // Garante valor inicial
+                           });
+                       }
+                   }} 
+                   className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
+                       ${sessaoData?.turn_data?.visible ? 'bg-red-900/80 border-red-500 text-red-200' : 'bg-black/60 hover:border-red-500 hover:text-red-400'}
+                   `}
+                   title="Contador de Turnos"
+               >
+                   <Clock size={24} weight={sessaoData?.turn_data?.visible ? "fill" : "regular"} />
+               </button>
            </div>
            
            <button onClick={() => setShowCardsMonitor(true)} className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-900 to-black border border-blue-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform">

@@ -16,6 +16,7 @@ import CARTAS_JSON from '../data/cartas.json';
 import { SheetModal } from '../components/SheetModal';
 import NPCViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
+import TurnCounter from '../components/TurnCounter';
 
 // ==================================================================================
 // 1. TIPOS GERAIS
@@ -943,6 +944,9 @@ export default function JogadorVTT() {
       {sessaoData && (
           <NPCViewer sessaoData={sessaoData} isMaster={false} />
       )}
+      
+      {/* NOVO COMPONENTE: Contador de Turnos */}
+      {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={false} />}
 
       {/* Camada 2: Mesa/Mapa (Frente) */}
       {/* Tabletop agora é uma janela Draggable para todos */}
