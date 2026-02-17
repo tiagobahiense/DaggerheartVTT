@@ -3,7 +3,7 @@ import { db } from '../lib/firebase';
 import { doc, updateDoc } from "firebase/firestore";
 import { 
   Skull, CaretUp, CaretDown, Plus, Trash, FloppyDisk, 
-  BookOpen, CaretRight, Sword 
+  BookOpen, CaretRight, Sword, Copy 
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
 
@@ -44,6 +44,25 @@ interface Token {
   stats?: EnemyStats;
 }
 
+// --- VALORES PADRÃO (Constante para evitar perda de dados) ---
+const DEFAULT_STATS: EnemyStats = {
+    type: "Comum (1º Patamar)", 
+    description: "", 
+    motivations: "",
+    difficulty: 10, 
+    thresholdMajor: 5, 
+    thresholdMinor: 10,
+    maxPV: 10, 
+    currentPV: 10, 
+    maxPF: 5, 
+    currentPF: 5,
+    atqBonus: "+0", 
+    weaponName: "Ataque Básico", 
+    damageType: "Físico", 
+    damageFormula: "1d4",
+    abilities: []
+};
+
 export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onClose: () => void }) {
   const [enemies, setEnemies] = useState<Token[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -58,6 +77,37 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     }
   }, [sessaoData]);
 
+  // --- FUNÇÃO DE REPLICAÇÃO INTELIGENTE ---
+  const handleReplicateStats = async (sourceToken: Token) => {
+      if (!sessaoData?.id || !sessaoData.active_map || !sourceToken.stats) return;
+      
+      const confirmText = `Deseja copiar a ficha de "${sourceToken.name}" para TODOS os outros tokens com o mesmo nome e imagem?`;
+      if (!confirm(confirmText)) return;
+
+      const allTokens = [...sessaoData.active_map.tokens];
+      let count = 0;
+
+      const updatedTokens = allTokens.map(t => {
+          // Verifica se é inimigo, se tem o mesmo nome/imagem e se não é o próprio token original
+          if (t.type === 'enemy' && t.name === sourceToken.name && t.img === sourceToken.img && t.id !== sourceToken.id) {
+              count++;
+              // Copia os stats, mas preserva o currentPV/currentPF se desejar (aqui estou copiando TUDO para garantir o setup inicial)
+              // Se quiser que o PV atual seja individual, teria que manter t.stats.currentPV
+              return { ...t, stats: { ...sourceToken.stats } }; 
+          }
+          return t;
+      });
+
+      if (count > 0) {
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              "active_map.tokens": updatedTokens
+          });
+          alert(`${count} fichas atualizadas com sucesso!`);
+      } else {
+          alert("Nenhum outro token igual encontrado.");
+      }
+  };
+
   // Função para salvar alterações
   const updateTokenInFirestore = async (tokenId: string, updates: any) => {
     if (!sessaoData?.id || !sessaoData.active_map) return;
@@ -67,13 +117,8 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     
     if (tokenIndex === -1) return;
 
-    const currentStats = allTokens[tokenIndex].stats || {
-        type: "Comum (1º Patamar)", description: "", motivations: "",
-        difficulty: 10, thresholdMajor: 5, thresholdMinor: 10,
-        maxPV: 10, currentPV: 10, maxPF: 5, currentPF: 5,
-        atqBonus: "+0", weaponName: "Ataque Básico", damageType: "Físico", damageFormula: "1d4",
-        abilities: []
-    };
+    // Garante que pegamos os stats existentes ou aplicamos o DEFAULT completo
+    const currentStats = allTokens[tokenIndex].stats ? { ...DEFAULT_STATS, ...allTokens[tokenIndex].stats } : { ...DEFAULT_STATS };
 
     let newStats;
     if (updates.stats) {
@@ -90,46 +135,58 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
   };
 
   const handleQuickStatChange = (token: Token, stat: 'currentPV' | 'currentPF', delta: number) => {
-    const stats = token.stats || { maxPV: 10, currentPV: 10, maxPF: 5, currentPF: 5 } as EnemyStats;
-    const current = stats[stat] || 0;
-    const max = stat === 'currentPV' ? (stats.maxPV || 10) : (stats.maxPF || 5);
+    const stats = token.stats || DEFAULT_STATS;
+    const current = stats[stat] ?? (stat === 'currentPV' ? 10 : 5);
+    const max = stat === 'currentPV' ? (stats.maxPV ?? 10) : (stats.maxPF ?? 5);
     
     const newValue = Math.min(max, Math.max(0, current + delta));
     updateTokenInFirestore(token.id, { [stat]: newValue });
   };
 
   const renderEnemyForm = (token: Token) => {
-    const stats = token.stats || {
-        type: "Comum (1º Patamar)", description: "", motivations: "",
-        difficulty: 12, thresholdMajor: 5, thresholdMinor: 9,
-        maxPV: 10, currentPV: 10, maxPF: 5, currentPF: 5,
-        atqBonus: "+1", weaponName: "Espada Longa", damageType: "Físico", damageFormula: "1d6+1",
-        abilities: []
-    } as EnemyStats;
+    // Mescla o que existe no token com os valores padrão para garantir que campos undefined não quebrem
+    const stats = { ...DEFAULT_STATS, ...(token.stats || {}) };
 
     const handleChange = (field: keyof EnemyStats, value: any) => {
         updateTokenInFirestore(token.id, { [field]: value });
     };
 
     const handleAbilityChange = (idx: number, field: keyof Ability, value: string) => {
-        const newAbilities = [...(stats.abilities || [])];
+        const newAbilities = [...stats.abilities];
         newAbilities[idx] = { ...newAbilities[idx], [field]: value };
         handleChange('abilities', newAbilities);
     };
 
     const addAbility = () => {
-        const newAbilities = [...(stats.abilities || []), { name: "Nova Habilidade", tag: "Ação", description: "" }];
+        const newAbilities = [...stats.abilities, { name: "Nova Habilidade", tag: "Ação", description: "" }];
         handleChange('abilities', newAbilities);
     };
 
     const removeAbility = (idx: number) => {
-        const newAbilities = [...(stats.abilities || [])];
+        const newAbilities = [...stats.abilities];
         newAbilities.splice(idx, 1);
         handleChange('abilities', newAbilities);
     };
 
+    // Conta quantos tokens iguais existem para mostrar no botão
+    const identicalCount = enemies.filter(e => e.name === token.name && e.img === token.img && e.id !== token.id).length;
+
     return (
         <div className="p-4 bg-black/40 border-t border-white/10 space-y-4 animate-fade-in text-sm">
+            
+            {/* BOTÃO DE REPLICAÇÃO INTELIGENTE */}
+            {identicalCount > 0 && (
+                <div className="flex justify-end">
+                    <button 
+                        onClick={() => handleReplicateStats(token)}
+                        className="flex items-center gap-2 bg-purple-900/50 hover:bg-purple-700 border border-purple-500/50 text-purple-200 text-xs px-3 py-1.5 rounded transition-all shadow-sm"
+                        title={`Copia esta ficha para outros ${identicalCount} tokens iguais`}
+                    >
+                        <Copy size={14} /> Replicar para {identicalCount} iguais
+                    </button>
+                </div>
+            )}
+
             {/* Linha 1 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -228,7 +285,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                             </button>
                         </div>
                     ))}
-                    {(!stats.abilities || stats.abilities.length === 0) && (
+                    {(stats.abilities.length === 0) && (
                         <p className="text-xs text-white/20 italic text-center">Nenhuma habilidade registrada.</p>
                     )}
                 </div>
@@ -241,13 +298,12 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     );
   };
 
-  // REMOVIDO A DIV EXTERNA WRAPPER PARA PERMITIR ARRASTO E CLIQUE
   return (
     <DraggableWindow 
         title="Bestiário da Cena" 
         headerIcon={<BookOpen size={24} />} 
         onClose={onClose}
-        initialWidth="600px" // Largura aumentada
+        initialWidth="600px" 
         initialHeight="80vh"
         minimizedPosition="bottom-left"
     >
@@ -263,10 +319,10 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
 
                 {enemies.map(enemy => {
                     const isExpanded = expandedId === enemy.id;
-                    const stats = enemy.stats || { currentPV: 10, maxPV: 10, currentPF: 5, maxPF: 5 };
+                    const stats = { ...DEFAULT_STATS, ...(enemy.stats || {}) };
                     
-                    const pvPercent = Math.min(100, Math.max(0, ((stats.currentPV || 0) / (stats.maxPV || 1)) * 100));
-                    const pfPercent = Math.min(100, Math.max(0, ((stats.currentPF || 0) / (stats.maxPF || 1)) * 100));
+                    const pvPercent = Math.min(100, Math.max(0, ((stats.currentPV) / (stats.maxPV || 1)) * 100));
+                    const pfPercent = Math.min(100, Math.max(0, ((stats.currentPF) / (stats.maxPF || 1)) * 100));
 
                     return (
                         <div key={enemy.id} className={`bg-[#0a080c] border transition-all duration-300 rounded-lg overflow-hidden shadow-lg ${isExpanded ? 'border-gold' : 'border-white/20 hover:border-white/50'}`}>
@@ -290,7 +346,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                                         <div className="flex-1 h-3 bg-gray-900 rounded-full overflow-hidden border border-white/10 relative">
                                             <div className="absolute inset-y-0 left-0 bg-red-600 transition-all duration-300" style={{ width: `${pvPercent}%` }}></div>
                                             <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white drop-shadow-md">
-                                                PV: {stats.currentPV || 0} / {stats.maxPV || 0}
+                                                PV: {stats.currentPV} / {stats.maxPV}
                                             </span>
                                         </div>
                                         <div className="flex gap-0.5 shrink-0">
@@ -304,7 +360,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                                         <div className="flex-1 h-3 bg-gray-900 rounded-full overflow-hidden border border-white/10 relative">
                                             <div className="absolute inset-y-0 left-0 bg-blue-500 transition-all duration-300" style={{ width: `${pfPercent}%` }}></div>
                                             <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white drop-shadow-md">
-                                                PF: {stats.currentPF || 0} / {stats.maxPF || 0}
+                                                PF: {stats.currentPF} / {stats.maxPF}
                                             </span>
                                         </div>
                                         <div className="flex gap-0.5 shrink-0">
