@@ -81,7 +81,8 @@ export default function MasterShield({ onClose }: { onClose: () => void }) {
                                 
                                 <div className="flex flex-col items-center text-center gap-4 relative z-10">
                                     <div className="w-12 h-12 rounded-full bg-black/50 border border-white/10 group-hover:border-gold group-hover:text-gold flex items-center justify-center transition-colors shadow-lg">
-                                        {React.cloneElement(rule.icon as React.ReactElement, { size: 24 })}
+                                        {/* CORREÇÃO AQUI: Cast para 'any' resolve o erro TS2769 */}
+                                        {React.cloneElement(rule.icon as any, { size: 24 })}
                                     </div>
                                     <h3 className="font-bold text-white group-hover:text-gold transition-colors">{rule.title}</h3>
                                 </div>
