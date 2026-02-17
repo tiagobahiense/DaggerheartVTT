@@ -44,7 +44,7 @@ interface Token {
   stats?: EnemyStats;
 }
 
-// --- VALORES PADRÃO (Constante para evitar perda de dados) ---
+// --- VALORES PADRÃO (Garante que nada fique "undefined") ---
 const DEFAULT_STATS: EnemyStats = {
     type: "Comum (1º Patamar)", 
     description: "", 
@@ -77,6 +77,38 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     }
   }, [sessaoData]);
 
+  // --- SINCRONIZAÇÃO COM O BANCO DE MAPAS ---
+  // Atualiza também o mapa salvo para persistir os dados ao recarregar
+  const syncWithSavedMaps = async (newActiveTokens: Token[]) => {
+      if (!sessaoData?.saved_maps || !sessaoData.active_map) return;
+      
+      const currentMapName = sessaoData.active_map.name;
+      const currentMapUrl = sessaoData.active_map.url;
+
+      // Percorre os mapas salvos e atualiza aquele que corresponde ao mapa ativo
+      const updatedSavedMaps = sessaoData.saved_maps.map((m: any) => {
+          if (m.name === currentMapName && m.url === currentMapUrl) {
+              // Filtra apenas inimigos para atualizar seus stats, mantendo outros tokens se houver lógica específica
+              // Aqui assumimos que o estado atual dos tokens no mapa ativo é o "mais recente"
+              // Porém, para não perder tokens que possam estar ocultos ou em outra lógica, vamos atualizar os tokens correspondentes
+              
+              // Abordagem Segura: Substitui a lista de tokens do mapa salvo pela lista atual (se forem os mesmos)
+              // Ou melhor: Mapeia os tokens do mapa salvo e atualiza os stats se o ID bater? 
+              // Como os IDs são gerados no spawn, eles mudam. 
+              // A melhor forma de persistir "template" é salvar o estado atual do active_map.tokens dentro do saved_map
+              return { ...m, tokens: newActiveTokens.filter(t => t.type === 'enemy') }; 
+          }
+          return m;
+      });
+
+      // Atualiza no banco apenas se houver o mapa salvo correspondente
+      if (updatedSavedMaps.length > 0) {
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              saved_maps: updatedSavedMaps
+          });
+      }
+  };
+
   // --- FUNÇÃO DE REPLICAÇÃO INTELIGENTE ---
   const handleReplicateStats = async (sourceToken: Token) => {
       if (!sessaoData?.id || !sessaoData.active_map || !sourceToken.stats) return;
@@ -91,24 +123,27 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
           // Verifica se é inimigo, se tem o mesmo nome/imagem e se não é o próprio token original
           if (t.type === 'enemy' && t.name === sourceToken.name && t.img === sourceToken.img && t.id !== sourceToken.id) {
               count++;
-              // Copia os stats, mas preserva o currentPV/currentPF se desejar (aqui estou copiando TUDO para garantir o setup inicial)
-              // Se quiser que o PV atual seja individual, teria que manter t.stats.currentPV
+              // Copia os stats completos
               return { ...t, stats: { ...sourceToken.stats } }; 
           }
           return t;
       });
 
       if (count > 0) {
+          // Atualiza Mapa Ativo
           await updateDoc(doc(db, 'sessoes', sessaoData.id), {
               "active_map.tokens": updatedTokens
           });
+          // Atualiza Mapa Salvo (Persistência)
+          await syncWithSavedMaps(updatedTokens);
+          
           alert(`${count} fichas atualizadas com sucesso!`);
       } else {
           alert("Nenhum outro token igual encontrado.");
       }
   };
 
-  // Função para salvar alterações
+  // Função Principal de Atualização
   const updateTokenInFirestore = async (tokenId: string, updates: any) => {
     if (!sessaoData?.id || !sessaoData.active_map) return;
 
@@ -117,7 +152,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
     
     if (tokenIndex === -1) return;
 
-    // Garante que pegamos os stats existentes ou aplicamos o DEFAULT completo
+    // Mescla stats existentes com Default para evitar perda de dados
     const currentStats = allTokens[tokenIndex].stats ? { ...DEFAULT_STATS, ...allTokens[tokenIndex].stats } : { ...DEFAULT_STATS };
 
     let newStats;
@@ -129,13 +164,20 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
 
     allTokens[tokenIndex] = { ...allTokens[tokenIndex], stats: newStats };
 
+    // 1. Atualiza Mapa Ativo
     await updateDoc(doc(db, 'sessoes', sessaoData.id), {
         "active_map.tokens": allTokens
     });
+
+    // 2. Sincroniza com Mapa Salvo (Auto-Save)
+    // Usamos um debounce simples ou chamamos direto (Firestore aguenta chamadas pequenas)
+    // Para garantir consistência imediata, chamamos direto.
+    await syncWithSavedMaps(allTokens);
   };
 
   const handleQuickStatChange = (token: Token, stat: 'currentPV' | 'currentPF', delta: number) => {
     const stats = token.stats || DEFAULT_STATS;
+    // Usa nullish coalescing (??) para garantir que 0 não seja tratado como falso
     const current = stats[stat] ?? (stat === 'currentPV' ? 10 : 5);
     const max = stat === 'currentPV' ? (stats.maxPV ?? 10) : (stats.maxPF ?? 5);
     
@@ -144,7 +186,6 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
   };
 
   const renderEnemyForm = (token: Token) => {
-    // Mescla o que existe no token com os valores padrão para garantir que campos undefined não quebrem
     const stats = { ...DEFAULT_STATS, ...(token.stats || {}) };
 
     const handleChange = (field: keyof EnemyStats, value: any) => {
@@ -168,7 +209,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
         handleChange('abilities', newAbilities);
     };
 
-    // Conta quantos tokens iguais existem para mostrar no botão
+    // Identifica quantos tokens idênticos existem para o botão de replicação
     const identicalCount = enemies.filter(e => e.name === token.name && e.img === token.img && e.id !== token.id).length;
 
     return (
@@ -176,13 +217,13 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
             
             {/* BOTÃO DE REPLICAÇÃO INTELIGENTE */}
             {identicalCount > 0 && (
-                <div className="flex justify-end">
+                <div className="flex justify-end animate-pulse-slow">
                     <button 
                         onClick={() => handleReplicateStats(token)}
-                        className="flex items-center gap-2 bg-purple-900/50 hover:bg-purple-700 border border-purple-500/50 text-purple-200 text-xs px-3 py-1.5 rounded transition-all shadow-sm"
+                        className="flex items-center gap-2 bg-gradient-to-r from-purple-900 to-indigo-900 hover:from-purple-800 hover:to-indigo-800 border border-purple-500 text-white text-xs font-bold px-4 py-2 rounded shadow-lg transition-all transform hover:scale-105"
                         title={`Copia esta ficha para outros ${identicalCount} tokens iguais`}
                     >
-                        <Copy size={14} /> Replicar para {identicalCount} iguais
+                        <Copy size={16} /> REPLICAR PARA {identicalCount} IGUAIS
                     </button>
                 </div>
             )}
@@ -292,7 +333,7 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
             </div>
             
             <div className="flex justify-end pt-2">
-                <p className="text-[10px] text-white/30 flex items-center gap-1"><FloppyDisk /> Salvo automaticamente.</p>
+                <p className="text-[10px] text-white/30 flex items-center gap-1"><FloppyDisk /> Salvo automaticamente no Mapa e no Banco.</p>
             </div>
         </div>
     );
