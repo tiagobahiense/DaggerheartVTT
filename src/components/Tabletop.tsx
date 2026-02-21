@@ -332,19 +332,21 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         </div>
 
                         <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <label className="text-[10px] uppercase text-gold font-bold">Habilidades</label>
-                                <button onClick={() => handleChange('abilities', [...stats.abilities, {name: "Nova", tag: "Ação", description: ""}])} className="text-[10px] bg-gold text-black px-2 rounded font-bold">+ Add</button>
-                            </div>
-                            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar p-1">
-                                {stats.abilities.map((ab, idx) => (
-                                    <div key={idx} className="bg-black/40 border border-white/5 rounded p-2 relative group">
-                                        <div className="flex gap-2 mb-1">
-                                            <input className="flex-1 bg-transparent border-b border-white/10 text-white font-bold text-sm" value={ab.name} onChange={e => handleAbilityChange(idx, 'name', e.target.value)} />
-                                            <input className="w-20 bg-transparent border-b border-white/10 text-white/50 text-xs text-right" value={ab.tag} onChange={e => handleAbilityChange(idx, 'tag', e.target.value)} />
-                                        </div>
-                                        <textarea className="w-full bg-transparent text-white/80 text-xs resize-none" value={ab.description} onChange={e => handleAbilityChange(idx, 'description', e.target.value)} />
-                                        <button onClick={() => {
+    <div className="flex justify-between items-center mb-1">
+        <label className="text-[10px] uppercase text-gold font-bold">Habilidades</label>
+        <button onClick={() => handleChange('abilities', [...stats.abilities, {name: "Nova", tag: "Ação", description: ""}])} className="text-[10px] bg-gold text-black px-2 rounded font-bold">+ Add</button>
+    </div>
+    {/* ALTEÇÃO 1: max-h-40 mudou para max-h-72 para dar mais espaço à lista */}
+    <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar p-1">
+        {stats.abilities.map((ab, idx) => (
+            <div key={idx} className="bg-black/40 border border-white/5 rounded p-2 relative group">
+                <div className="flex gap-2 mb-1">
+                    <input className="flex-1 bg-transparent border-b border-white/10 text-white font-bold text-sm" value={ab.name} onChange={e => handleAbilityChange(idx, 'name', e.target.value)} />
+                    <input className="w-20 bg-transparent border-b border-white/10 text-white/50 text-xs text-right" value={ab.tag} onChange={e => handleAbilityChange(idx, 'tag', e.target.value)} />
+                </div>
+                {/* ALTERAÇÃO 2: resize-none mudou para resize-y, e adicionamos min-h-[80px] e mt-1 */}
+                <textarea className="w-full bg-white/5 p-1 rounded border border-white/10 text-white/80 text-xs resize-y min-h-[80px] mt-1" value={ab.description} onChange={e => handleAbilityChange(idx, 'description', e.target.value)} />
+                <button onClick={() => {
                                             const newAbs = [...stats.abilities];
                                             newAbs.splice(idx, 1);
                                             handleChange('abilities', newAbs);
