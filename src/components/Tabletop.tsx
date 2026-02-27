@@ -6,12 +6,11 @@ import {
   X, MapTrifold, Plus, Trash, 
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   Ruler, Minus, FloppyDisk, Upload, GridFour,
-  PawPrint, PencilSimple, Sword, Skull
+  PawPrint, PencilSimple, Sword
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
 
 // --- INTERFACES COMPARTILHADAS ---
-// (Adicionamos as interfaces de Stats aqui para salvar no banco)
 interface Ability {
   name: string;
   tag: string;
@@ -50,7 +49,7 @@ interface Token {
   imgOffX: number;
   imgOffY: number;
   imgScale: number;
-  stats?: EnemyStats; // Token agora carrega os stats completos
+  stats?: EnemyStats;
 }
 
 interface MapData {
@@ -74,7 +73,27 @@ interface SavedEnemy {
     name: string;
     img: string;
     defaultSize: number;
-    stats: EnemyStats; // O inimigo salvo TEM que ter stats
+    stats: EnemyStats;
+}
+
+interface TabletopCharacter {
+    id: string;
+    playerId: string;
+    name: string;
+    imageUrl?: string;
+    class?: string;
+    subclass?: string;
+    companionName?: string;
+    companion?: { image?: string };
+}
+
+interface TabletopProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sessaoData: any;
+    isMaster: boolean;
+    charactersData: TabletopCharacter[];
+    showManager?: boolean;
+    onCloseManager?: () => void;
 }
 
 const DEFAULT_STATS: EnemyStats = {
@@ -95,25 +114,21 @@ const DEFAULT_STATS: EnemyStats = {
     abilities: []
 };
 
-export default function Tabletop({ sessaoData, isMaster, charactersData, showManager, onCloseManager }: any) {
-  // --- OTIMIZAÇÃO: MAPA DE PERSONAGENS (Lookup O(1)) ---
+export default function Tabletop({ sessaoData, isMaster, charactersData, showManager, onCloseManager }: TabletopProps) {
   const charMap = useMemo(() => {
-      const map: Record<string, any> = {};
+      const map: Record<string, TabletopCharacter> = {};
       if(charactersData && Array.isArray(charactersData)) {
-          charactersData.forEach((c: any) => { map[c.id] = c; });
+          charactersData.forEach((c) => { map[c.id] = c; });
       }
       return map;
   }, [charactersData]);
 
-  // --- ESTADOS GLOBAIS ---
   const [activeMap, setActiveMap] = useState<MapData | null>(null);
   const [localTokens, setLocalTokens] = useState<Token[]>([]);
   
-  // --- VIEWPORT LOCAL ---
   const [localView, setLocalView] = useState({ zoom: 1, panX: 0, panY: 0 });
-  const lastMapUrl = useRef<string | null>(null);
+  const [currentMapUrl, setCurrentMapUrl] = useState<string | null>(null);
 
-  // --- ESTADOS DE INTERAÇÃO ---
   const [draggingTokenId, setDraggingTokenId] = useState<string | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [isRulerMode, setIsRulerMode] = useState(false);
@@ -123,36 +138,33 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   const [editingToken, setEditingToken] = useState<{id: string, screenX: number, screenY: number} | null>(null);
 
-  // --- MESTRE: GERENCIADOR ---
   const [managerTab, setManagerTab] = useState<'MAPS' | 'ENEMIES' | 'SAVED'>('MAPS');
   const [inputMapUrl, setInputMapUrl] = useState("");
   const [inputMapName, setInputMapName] = useState("");
   const [inputGridSize, setInputGridSize] = useState(50);
   
-  // Mestre: Editor de Inimigo do Banco
-  const [savedMaps, setSavedMaps] = useState<SavedMap[]>([]);
-  const [savedEnemies, setSavedEnemies] = useState<SavedEnemy[]>([]);
-  const [editingEnemyBank, setEditingEnemyBank] = useState<SavedEnemy | null>(null); // Se !null, mostra o modal de edição
+  const savedMaps: SavedMap[] = sessaoData?.saved_maps || [];
+  const savedEnemies: SavedEnemy[] = sessaoData?.saved_enemies || [];
+
+  const [editingEnemyBank, setEditingEnemyBank] = useState<SavedEnemy | null>(null); 
 
   const containerRef = useRef<HTMLDivElement>(null);
   const panStart = useRef({ x: 0, y: 0 }); 
   const panStartView = useRef({ x: 0, y: 0 }); 
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // --- SINCRONIZAÇÃO ---
+  // SOLUÇÃO: Atualiza a câmera (zoom/pan) de forma limpa quando o Mapa muda (Render-phase state update)
+  const activeMapUrl = sessaoData?.active_map?.url || null;
+  if (activeMapUrl !== currentMapUrl) {
+      setCurrentMapUrl(activeMapUrl);
+      setLocalView({ zoom: 1, panX: 0, panY: 0 });
+  }
+
   useEffect(() => {
     if (sessaoData) {
-        setSavedMaps(sessaoData.saved_maps || []);
-        setSavedEnemies(sessaoData.saved_enemies || []);
-
         if (sessaoData.active_map) {
             const serverMap = sessaoData.active_map;
             
-            if (serverMap.url !== lastMapUrl.current) {
-                setLocalView({ zoom: 1, panX: 0, panY: 0 });
-                lastMapUrl.current = serverMap.url;
-            }
-
             setActiveMap(prev => {
                 if (prev && 
                     prev.url === serverMap.url &&
@@ -175,12 +187,10 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
         } else {
             setActiveMap(null);
             setLocalTokens([]);
-            lastMapUrl.current = null;
         }
     }
   }, [sessaoData, draggingTokenId]);
 
-  // --- HELPER DE PERMISSÃO ---
   const isTokenOwner = (token: Token) => {
       if (isMaster) return true;
       if (token.type === 'enemy') return false;
@@ -194,6 +204,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       return false;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleImageError = (e: any, token: Token) => {
       const target = e.target;
       if (target.getAttribute('data-error-handled')) return;
@@ -206,7 +217,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       target.src = fallbackUrl;
   };
 
-  // --- FIREBASE UPDATES ---
   const pushTokensUpdate = async (newTokens: Token[]) => {
       if (!sessaoData?.id) return;
       await updateDoc(doc(db, 'sessoes', sessaoData.id), { "active_map.tokens": newTokens });
@@ -224,9 +234,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       alert("Mapa salvo no banco!");
   };
 
-  // --- GERENCIAMENTO DE BANCO DE INIMIGOS ---
-  
-  // 1. Criar novo (Abre o editor vazio)
   const startNewEnemy = () => {
       setEditingEnemyBank({
           name: "Novo Inimigo",
@@ -236,20 +243,15 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       });
   };
 
-  // 2. Salvar ou Atualizar Inimigo no Banco
   const saveEnemyToBank = async () => {
       if (!editingEnemyBank || !editingEnemyBank.name || !editingEnemyBank.img) return alert("Preencha nome e imagem.");
       
-      // Verifica se é edição (já existe no array) ou novo
-      const existingIndex = savedEnemies.findIndex(e => e.name === editingEnemyBank.name); // *Nome é a chave primária simples aqui*
-      
-      let newEnemiesList = [...savedEnemies];
+      const existingIndex = savedEnemies.findIndex(e => e.name === editingEnemyBank.name); 
+      const newEnemiesList = [...savedEnemies];
       
       if (existingIndex >= 0) {
-          // Substitui
           newEnemiesList[existingIndex] = editingEnemyBank;
       } else {
-          // Adiciona
           newEnemiesList.push(editingEnemyBank);
       }
 
@@ -257,7 +259,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       setEditingEnemyBank(null);
   };
 
-  // 3. Spawnar Inimigo (Copia os stats do banco para o Token)
   const spawnSavedEnemy = (enemy: SavedEnemy) => {
       const newToken: Token = {
           id: crypto.randomUUID(),
@@ -267,18 +268,18 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
           type: 'enemy',
           visible: false,
           imgOffX: 0, imgOffY: 0, imgScale: 1,
-          stats: { ...enemy.stats, currentPV: enemy.stats.maxPV, currentPF: enemy.stats.maxPF } // Reseta HP ao spawnar
+          stats: { ...enemy.stats, currentPV: enemy.stats.maxPV, currentPF: enemy.stats.maxPF } 
       };
       const updatedTokens = [...localTokens, newToken];
       setLocalTokens(updatedTokens);
       pushTokensUpdate(updatedTokens);
   };
 
-  // --- INTERFACE DO EDITOR DE INIMIGO (DENTRO DO TABLETOP) ---
   const renderEnemyEditor = () => {
       if (!editingEnemyBank) return null;
       const stats = editingEnemyBank.stats;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const handleChange = (field: keyof EnemyStats, value: any) => {
           setEditingEnemyBank({ ...editingEnemyBank, stats: { ...stats, [field]: value } });
       };
@@ -297,7 +298,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                       <button onClick={() => setEditingEnemyBank(null)}><X className="text-white hover:text-red-500" size={24} /></button>
                   </div>
 
-                  {/* Dados Básicos */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                           <label className="text-xs text-white/50 block">Nome do Inimigo</label>
@@ -309,7 +309,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                       </div>
                   </div>
 
-                  {/* Stats RPG */}
                   <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div><label className="text-[10px] uppercase text-white/50">Tipo/Patamar</label><input className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-sm" value={stats.type} onChange={e => handleChange('type', e.target.value)} /></div>
@@ -332,21 +331,19 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         </div>
 
                         <div>
-    <div className="flex justify-between items-center mb-1">
-        <label className="text-[10px] uppercase text-gold font-bold">Habilidades</label>
-        <button onClick={() => handleChange('abilities', [...stats.abilities, {name: "Nova", tag: "Ação", description: ""}])} className="text-[10px] bg-gold text-black px-2 rounded font-bold">+ Add</button>
-    </div>
-    {/* ALTEÇÃO 1: max-h-40 mudou para max-h-72 para dar mais espaço à lista */}
-    <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar p-1">
-        {stats.abilities.map((ab, idx) => (
-            <div key={idx} className="bg-black/40 border border-white/5 rounded p-2 relative group">
-                <div className="flex gap-2 mb-1">
-                    <input className="flex-1 bg-transparent border-b border-white/10 text-white font-bold text-sm" value={ab.name} onChange={e => handleAbilityChange(idx, 'name', e.target.value)} />
-                    <input className="w-20 bg-transparent border-b border-white/10 text-white/50 text-xs text-right" value={ab.tag} onChange={e => handleAbilityChange(idx, 'tag', e.target.value)} />
-                </div>
-                {/* ALTERAÇÃO 2: resize-none mudou para resize-y, e adicionamos min-h-[80px] e mt-1 */}
-                <textarea className="w-full bg-white/5 p-1 rounded border border-white/10 text-white/80 text-xs resize-y min-h-[80px] mt-1" value={ab.description} onChange={e => handleAbilityChange(idx, 'description', e.target.value)} />
-                <button onClick={() => {
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-[10px] uppercase text-gold font-bold">Habilidades</label>
+                                <button onClick={() => handleChange('abilities', [...stats.abilities, {name: "Nova", tag: "Ação", description: ""}])} className="text-[10px] bg-gold text-black px-2 rounded font-bold">+ Add</button>
+                            </div>
+                            <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar p-1">
+                                {stats.abilities.map((ab, idx) => (
+                                    <div key={idx} className="bg-black/40 border border-white/5 rounded p-2 relative group">
+                                        <div className="flex gap-2 mb-1">
+                                            <input className="flex-1 bg-transparent border-b border-white/10 text-white font-bold text-sm" value={ab.name} onChange={e => handleAbilityChange(idx, 'name', e.target.value)} />
+                                            <input className="w-20 bg-transparent border-b border-white/10 text-white/50 text-xs text-right" value={ab.tag} onChange={e => handleAbilityChange(idx, 'tag', e.target.value)} />
+                                        </div>
+                                        <textarea className="w-full bg-white/5 p-1 rounded border border-white/10 text-white/80 text-xs resize-y min-h-[80px] mt-1" value={ab.description} onChange={e => handleAbilityChange(idx, 'description', e.target.value)} />
+                                        <button onClick={() => {
                                             const newAbs = [...stats.abilities];
                                             newAbs.splice(idx, 1);
                                             handleChange('abilities', newAbs);
@@ -379,7 +376,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       await updateDoc(doc(db, 'sessoes', sessaoData.id), { active_map: newActiveMap });
   };
 
-  // --- RENDER DO TABLETOP (CÓDIGO ORIGINAL COM AJUSTES) ---
   const getSceneCoord = (clientX: number, clientY: number) => {
       if (!containerRef.current || !activeMap) return { x: 0, y: 0 };
       const rect = containerRef.current.getBoundingClientRect();
@@ -485,7 +481,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       setEditingToken(null);
   };
 
-  // --- RENDER ---
   return (
     <>
         {activeMap && (
@@ -589,7 +584,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
             </DraggableWindow>
         )}
 
-        {/* MODAL DO GERENCIADOR (MESTRE) */}
         {isMaster && showManager && (
              <div className="fixed inset-0 z-[10000000] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                  <div className="w-[900px] h-[700px] bg-[#1a120b] border border-gold/30 rounded-xl shadow-2xl flex flex-col p-4 animate-scale-up">
@@ -607,7 +601,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
                      <div className="flex-1 overflow-hidden p-2">
                         {managerTab === 'MAPS' && (
-                            /* ... Conteúdo de Mapas mantido similar ao original, apenas abreviado para focar na mudança ... */
                             <div className="flex flex-col gap-4 h-full">
                                 <div className="bg-black/40 p-4 rounded border border-white/10">
                                     <h3 className="text-white text-sm mb-2 font-bold">Definir Mapa Ativo</h3>
@@ -634,14 +627,14 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                         <button onClick={saveMapToBank} className="text-gold text-xs flex items-center gap-1 hover:underline"><FloppyDisk /> Salvar Estado</button>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                            {charactersData.map((c:any) => (
+                                            {charactersData.map((c) => (
                                                 <button key={c.id} onClick={async () => {
                                                     if (!activeMap) return alert("Projete um mapa primeiro");
                                                     const newToken: Token = { 
                                                         id: crypto.randomUUID(), charId: c.id, ownerId: c.playerId, name: c.name, 
                                                         img: c.imageUrl || '/default-token.png', x: 2, y: 2, size: 1, type: 'player', visible: true, imgOffX: 0, imgOffY: 0, imgScale: 1 
                                                     };
-                                                    let tokensToAdd = [newToken];
+                                                    const tokensToAdd = [newToken];
                                                     if (c.class === 'Patrulheiro' && c.subclass === 'Treinador') {
                                                         tokensToAdd.push({
                                                             id: crypto.randomUUID(), charId: c.id, ownerId: c.playerId, name: c.companionName || `${c.name} (Comp.)`,
@@ -677,7 +670,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                             </div>
                         )}
 
-                        {/* --- NOVA ABA DE INIMIGOS --- */}
                         {managerTab === 'ENEMIES' && (
                             <div className="flex flex-col h-full">
                                 <div className="mb-4 flex justify-between items-center">
@@ -689,7 +681,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                 <div className="grid grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
                                     {savedEnemies.map((enemy, i) => (
                                         <div key={i} className="group relative bg-[#0a0a0a] border border-white/20 rounded-lg hover:border-gold transition-all flex flex-col overflow-hidden">
-                                            {/* Área de Spawn (Imagem) */}
                                             <div className="relative aspect-square cursor-pointer overflow-hidden bg-black" onClick={() => spawnSavedEnemy(enemy)} title="Clique para Spawnar no Mapa">
                                                 <img src={enemy.img} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500" />
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 backdrop-blur-[2px] transition-opacity">
@@ -697,7 +688,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                                 </div>
                                             </div>
                                             
-                                            {/* Rodapé (Nome e Editar) */}
                                             <div className="bg-[#151515] p-2 flex justify-between items-center border-t border-white/10">
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="text-white font-bold text-xs truncate" title={enemy.name}>{enemy.name}</span>
@@ -719,7 +709,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
              </div>
         )}
 
-        {/* RENDER DO EDITOR DE INIMIGO (SE ABERTO) */}
         {renderEnemyEditor()}
     </>
   );

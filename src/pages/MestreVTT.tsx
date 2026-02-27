@@ -9,7 +9,7 @@ import {
   Dna, X, Cube, Coins, Sparkle, HandPalm, 
   MapTrifold, UserCircle, Stack, Scroll, Image as ImageIcon,
   Fire, UsersThree, CaretDown, Check, Trash, Plus, PawPrint, Clock,
-  BookOpen, ShieldCheck // <--- ADICIONADO
+  BookOpen, ShieldCheck 
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
 
@@ -18,7 +18,7 @@ import SceneryViewer from '../components/NPCViewer';
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
 import Bestiary from '../components/Bestiary';
-import MasterShield from '../components/MasterShield'; // <--- ADICIONADO
+import MasterShield from '../components/MasterShield'; 
 
 // --- CONFIGURAÇÕES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
@@ -45,6 +45,7 @@ interface Card {
 
 interface Character {
   id: string;
+  playerId: string; // <--- ADICIONADO PARA CORRIGIR O ERRO COM O TABLETOP
   name: string;
   class: string;
   subclass: string;
@@ -823,13 +824,12 @@ export default function MestreVTT() {
   const [showTabletopManager, setShowTabletopManager] = useState(false);
   const [showGroupManager, setShowGroupManager] = useState(false);
   const [showBestiary, setShowBestiary] = useState(false); 
-  const [showMasterShield, setShowMasterShield] = useState(false); // <--- NOVO ESTADO
+  const [showMasterShield, setShowMasterShield] = useState(false); 
 
   const [showFearModal, setShowFearModal] = useState(false);
   const [fearTokens, setFearTokens] = useState(0);
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
-  // --- NOVO: ESTADO PARA O ALERTA DE DRUIDA ---
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
   const styles = `
@@ -908,15 +908,13 @@ useEffect(() => {
       setCharacters(chars);
     });
     return () => unsubscribe();
-  }, []); // Dependência vazia: O listener NÃO é recriado quando o state muda
+  }, []); 
 
   // 2.1 Sincroniza Personagem Selecionado (Roda apenas quando necessário)
   useEffect(() => {
       if (selectedChar) {
           const updated = characters.find(c => c.id === selectedChar.id);
           
-          // Verifica se realmente houve mudança nos dados antes de atualizar o state
-          // Isso previne o loop "update depth exceeded" comparando o conteúdo
           if (updated && JSON.stringify(updated) !== JSON.stringify(selectedChar)) {
               setSelectedChar(updated);
           }
@@ -941,7 +939,7 @@ useEffect(() => {
   };
 
   const toggleFearToken = async (index: number) => {
-      let newCount = index < fearTokens ? index : index + 1;
+      const newCount = index < fearTokens ? index : index + 1;
       if (sessaoData?.id) {
           await updateDoc(doc(db, 'sessoes', sessaoData.id), { "fear_data.tokens": newCount });
       }

@@ -2,16 +2,15 @@ import { DruidMorphModal } from '../components/DruidMorphModal';
 import { PawPrint } from '@phosphor-icons/react'; 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { 
-  X, Shield, HandGrabbing, Stack, ArrowsOutSimple, 
+  X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Scroll, Plus, 
-  ArrowsLeftRight, Coin, Skull, Sparkle, Campfire, MoonStars,
-  Dna, Coins, Cube, ArrowUUpLeft, List, ChatTeardropText, PaperPlaneRight
+  ArrowsLeftRight, Coin, Skull, Sparkle,
+  Dna, Coins, Cube, ArrowUUpLeft, ChatTeardropText, PaperPlaneRight
 } from '@phosphor-icons/react';
 
-// --- IMPORTAÇÕES DE DADOS E COMPONENTES ---
 import CARTAS_JSON from '../data/cartas.json'; 
 import { SheetModal } from '../components/SheetModal';
 import NPCViewer from '../components/NPCViewer'; 
@@ -44,21 +43,23 @@ interface Character {
   community: string;
   heritage: string;
   level: number;
-  unlockedTier?: number; // Adicionado para o Druida
+  unlockedTier?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attributes?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   weapons?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   armor?: any;
   imageUrl?: string;
   paSpent?: number;
-  bondRequests?: any[]; // Lista de solicitações de vínculo
-  // Persistência das cartas
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  bondRequests?: any[]; 
   cards?: {
     hand: ActiveCard[];
     reserve: Card[];
   };
 }
 
-// Resultado da Dualidade
 interface DualityResult {
   type: 'DUALITY';
   hopeDie: number;
@@ -69,7 +70,6 @@ interface DualityResult {
   isSuccess: boolean;
 }
 
-// Resultado Padrão (d20, dano, etc)
 interface StandardResult {
   type: 'STANDARD';
   rolls: number[];
@@ -80,7 +80,16 @@ interface StandardResult {
 
 type RollResult = DualityResult | StandardResult;
 
-// --- CORES DE FUNDO/HUD ---
+interface RollLog {
+  id: string;
+  playerName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  timestamp: any;
+  type: 'DUALITY' | 'STANDARD';
+}
+
 const CLASS_COLORS: Record<string, string> = {
   "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
@@ -93,24 +102,114 @@ const ANCESTRY_COLORS: Record<string, string> = {
 };
 
 // ==================================================================================
-// 2. COMPONENTE: SISTEMA DE DADOS (DiceSystem)
+// COMPONENTES AUXILIARES
 // ==================================================================================
-function InternalDiceSystem({ onClose }: { onClose: () => void }) {
+const DiceToast = () => {
+    const [lastRoll, setLastRoll] = useState<RollLog | null>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const q = query(collection(db, 'rolls'), orderBy('timestamp', 'desc'), limit(1));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                const rollData = { id: snapshot.docs[0].id, ...data } as RollLog;
+                
+                const now = new Date().getTime();
+                const rollTime = rollData.timestamp?.toMillis ? rollData.timestamp.toMillis() : now;
+                
+                if (now - rollTime < 10000) { 
+                    setLastRoll(rollData);
+                    setVisible(true);
+                    const timer = setTimeout(() => setVisible(false), 8000); 
+                    return () => clearTimeout(timer);
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    if (!visible || !lastRoll) return null;
+
+    return (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[4000] animate-bounce-in pointer-events-none">
+            <div className={`px-6 py-4 rounded-xl border-2 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md flex items-center gap-4 min-w-[300px] ${lastRoll.type === 'DUALITY' ? 'bg-black/90 border-gold' : 'bg-[#1a0b2e]/90 border-purple-500'}`}>
+                <div className="flex flex-col items-center border-r border-white/10 pr-4">
+                    <span className="text-[10px] uppercase text-white/50 tracking-widest">Jogador</span>
+                    <span className="text-lg font-bold text-white leading-none">{lastRoll.playerName}</span>
+                </div>
+                
+                {lastRoll.type === 'DUALITY' ? (
+                    <div className="flex items-center gap-4">
+                        <div className="text-center">
+                            <span className="block text-2xl font-bold text-green-400 drop-shadow">{lastRoll.result.total}</span>
+                            <span className="text-[9px] text-white/30 uppercase">Total</span>
+                        </div>
+                        <div className="flex gap-2 text-xs">
+                             <span className="text-gold font-bold">{lastRoll.result.hopeDie} (Esp)</span>
+                             <span className="text-purple-400 font-bold">{lastRoll.result.fearDie} (Medo)</span>
+                        </div>
+                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${lastRoll.result.outcome === 'CRITICAL' ? 'bg-gold text-black' : lastRoll.result.isSuccess ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'}`}>
+                            {lastRoll.result.outcome === 'CRITICAL' ? 'Crítico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <div className="text-center">
+                            <span className="block text-2xl font-bold text-purple-300 drop-shadow">{lastRoll.result.total}</span>
+                            <span className="text-[9px] text-white/30 uppercase">Total</span>
+                        </div>
+                        <div className="text-xs text-white/50">
+                            [{lastRoll.result.rolls.join(' + ')}] + {lastRoll.result.modifier}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const TableCard = ({ card, label, locked = true, onSelect }: { card: Card | null, label: string, locked?: boolean, onSelect: (card: Card) => void }) => {
+    if (!card) return (<div className="w-20 h-28 border border-white/10 rounded bg-white/5 flex flex-col items-center justify-center text-[8px] text-white/30 uppercase tracking-widest text-center px-1 gap-2 border-dashed">{locked ? <LockKey size={16} /> : <Plus size={16} />}<span>{label}</span></div>);
+    return (
+        <div onClick={() => onSelect(card)} className="group relative w-20 h-28 md:w-24 md:h-36 rounded border border-white/20 bg-black/50 transition-all duration-300 hover:scale-[2.5] hover:z-50 hover:translate-y-20 cursor-help shadow-lg origin-top">
+            <img src={card.caminho} className="w-full h-full object-cover rounded opacity-90 group-hover:opacity-100" />
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-gold uppercase tracking-widest opacity-0 group-hover:opacity-100 whitespace-nowrap bg-black/80 px-2 py-0.5 rounded border border-gold/30 z-50">{label}</span>
+            {locked && <div className="absolute bottom-1 right-1 text-white/20 group-hover:hidden"><LockKey size={12} weight="fill" /></div>}
+        </div>
+    );
+};
+
+// ==================================================================================
+// SISTEMA DE DADOS
+// ==================================================================================
+function InternalDiceSystem({ characterName, onClose }: { characterName: string, onClose: () => void }) {
   const [tab, setTab] = useState<'DUALITY' | 'STANDARD'>('DUALITY');
   const [isRolling, setIsRolling] = useState(false);
   const [result, setResult] = useState<RollResult | null>(null);
 
-  // Estados Dualidade
   const [modifier, setModifier] = useState(0);
   const [difficulty, setDifficulty] = useState<number>(12);
   const [advantage, setAdvantage] = useState<'none' | 'advantage' | 'disadvantage'>('none');
 
-  // Estados Standard
-  const [selectedDie, setSelectedDie] = useState(20); // d20 padrão
+  const [selectedDie, setSelectedDie] = useState(20); 
   const [diceCount, setDiceCount] = useState(1);
   const [standardMod, setStandardMod] = useState(0);
 
-  // --- ROLAGEM DUALIDADE ---
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pushRollToFirebase = async (rollResult: any, type: 'DUALITY' | 'STANDARD') => {
+      try {
+        await addDoc(collection(db, 'rolls'), {
+            playerName: characterName, 
+            type,
+            result: rollResult,
+            timestamp: serverTimestamp()
+        });
+      } catch (e) {
+          console.error("Erro ao enviar rolagem:", e);
+      }
+  };
+
   const rollDuality = () => {
     setIsRolling(true);
     setResult(null);
@@ -130,20 +229,22 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
       else if (hope > fear) outcome = 'HOPE';
       else outcome = 'FEAR';
 
-      setResult({
-        type: 'DUALITY',
+      const finalResult = {
+        type: 'DUALITY' as const,
         hopeDie: hope,
         fearDie: fear,
         modifier: modifier + finalAdvMod,
         total,
         outcome,
         isSuccess: total >= difficulty
-      });
+      };
+
+      setResult(finalResult);
+      pushRollToFirebase(finalResult, 'DUALITY'); 
       setIsRolling(false);
     }, 1000);
   };
 
-  // --- ROLAGEM PADRÃO ---
   const rollStandard = () => {
     setIsRolling(true);
     setResult(null);
@@ -152,13 +253,16 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
         const rolls = Array.from({ length: diceCount }, () => Math.floor(Math.random() * selectedDie) + 1);
         const sum = rolls.reduce((a, b) => a + b, 0);
         
-        setResult({
-            type: 'STANDARD',
+        const finalResult = {
+            type: 'STANDARD' as const,
             rolls,
             dieType: selectedDie,
             modifier: standardMod,
             total: sum + standardMod
-        });
+        };
+
+        setResult(finalResult);
+        pushRollToFirebase(finalResult, 'STANDARD');
         setIsRolling(false);
     }, 1000);
   };
@@ -337,17 +441,15 @@ function InternalDiceSystem({ onClose }: { onClose: () => void }) {
 }
 
 // ==================================================================================
-// 3. COMPONENTE INTERNO: SISTEMA DE CARTAS (InternalCardSystem)
+// SISTEMA DE CARTAS (InternalCardSystem)
 // ==================================================================================
-function InternalCardSystem({ character, allCards }: { character: Character, allCards: any[] }) {
-  const safeCards: Card[] = Array.isArray(allCards) ? allCards : [];
+function InternalCardSystem({ character, allCards }: { character: Character, allCards: Card[] }) {
+  const safeCards: Card[] = useMemo(() => Array.isArray(allCards) ? allCards : [], [allCards]);
 
-  // --- PERSISTÊNCIA: Carregamento Inicial ---
   const [hand, setHand] = useState<ActiveCard[]>([]);
   const [reserve, setReserve] = useState<Card[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   
-  // Ref para evitar loops infinitos no useEffect de salvamento
   const handRef = useRef(hand);
   const reserveRef = useRef(reserve);
 
@@ -362,13 +464,11 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     }
   }, [character, isDataLoaded]);
 
-  // CORREÇÃO: Sync com Servidor (para quando o Mestre altera as cartas)
+  // Sync com Servidor
   useEffect(() => {
       if (character?.cards) {
-          // Compara versões stringificadas para evitar loops se os objetos não forem idênticos por referência
           const serverHand = JSON.stringify(character.cards.hand || []);
           const localHand = JSON.stringify(hand);
-          
           if (serverHand !== localHand) {
               setHand(character.cards.hand || []);
           }
@@ -381,26 +481,21 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       }
   }, [character]);
 
-  // Atualiza refs para o salvamento
   useEffect(() => {
     handRef.current = hand;
     reserveRef.current = reserve;
   }, [hand, reserve]);
 
-  // --- PERSISTÊNCIA: Salvamento Automático OTIMIZADO ---
   useEffect(() => {
-    // Só salva se já carregou os dados iniciais para não sobrescrever com vazio
     if (!isDataLoaded || !character.id) return;
 
     const saveData = async () => {
       try {
         const charRef = doc(db, 'characters', character.id);
-        
         await updateDoc(charRef, {
           "cards.hand": handRef.current,
           "cards.reserve": reserveRef.current
         });
-        
       } catch (error) {
         console.error("Erro ao salvar cartas:", error);
       }
@@ -410,16 +505,12 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     return () => clearTimeout(debounce);
   }, [hand, reserve, character.id, isDataLoaded]);
 
-  
   const [pendingCard, setPendingCard] = useState<Card | null>(null);
   const [isSwapping, setIsSwapping] = useState(false);
   const [swapSource, setSwapSource] = useState<'grimoire' | 'reserve' | null>(null);
   const [reserveIndexToSwap, setReserveIndexToSwap] = useState<number>(-1);
 
   const [castingCard, setCastingCard] = useState<ActiveCard | null>(null);
-  const [ancestryCard, setAncestryCard] = useState<Card | null>(null);
-  const [communityCard, setCommunityCard] = useState<Card | null>(null);
-  const [subclassCards, setSubclassCards] = useState<(Card | null)[]>([null, null, null]);
 
   const [showGrimoire, setShowGrimoire] = useState(false);
   const [showReserve, setShowReserve] = useState(false);
@@ -435,21 +526,21 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     return selectedCardState.staticCard;
   }, [selectedCardState, hand]);
 
-  // Carrega cartas fixas da mesa (Ancestralidade, Classe)
-  useEffect(() => {
-    if (!character || safeCards.length === 0) return;
-    const safeStr = (str?: string) => (str || "").toLowerCase();
+  const safeStr = (str?: string) => (str || "").toLowerCase();
 
-    const anc = safeCards.find(c => c.categoria === "Ancestralidade" && c.nome.toLowerCase().includes(safeStr(character.ancestry)));
-    const com = safeCards.find(c => c.categoria === "Comunidade" && c.nome.toLowerCase().includes(safeStr(character.community)));
-    setAncestryCard(anc || null);
-    setCommunityCard(com || null);
+  const ancestryCard = useMemo(() => 
+      safeCards.find(c => c.categoria === "Ancestralidade" && c.nome.toLowerCase().includes(safeStr(character.ancestry))) || null
+  , [character.ancestry, safeCards]);
 
-    const fundamental = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)) && c.nome.toLowerCase().includes("fundamental"));
-    const fallbackSub = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)));
-    setSubclassCards([fundamental || fallbackSub || null, null, null]);
-    
-  }, [character, safeCards]);
+  const communityCard = useMemo(() => 
+      safeCards.find(c => c.categoria === "Comunidade" && c.nome.toLowerCase().includes(safeStr(character.community))) || null
+  , [character.community, safeCards]);
+
+  const subclassCards = useMemo(() => {
+      const fundamental = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)) && c.nome.toLowerCase().includes("fundamental"));
+      const fallbackSub = safeCards.find(c => c.categoria === "Classes" && c.nome.toLowerCase().includes(safeStr(character.subclass)));
+      return [fundamental || fallbackSub || null, null, null];
+  }, [character.subclass, safeCards]);
 
   const createActiveCard = (card: Card): ActiveCard => ({
     ...card, uniqueId: crypto.randomUUID(), isExhausted: false, exhaustionType: null, tokens: 0
@@ -520,22 +611,11 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     setHand(hand.map(c => c.uniqueId === uniqueId ? { ...c, tokens: Math.max(0, c.tokens + delta) } : c));
   };
 
-  const TableCard = ({ card, label, locked = true }: { card: Card | null, label: string, locked?: boolean }) => {
-    if (!card) return (<div className="w-20 h-28 border border-white/10 rounded bg-white/5 flex flex-col items-center justify-center text-[8px] text-white/30 uppercase tracking-widest text-center px-1 gap-2 border-dashed">{locked ? <LockKey size={16} /> : <Plus size={16} />}<span>{label}</span></div>);
-    return (
-      <div onClick={() => setSelectedCardState({ id: null, staticCard: card, source: 'table' })} className="group relative w-20 h-28 md:w-24 md:h-36 rounded border border-white/20 bg-black/50 transition-all duration-300 hover:scale-[2.5] hover:z-50 hover:translate-y-20 cursor-help shadow-lg origin-top">
-        <img src={card.caminho} className="w-full h-full object-cover rounded opacity-90 group-hover:opacity-100" />
-        <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-gold uppercase tracking-widest opacity-0 group-hover:opacity-100 whitespace-nowrap bg-black/80 px-2 py-0.5 rounded border border-gold/30 z-50">{label}</span>
-        {locked && <div className="absolute bottom-1 right-1 text-white/20 group-hover:hidden"><LockKey size={12} weight="fill" /></div>}
-      </div>
-    );
-  };
-
-  const filteredGrimoire = safeCards.filter(c => {
+  const filteredGrimoire = useMemo(() => safeCards.filter(c => {
     if (!c) return false;
     if (!["Feitiço", "Grimório", "Talento"].includes(c.categoria)) return false;
     return c.nome.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  }), [safeCards, searchTerm]);
 
   return (
     <>
@@ -584,18 +664,17 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       {/* MESA (Cartas Fixas) */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-start gap-4 z-40 pointer-events-none">
         <div className="flex gap-2 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
-          <TableCard card={ancestryCard} label="Ancestralidade" />
-          <TableCard card={communityCard} label="Comunidade" />
+          <TableCard card={ancestryCard} label="Ancestralidade" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
+          <TableCard card={communityCard} label="Comunidade" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
         </div>
         <div className="w-[1px] h-20 bg-white/10"></div>
         <div className="flex gap-1 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
-          <TableCard card={subclassCards[0]} label="Fundamental" />
-          <TableCard card={subclassCards[1]} label="Especialização" locked={false} />
-          <TableCard card={subclassCards[2]} label="Maestria" locked={false} />
+          <TableCard card={subclassCards[0]} label="Fundamental" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
+          <TableCard card={subclassCards[1]} label="Especialização" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
+          <TableCard card={subclassCards[2]} label="Maestria" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
         </div>
       </div>
 
-      {/* Notificação Mão Cheia */}
       {isSwapping && (
         <div className="fixed top-32 left-1/2 -translate-x-1/2 z-[60] bg-black/80 border border-gold text-gold px-6 py-4 rounded-xl shadow-2xl animate-bounce text-center backdrop-blur-md">
             <div className="flex flex-col items-center gap-2">
@@ -607,7 +686,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      {/* BOTÕES LATERAIS (Grimório e Reserva) */}
       <div className="absolute bottom-8 right-8 z-40">
         <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-28 h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
           <img src="/pote_deck.png" className="w-full h-full object-contain" />
@@ -625,7 +703,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </button>
       </div>
 
-      {/* MÃO DO JOGADOR */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-48 flex items-end justify-center z-30 pointer-events-none">
         <div className="flex items-end justify-center -space-x-12 pb-6 pointer-events-auto perspective-500">
           {hand.map((card, idx) => (
@@ -635,7 +712,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                 className={`relative w-40 h-60 rounded-xl shadow-xl border transition-all duration-300 cursor-pointer origin-bottom bg-cover bg-center bg-[#1a120b] ${isSwapping ? 'animate-pulse border-red-500 z-50 hover:scale-105' : 'border-white/20 hover:z-50 hover:scale-110 hover:-translate-y-24 hover:rotate-0 hover:border-gold'}`}
                 style={{ backgroundImage: `url('${card.caminho}')`, transform: `rotate(${(idx - (hand.length - 1) / 2) * 6}deg) translateY(${Math.abs(idx - (hand.length - 1) / 2) * 15}px)`, zIndex: idx, filter: card.isExhausted ? 'grayscale(100%) brightness(60%)' : 'none' }}
             >
-                {/* TOKEN CENTRALIZADO */}
                 {card.tokens > 0 && (
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_15px_rgba(255,0,0,0.5)] z-[60] text-xl animate-bounce">
                         {card.tokens}
@@ -647,7 +723,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       </div>
 
-      {/* MODALS DE LISTAS (GRIMÓRIO/RESERVA) */}
       {(showGrimoire || showReserve) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-[85%] h-[85%] bg-[#0f0b15]/90 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
@@ -672,15 +747,11 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      {/* MODAL ZOOM (DETALHES DA CARTA) CORRIGIDO */}
       {currentSelectedCard && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 animate-fade-in" onClick={() => setSelectedCardState(null)}>
-          {/* Overlay com Blur apenas no fundo */}
           <div className="absolute inset-0 backdrop-blur-sm pointer-events-none"></div>
 
           <div className="relative flex flex-col md:flex-row items-center gap-10 max-w-5xl w-full p-4 z-10" onClick={e => e.stopPropagation()}>
-            
-            {/* Container da Imagem Ajustado (Shrink-0 para não espremer, object-contain para não cortar) */}
             <div className="relative h-[65vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden shrink-0 bg-[#0a080c]">
                 <img src={currentSelectedCard.caminho} className={`w-full h-full object-contain ${(currentSelectedCard as ActiveCard).isExhausted ? 'grayscale' : ''}`} />
                 {(currentSelectedCard as ActiveCard).isExhausted && (
@@ -692,7 +763,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                 )}
             </div>
             
-            {/* Container de Texto (subpixel-antialiased para nitidez) */}
             <div className="flex flex-col gap-4 min-w-[300px] subpixel-antialiased pl-4">
               <h3 className="text-3xl font-rpg text-white">{currentSelectedCard.nome}</h3>
               <span className="text-xs uppercase text-gold border border-gold/30 px-2 py-1 rounded w-fit">{currentSelectedCard.categoria}</span>
@@ -752,26 +822,26 @@ export default function JogadorVTT() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
-  const [sessaoData, setSessaoData] = useState<any>(null); // Sincronização de Sessão
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [sessaoData, setSessaoData] = useState<any>(null); 
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
-  // Estados DRUIDA
   const [showDruidModal, setShowDruidModal] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
-  // ESTADOS DE VÍNCULO (NOVO)
   const [groupCharacters, setGroupCharacters] = useState<Character[]>([]); 
-  const [bondRequests, setBondRequests] = useState<any[]>([]); // Lista de solicitações
-  const [isNotifOpen, setIsNotifOpen] = useState(false); // Estado do menu de notificações
+  const [isNotifOpen, setIsNotifOpen] = useState(false); 
 
-  // --- BUSCA DO PERSONAGEM (EM TEMPO REAL) ---
+  // SOLUÇÃO: Não precisamos mais de um state para bondRequests, ele deriva diretamente do objeto
+  const bondRequests = character?.bondRequests || [];
+
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) { navigate('/login'); return; }
 
     const q = query(collection(db, 'characters'), where('playerId', '==', user.uid));
     
-    // Listener para ouvir atualizações do Mestre em tempo real
     const unsubscribe = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
@@ -792,10 +862,9 @@ export default function JogadorVTT() {
         setLoading(false);
     });
 
-    return () => unsubscribe(); // CORREÇÃO: "unsubscribe" no singular, igual à declaração
+    return () => unsubscribe(); 
   }, [navigate]);
 
-  // Listener para dados da Sessão (Mapa/Cenário)
   useEffect(() => {
     const q = query(collection(db, 'sessoes'), limit(1));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -807,40 +876,29 @@ export default function JogadorVTT() {
     return () => unsubscribe();
   }, []);
 
-  // --- BUSCA GRUPO E MONITORAMENTO DE SOLICITAÇÕES ---
   useEffect(() => {
     if (!sessaoData?.active_group_id) return;
 
-    // 1. Buscar personagens do mesmo grupo para popular a lista de menções
     const qGroup = query(collection(db, 'characters'));
     const unsubGroup = onSnapshot(qGroup, (snapshot) => {
         const allChars = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Character));
-        // Filtra apenas quem está no grupo ativo
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const activeGroup = sessaoData.player_groups?.find((g: any) => g.id === sessaoData.active_group_id);
         if (activeGroup) {
             setGroupCharacters(allChars.filter(c => activeGroup.memberIds.includes(c.id)));
         } else {
-            setGroupCharacters(allChars); // Fallback
+            setGroupCharacters(allChars); 
         }
     });
 
     return () => unsubGroup();
   }, [sessaoData]);
 
-  // Monitorar Solicitações de Vínculo no próprio personagem
-  useEffect(() => {
-      if (character?.bondRequests) {
-          setBondRequests(character.bondRequests);
-      } else {
-          setBondRequests([]);
-      }
-  }, [character]);
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAnswerBond = async (req: any, answerText: string) => {
       if (!character || !answerText.trim()) return;
       
       try {
-          // 1. Atualizar o personagem que perguntou (sender)
           const senderDoc = await getDocs(query(collection(db, 'characters'), where('__name__', '==', req.fromId)));
           
           if (!senderDoc.empty) {
@@ -848,7 +906,6 @@ export default function JogadorVTT() {
               const currentGuide = senderData.guide || { origin: [], bonds: [] };
               const currentBonds = [...(currentGuide.bonds || [])];
               
-              // Garante que o array tenha tamanho suficiente
               while (currentBonds.length <= req.questionIndex) currentBonds.push("");
 
               const previousText = currentBonds[req.questionIndex] || "";
@@ -861,16 +918,14 @@ export default function JogadorVTT() {
               });
           }
 
-          // 2. Remover a solicitação deste personagem (Optimistic UI)
           const myRef = doc(db, 'characters', character.id);
-          // Filtra removendo exatamente este request (pelo timestamp para garantir unicidade)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const safeNewRequests = (character.bondRequests || []).filter((r: any) => r.timestamp !== req.timestamp);
           
           await updateDoc(myRef, {
               bondRequests: safeNewRequests
           });
 
-          // Fecha se não houver mais requests
           if (safeNewRequests.length === 0) setIsNotifOpen(false);
 
       } catch (error) {
@@ -879,23 +934,19 @@ export default function JogadorVTT() {
       }
   };
 
-  // --- LISTENER GLOBAL: TRANSFORMAÇÃO DRUIDA ---
   useEffect(() => {
-    if (!sessaoData?.id) return; // Aguarda o ID da sessão carregar
+    if (!sessaoData?.id) return; 
 
-    // Escuta o documento da sessão correta para alertas globais de transformação
     const unsub = onSnapshot(doc(db, "sessoes", sessaoData.id), (snapshot) => {
       const data = snapshot.data();
       
       if (data?.latestTransformation) {
-        // Verifica se a transformação aconteceu nos últimos 8 segundos
         const now = Date.now();
         const timeDiff = now - (data.latestTransformation.id || 0);
 
         if (timeDiff < 8000) {
           setTransformAlert(data.latestTransformation);
 
-          // Remove o alerta da tela após 6 segundos
           const timer = setTimeout(() => {
             setTransformAlert(null);
           }, 6000);
@@ -906,16 +957,16 @@ export default function JogadorVTT() {
     });
 
     return () => unsub();
-  }, [sessaoData?.id]); // Re-executa apenas quando o ID da sessão mudar (carregar)
+  }, [sessaoData?.id]); 
 
-  // --- CONTROLE ALERTA MEDO ---
+  // SOLUÇÃO: setTimeout garante que a tela atualize sem travar a thread do hook
   useEffect(() => {
     if (sessaoData?.fear_data?.last_trigger) {
         const diff = Date.now() - sessaoData.fear_data.last_trigger;
         if (diff < 5000) {
-            setFearAlertVisible(true);
-            const timer = setTimeout(() => setFearAlertVisible(false), 5000 - diff);
-            return () => clearTimeout(timer);
+            const timerShow = setTimeout(() => setFearAlertVisible(true), 0);
+            const timerHide = setTimeout(() => setFearAlertVisible(false), 5000 - diff);
+            return () => { clearTimeout(timerShow); clearTimeout(timerHide); };
         }
     }
   }, [sessaoData?.fear_data?.last_trigger]);
@@ -929,39 +980,23 @@ export default function JogadorVTT() {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black select-none">
       
-      {/* CAMADA 0: BACKGROUND ESTÁTICO (DEVOLVIDA) */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <img src="/jogador-vtt-fundo.webp" className="w-full h-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40"></div>
       </div>
       
-      {/* ============================== */}
-      {/* CAMADAS DE VISUALIZAÇÃO (MAPA) */}
-      {/* ============================== */}
-      
-      {/* Camada 1: Cenário/NPC (Overlay ou Fundo) */}
-      {/* O NPCViewer controla seus próprios Z-Indices (NPC=100, Cenário=0) */}
       {sessaoData && (
           <NPCViewer sessaoData={sessaoData} isMaster={false} />
       )}
       
-      {/* NOVO COMPONENTE: Contador de Turnos */}
       {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={false} />}
 
-      {/* Camada 2: Mesa/Mapa (Frente) */}
-      {/* Tabletop agora é uma janela Draggable para todos */}
       {sessaoData && (
          <Tabletop sessaoData={sessaoData} isMaster={false} charactersData={[]} />
       )}
 
-      {/* Overlay Escuro para melhorar leitura do HUD */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
 
-      {/* ============================== */}
-      {/* HUD (Interface)                */}
-      {/* ============================== */}
-
-      {/* PERFIL (Topo Esquerdo) */}
       <div className="absolute top-6 left-6 z-50 animate-fade-in pointer-events-auto flex items-center gap-4">
         <button onClick={() => setSheetOpen(true)} className="group relative flex items-center gap-4 pr-8 pl-2 py-2 rounded-full border border-white/20 shadow-xl transition-all hover:scale-[1.02]" style={{ background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' }}>
           <div className="relative w-14 h-14 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0">
@@ -979,16 +1014,13 @@ export default function JogadorVTT() {
         </button>
       </div>
 
-      {/* --- CENTRAL DE NOTIFICAÇÕES (VÍNCULOS) --- */}
       <div className="absolute top-6 right-6 z-[60] pointer-events-auto flex flex-col items-end">
-          {/* Botão de Notificação */}
           <button 
               onClick={() => setIsNotifOpen(!isNotifOpen)}
               className="relative w-12 h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/10 hover:border-gold transition-all shadow-lg backdrop-blur-md"
           >
               <ChatTeardropText size={24} weight={bondRequests.length > 0 ? "fill" : "regular"} className={bondRequests.length > 0 ? "text-gold" : "text-white/60"} />
               
-              {/* Badge Vermelho */}
               {bondRequests.length > 0 && (
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-black shadow-md animate-bounce">
                       {bondRequests.length}
@@ -996,7 +1028,6 @@ export default function JogadorVTT() {
               )}
           </button>
 
-          {/* Painel Expansível */}
           {isNotifOpen && (
               <div className="mt-3 w-80 max-h-[70vh] overflow-y-auto custom-scrollbar bg-[#1a120b]/95 border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-4 animate-scale-up origin-top-right backdrop-blur-md">
                   <div className="flex justify-between items-center border-b border-white/10 pb-2">
@@ -1053,14 +1084,12 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      {/* BOTÃO FLUTUANTE DE DADOS (Canto Inferior Direito) */}
       <div className="absolute bottom-36 right-8 z-40 pointer-events-auto">
         <button onClick={() => setShowDiceRoller(true)} className="w-16 h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
             <div className="group-hover:animate-spin"><Dna size={32} weight="bold" /></div>
         </button>
       </div>
 
-      {/* --- BOTÃO DE TRANSFORMAÇÃO (APENAS DRUIDA) --- */}
       {character.class === "Druida" && (
         <div className="absolute bottom-56 right-8 z-40 pointer-events-auto">
             <button 
@@ -1073,13 +1102,12 @@ export default function JogadorVTT() {
         </div>
       )}
 
-      {/* SISTEMA DE CARTAS INTEGRADO */}
-      <InternalCardSystem character={character} allCards={CARTAS_JSON as any} />
+      <InternalCardSystem character={character} allCards={CARTAS_JSON as Card[]} />
 
-      {/* MODAL DE DADOS */}
-      {showDiceRoller && <InternalDiceSystem onClose={() => setShowDiceRoller(false)} />}
+      <DiceToast />
 
-      {/* MODAL DE FICHA */}
+      {showDiceRoller && <InternalDiceSystem characterName={character.name} onClose={() => setShowDiceRoller(false)} />}
+
       <SheetModal 
         character={character} 
         isOpen={sheetOpen} 
@@ -1087,8 +1115,6 @@ export default function JogadorVTT() {
         groupCharacters={groupCharacters} 
       />
 
-      {/* MODAL DE DRUIDA */}
-      {/* AGORA RECEBE O ID DA SESSÃO PARA O ALERTA FUNCIONAR */}
       {character.class === "Druida" && (
         <DruidMorphModal 
           character={character}
@@ -1098,32 +1124,24 @@ export default function JogadorVTT() {
         />
       )}
 
-      {/* ========================================= */}
-      {/* ALERTA DE TRANSFORMAÇÃO (DRUIDA)          */}
-      {/* ========================================= */}
       {transformAlert && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4">
             <div className="relative w-full max-w-5xl flex flex-col items-center justify-center text-center animate-fade-in-up">
                 
-                {/* Faixa de Fundo com Blur e Gradiente da Classe */}
                 <div className={`absolute inset-0 bg-gradient-to-r ${transformAlert.gradientClass || 'from-gray-800 to-black'} opacity-90 blur-xl h-40 top-1/2 -translate-y-1/2 rounded-full transform scale-x-110 -z-10`}></div>
                 
-                {/* Nome do Personagem que se transformou */}
                 <h2 className="text-3xl md:text-5xl font-rpg uppercase text-white drop-shadow-[0_4px_4px_rgba(0,0,0,1)] relative z-10 animate-slide-in-left">
                     {transformAlert.charName}
                 </h2>
                 
-                {/* Texto de conexão */}
                 <p className="text-sm md:text-xl text-white/90 font-light tracking-[0.3em] uppercase my-3 relative z-10 bg-black/60 px-6 py-1 rounded-full border border-white/10 backdrop-blur-md">
                     Se transformou em
                 </p>
                 
-                {/* Nome da Nova Forma (O animal escolhido) */}
                 <h1 className="text-5xl md:text-8xl font-black uppercase relative z-10 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] animate-zoom-in font-rpg leading-none pb-2">
                     {transformAlert.formName}
                 </h1>
 
-                 {/* Nome da Forma Base e Patamar (ex: Predador • 1º Patamar) */}
                  <span className="relative z-10 text-green-400 text-sm md:text-lg uppercase tracking-widest mt-2 font-bold bg-black/40 px-4 py-1 rounded border border-green-500/30">
                     {transformAlert.baseForm} • {transformAlert.tierLabel || "Forma Selvagem"}
                  </span>
@@ -1131,9 +1149,6 @@ export default function JogadorVTT() {
         </div>
       )}
 
-      {/* ========================================= */}
-      {/* ALERTA DE MEDO (GLOBAL OVERLAY)           */}
-      {/* ========================================= */}
       {fearAlertVisible && (
            <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
                <div className="relative w-full flex flex-col items-center animate-ds-text">
