@@ -12,15 +12,16 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
   const turnData = sessaoData?.turn_data || { visible: false, current: 1 };
   const lastValue = useRef(turnData.current);
   
-  // Estado de Posição (Arrastável) - Inicializado no centro superior
-  const [position, setPosition] = useState({ x: window.innerWidth / 2 - 120, y: 50 });
+  // Posicionamento inicial inteligente: Centro no Desktop, Canto Direito no Mobile
+  const [position, setPosition] = useState({ 
+      x: window.innerWidth > 768 ? window.innerWidth / 2 - 120 : window.innerWidth - 180, 
+      y: window.innerWidth > 768 ? 50 : 100 
+  });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // Estado de Minimização
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // --- LÓGICA DE SOM (BIP) E AUTO-ABERTURA ---
   const playBeep = () => {
     try {
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -50,21 +51,28 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
   useEffect(() => {
     if (turnData.visible && turnData.current !== lastValue.current) {
         playBeep();
-        // Se o turno mudar e estiver minimizado, abre automaticamente para o jogador
         if (isMinimized) setIsMinimized(false);
         lastValue.current = turnData.current;
     }
   }, [turnData.current, turnData.visible]);
 
-  // --- LÓGICA DE ARRASTO ---
+  // --- EVENTOS DE MOUSE ---
   const handleMouseDown = (e: React.MouseEvent) => {
-      // Impede o arrasto se clicar nos botões de controle
       if ((e.target as HTMLElement).closest('button')) return;
-      
       setIsDragging(true);
       dragOffset.current = {
           x: e.clientX - position.x,
           y: e.clientY - position.y
+      };
+  };
+
+  // --- EVENTOS DE TOQUE (MOBILE) ---
+  const handleTouchStart = (e: React.TouchEvent) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      setIsDragging(true);
+      dragOffset.current = {
+          x: e.touches[0].clientX - position.x,
+          y: e.touches[0].clientY - position.y
       };
   };
 
@@ -78,17 +86,30 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
       };
       const handleMouseUp = () => setIsDragging(false);
 
+      const handleTouchMove = (e: TouchEvent) => {
+          if (!isDragging) return;
+          e.preventDefault(); 
+          setPosition({
+              x: e.touches[0].clientX - dragOffset.current.x,
+              y: e.touches[0].clientY - dragOffset.current.y
+          });
+      };
+      const handleTouchEnd = () => setIsDragging(false);
+
       if (isDragging) {
           window.addEventListener('mousemove', handleMouseMove);
           window.addEventListener('mouseup', handleMouseUp);
+          window.addEventListener('touchmove', handleTouchMove, { passive: false });
+          window.addEventListener('touchend', handleTouchEnd);
       }
       return () => {
           window.removeEventListener('mousemove', handleMouseMove);
           window.removeEventListener('mouseup', handleMouseUp);
+          window.removeEventListener('touchmove', handleTouchMove);
+          window.removeEventListener('touchend', handleTouchEnd);
       };
   }, [isDragging]);
 
-  // Se não estiver visível (Mestre fechou), não renderiza nada
   if (!turnData.visible) return null;
 
   const handleUpdate = async (delta: number) => {
@@ -104,13 +125,13 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
       return num.toString().padStart(3, '0');
   };
 
-  // --- RENDERIZAÇÃO MINIMIZADA ---
   if (isMinimized) {
       return (
           <div 
             style={{ left: position.x, top: position.y }}
-            className="fixed z-[9999] bg-black/90 border border-red-500/50 rounded-full p-2 pr-4 flex items-center gap-3 cursor-move shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-scale-up hover:bg-white/10 transition-colors select-none"
+            className="fixed z-[45] bg-black/90 border border-red-500/50 rounded-full p-2 pr-4 flex items-center gap-3 cursor-move shadow-[0_0_20px_rgba(220,38,38,0.4)] animate-scale-up hover:bg-white/10 transition-colors select-none scale-75 md:scale-100 origin-top-right md:origin-top"
             onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
           >
               <div className="w-8 h-8 rounded-full bg-red-900/20 flex items-center justify-center text-red-500">
                   <Clock size={20} weight="fill" className="animate-pulse" />
@@ -129,17 +150,15 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
       );
   }
 
-  // --- RENDERIZAÇÃO COMPLETA ---
   return (
     <div 
         style={{ left: position.x, top: position.y }}
-        className="fixed z-[9999] animate-fade-in-down select-none"
+        className="fixed z-[45] animate-fade-in-down select-none scale-75 md:scale-100 origin-top-right md:origin-top"
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
     >
-        {/* Container Glassmorphism */}
         <div className="bg-black/85 backdrop-blur-md border border-white/10 shadow-[0_0_50px_rgba(220,38,38,0.3)] rounded-2xl p-4 flex flex-col items-center gap-2 min-w-[200px] cursor-move relative group">
             
-            {/* Header: Título + Botão Minimizar */}
             <div className="w-full flex justify-between items-center border-b border-white/5 pb-2 mb-1 pl-1">
                 <div className="text-[10px] uppercase text-white/50 tracking-[0.3em] font-bold flex items-center gap-2 pointer-events-none">
                     <Clock className="text-red-500" /> Turno Atual
@@ -154,7 +173,6 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
             </div>
 
             <div className="flex items-center gap-4">
-                {/* Botão Menos (Só Mestre) */}
                 {isMaster && (
                     <button 
                         onClick={() => handleUpdate(-1)}
@@ -164,20 +182,15 @@ export default function TurnCounter({ sessaoData, isMaster }: TurnCounterProps) 
                     </button>
                 )}
 
-                {/* DISPLAY DE RELÓGIO DE ACADEMIA */}
                 <div className="relative bg-black px-6 py-2 rounded border border-white/10 shadow-inner pointer-events-none">
-                    {/* Fundo "fantasma" 888 para dar efeito de display digital apagado */}
                     <span className="absolute left-6 top-2 font-mono text-6xl font-black tracking-widest text-[#220000] select-none z-0 opacity-50">
                         888
                     </span>
-                    
-                    {/* Número Real Aceso */}
                     <span className="relative z-10 font-mono text-6xl font-black tracking-widest text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.9)] select-none">
                         {formatNumber(turnData.current)}
                     </span>
                 </div>
 
-                {/* Botão Mais (Só Mestre) */}
                 {isMaster && (
                     <button 
                         onClick={() => handleUpdate(1)}

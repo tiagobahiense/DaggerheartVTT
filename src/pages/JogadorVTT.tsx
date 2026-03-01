@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit, a
 import { auth, db } from '../lib/firebase';
 import { 
   X, HandGrabbing, Stack, ArrowsOutSimple, 
-  MagnifyingGlass, LockKey, Scroll, Plus, 
+  MagnifyingGlass, LockKey, Plus, 
   ArrowsLeftRight, Coin, Skull, Sparkle,
   Dna, Coins, Cube, ArrowUUpLeft, ChatTeardropText, PaperPlaneRight
 } from '@phosphor-icons/react';
@@ -44,15 +44,11 @@ interface Character {
   heritage: string;
   level: number;
   unlockedTier?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attributes?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   weapons?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   armor?: any;
   imageUrl?: string;
   paSpent?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bondRequests?: any[]; 
   cards?: {
     hand: ActiveCard[];
@@ -83,9 +79,7 @@ type RollResult = DualityResult | StandardResult;
 interface RollLog {
   id: string;
   playerName: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   timestamp: any;
   type: 'DUALITY' | 'STANDARD';
 }
@@ -132,7 +126,8 @@ const DiceToast = () => {
     if (!visible || !lastRoll) return null;
 
     return (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[4000] animate-bounce-in pointer-events-none">
+        // z-index extremamente alto para sobrepor TUDO
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100000] animate-bounce-in pointer-events-none">
             <div className={`px-6 py-4 rounded-xl border-2 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md flex items-center gap-4 min-w-[300px] ${lastRoll.type === 'DUALITY' ? 'bg-black/90 border-gold' : 'bg-[#1a0b2e]/90 border-purple-500'}`}>
                 <div className="flex flex-col items-center border-r border-white/10 pr-4">
                     <span className="text-[10px] uppercase text-white/50 tracking-widest">Jogador</span>
@@ -170,11 +165,11 @@ const DiceToast = () => {
 };
 
 const TableCard = ({ card, label, locked = true, onSelect }: { card: Card | null, label: string, locked?: boolean, onSelect: (card: Card) => void }) => {
-    if (!card) return (<div className="w-20 h-28 border border-white/10 rounded bg-white/5 flex flex-col items-center justify-center text-[8px] text-white/30 uppercase tracking-widest text-center px-1 gap-2 border-dashed">{locked ? <LockKey size={16} /> : <Plus size={16} />}<span>{label}</span></div>);
+    if (!card) return (<div className="w-16 h-24 md:w-24 md:h-36 border border-white/10 rounded bg-white/5 flex flex-col items-center justify-center text-[8px] text-white/30 uppercase tracking-widest text-center px-1 gap-2 border-dashed">{locked ? <LockKey size={16} /> : <Plus size={16} />}<span>{label}</span></div>);
     return (
-        <div onClick={() => onSelect(card)} className="group relative w-20 h-28 md:w-24 md:h-36 rounded border border-white/20 bg-black/50 transition-all duration-300 hover:scale-[2.5] hover:z-50 hover:translate-y-20 cursor-help shadow-lg origin-top">
+        <div onClick={() => onSelect(card)} className="group relative w-16 h-24 md:w-24 md:h-36 rounded border border-white/20 bg-black/50 transition-all duration-300 hover:scale-[1.5] md:hover:scale-[2.5] hover:z-50 hover:translate-y-10 md:hover:translate-y-20 cursor-help shadow-lg origin-top">
             <img src={card.caminho} className="w-full h-full object-cover rounded opacity-90 group-hover:opacity-100" />
-            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-gold uppercase tracking-widest opacity-0 group-hover:opacity-100 whitespace-nowrap bg-black/80 px-2 py-0.5 rounded border border-gold/30 z-50">{label}</span>
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[6px] md:text-[8px] text-gold uppercase tracking-widest opacity-0 group-hover:opacity-100 whitespace-nowrap bg-black/80 px-2 py-0.5 rounded border border-gold/30 z-50">{label}</span>
             {locked && <div className="absolute bottom-1 right-1 text-white/20 group-hover:hidden"><LockKey size={12} weight="fill" /></div>}
         </div>
     );
@@ -196,7 +191,6 @@ function InternalDiceSystem({ characterName, onClose }: { characterName: string,
   const [diceCount, setDiceCount] = useState(1);
   const [standardMod, setStandardMod] = useState(0);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pushRollToFirebase = async (rollResult: any, type: 'DUALITY' | 'STANDARD') => {
       try {
         await addDoc(collection(db, 'rolls'), {
@@ -660,12 +654,12 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       )}
 
       {/* MESA (Cartas Fixas) */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-start gap-4 z-40 pointer-events-none hidden md:flex">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-start gap-2 md:gap-4 lg:gap-8 z-[40] pointer-events-none">
         <div className="flex gap-2 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
           <TableCard card={ancestryCard} label="Ancestralidade" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
           <TableCard card={communityCard} label="Comunidade" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
         </div>
-        <div className="w-[1px] h-20 bg-white/10"></div>
+        <div className="w-[1px] h-20 bg-white/10 hidden md:block"></div>
         <div className="flex gap-1 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
           <TableCard card={subclassCards[0]} label="Fundamental" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
           <TableCard card={subclassCards[1]} label="Especialização" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
@@ -674,7 +668,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       </div>
 
       {isSwapping && (
-        <div className="fixed top-32 left-1/2 -translate-x-1/2 z-[60] bg-black/80 border border-gold text-gold px-6 py-4 rounded-xl shadow-2xl animate-bounce text-center backdrop-blur-md">
+        <div className="fixed top-16 landscape:top-4 md:top-32 left-1/2 -translate-x-1/2 z-[60] bg-black/80 border border-gold text-gold px-6 py-4 rounded-xl shadow-2xl animate-bounce text-center backdrop-blur-md">
             <div className="flex flex-col items-center gap-2">
                 <ArrowsLeftRight size={32} />
                 <p className="font-bold text-lg">MÃO CHEIA!</p>
@@ -684,14 +678,14 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-40 scale-75 md:scale-100 origin-bottom-right">
+      <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-[40]">
         <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-16 h-16 md:w-28 md:h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
           <img src="/pote_deck.png" className="w-full h-full object-contain" />
           <div className="absolute inset-0 flex items-center justify-center pt-2 md:pt-4"><span className="font-rpg text-gold font-bold text-shadow text-xs md:text-lg group-hover:text-white transition-colors">Grimório</span></div>
         </button>
       </div>
 
-      <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 z-40 scale-75 md:scale-100 origin-bottom-left">
+      <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 z-[40]">
         <button onClick={() => !isSwapping && setShowReserve(true)} className={`relative w-16 h-24 md:w-24 md:h-32 bg-dungeon-stone border border-white/20 rounded-lg shadow-2xl transition-all group flex items-center justify-center ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:border-gold'}`}>
           {reserve.length > 0 ? (
              <div className="w-full h-full rounded-lg overflow-hidden relative"><img src={reserve[reserve.length-1].caminho} className="w-full h-full object-cover opacity-60 group-hover:opacity-100" /><div className="absolute inset-0 flex items-center justify-center bg-black/40"><span className="text-2xl font-bold text-white">{reserve.length}</span></div></div>
@@ -701,13 +695,13 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </button>
       </div>
 
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[100vw] h-40 md:h-48 flex items-end justify-center z-30 pointer-events-none">
-        <div className="flex items-end justify-center -space-x-8 md:-space-x-12 pb-2 md:pb-6 pointer-events-auto perspective-500 scale-75 md:scale-100 origin-bottom">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-28 md:h-36 lg:h-48 flex items-end justify-center z-[40] pointer-events-none">
+        <div className="flex items-end justify-center -space-x-6 md:-space-x-8 lg:-space-x-12 pb-2 md:pb-6 pointer-events-auto perspective-500">
           {hand.map((card, idx) => (
             <div 
                 key={card.uniqueId} 
                 onClick={() => isSwapping ? executeSwap(idx) : setSelectedCardState({ id: card.uniqueId, staticCard: null, source: 'hand' })} 
-                className={`relative w-40 h-60 rounded-xl shadow-xl border transition-all duration-300 cursor-pointer origin-bottom bg-cover bg-center bg-[#1a120b] ${isSwapping ? 'animate-pulse border-red-500 z-50 hover:scale-105' : 'border-white/20 hover:z-50 hover:scale-110 hover:-translate-y-24 hover:rotate-0 hover:border-gold'}`}
+                className={`relative w-20 h-32 md:w-32 md:h-48 lg:w-40 lg:h-60 rounded-xl shadow-xl border transition-all duration-300 cursor-pointer origin-bottom bg-cover bg-center bg-[#1a120b] ${isSwapping ? 'animate-pulse border-red-500 z-50 hover:scale-105' : 'border-white/20 hover:z-50 hover:scale-110 hover:-translate-y-12 md:hover:-translate-y-20 lg:hover:-translate-y-24 hover:rotate-0 hover:border-gold'}`}
                 style={{ backgroundImage: `url('${card.caminho}')`, transform: `rotate(${(idx - (hand.length - 1) / 2) * 6}deg) translateY(${Math.abs(idx - (hand.length - 1) / 2) * 15}px)`, zIndex: idx, filter: card.isExhausted ? 'grayscale(100%) brightness(60%)' : 'none' }}
             >
                 {card.tokens > 0 && (
@@ -723,13 +717,13 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
       {(showGrimoire || showReserve) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-[95%] md:w-[85%] h-[90%] md:h-[85%] bg-[#0f0b15]/90 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 md:p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-4">
-              <h2 className="text-xl md:text-3xl text-gold font-rpg">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
-              {showGrimoire && (<div className="relative w-full md:w-96"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none" autoFocus /></div>)}
-              <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); }}><X size={28} className="text-white/50 hover:text-red-400" /></button>
+          <div className="w-[95%] md:w-[85%] lg:w-[80%] h-[90dvh] md:h-[85dvh] landscape:h-[95dvh] bg-[#0f0b15]/95 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-3 md:p-6 border-b border-white/5 flex flex-row flex-wrap md:flex-nowrap justify-between items-center bg-white/5 gap-3 md:gap-4 shrink-0">
+              <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
+              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
+              <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); }} className="ml-auto md:ml-0"><X size={28} className="text-white/50 hover:text-red-400" /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 md:p-8 grid grid-cols-3 landscape:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-6 custom-scrollbar">
               {showGrimoire && filteredGrimoire.map((card, idx) => (
                 <div key={idx} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
                   <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"><img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /></div>
@@ -749,8 +743,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 animate-fade-in" onClick={() => setSelectedCardState(null)}>
           <div className="absolute inset-0 backdrop-blur-sm pointer-events-none"></div>
 
-          <div className="relative flex flex-col md:flex-row items-center gap-4 md:gap-10 max-w-5xl w-full p-4 z-10 max-h-screen overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="relative h-[45vh] md:h-[65vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden shrink-0 bg-[#0a080c]">
+          <div className="relative flex flex-col landscape:flex-row md:flex-row items-center landscape:items-stretch gap-4 md:gap-10 max-w-5xl lg:max-w-6xl w-full p-4 md:p-8 z-10 max-h-[100dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="relative h-[45vh] landscape:h-[85vh] md:h-[65vh] lg:h-[75vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden shrink-0 bg-[#0a080c] flex-shrink-0">
                 <img src={currentSelectedCard.caminho} className={`w-full h-full object-contain ${(currentSelectedCard as ActiveCard).isExhausted ? 'grayscale' : ''}`} />
                 {(currentSelectedCard as ActiveCard).isExhausted && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px]">
@@ -761,7 +755,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                 )}
             </div>
             
-            <div className="flex flex-col gap-4 min-w-[300px] subpixel-antialiased md:pl-4">
+            <div className="flex flex-col gap-3 md:gap-4 min-w-[280px] w-full max-w-md subpixel-antialiased md:pl-4 landscape:overflow-y-auto landscape:max-h-[85vh] landscape:pr-2 custom-scrollbar shrink-0">
               <h3 className="text-xl md:text-3xl font-rpg text-white">{currentSelectedCard.nome}</h3>
               <span className="text-xs uppercase text-gold border border-gold/30 px-2 py-1 rounded w-fit">{currentSelectedCard.categoria}</span>
               
@@ -820,12 +814,10 @@ export default function JogadorVTT() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sessaoData, setSessaoData] = useState<any>(null); 
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
   const [showDruidModal, setShowDruidModal] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
   const [groupCharacters, setGroupCharacters] = useState<Character[]>([]); 
@@ -879,7 +871,6 @@ export default function JogadorVTT() {
     const qGroup = query(collection(db, 'characters'));
     const unsubGroup = onSnapshot(qGroup, (snapshot) => {
         const allChars = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Character));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const activeGroup = sessaoData.player_groups?.find((g: any) => g.id === sessaoData.active_group_id);
         if (activeGroup) {
             setGroupCharacters(allChars.filter(c => activeGroup.memberIds.includes(c.id)));
@@ -891,7 +882,6 @@ export default function JogadorVTT() {
     return () => unsubGroup();
   }, [sessaoData]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAnswerBond = async (req: any, answerText: string) => {
       if (!character || !answerText.trim()) return;
       
@@ -916,7 +906,6 @@ export default function JogadorVTT() {
           }
 
           const myRef = doc(db, 'characters', character.id);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const safeNewRequests = (character.bondRequests || []).filter((r: any) => r.timestamp !== req.timestamp);
           
           await updateDoc(myRef, {
@@ -993,29 +982,25 @@ export default function JogadorVTT() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
 
-      <div className="absolute top-2 left-2 md:top-6 md:left-6 z-50 animate-fade-in pointer-events-auto flex items-center gap-2 md:gap-4 scale-75 md:scale-100 origin-top-left">
-        <button onClick={() => setSheetOpen(true)} className="group relative flex items-center gap-4 pr-8 pl-2 py-2 rounded-full border border-white/20 shadow-xl transition-all hover:scale-[1.02]" style={{ background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' }}>
-          <div className="relative w-14 h-14 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0">
-            <span className="text-xl font-rpg text-white font-bold">{character.level}</span>
-            <span className="absolute -bottom-1 text-[8px] uppercase tracking-widest text-white/60 bg-black/60 px-1 rounded">Nível</span>
-          </div>
-          <div className="flex flex-col items-start text-left text-white">
-            <h2 className="font-rpg text-xl font-bold leading-none drop-shadow-md group-hover:text-gold transition-colors">{character.name}</h2>
-            <div className="flex items-center gap-2 text-xs opacity-90 mt-1">
-              <span className="font-bold uppercase tracking-wide">{character.class}</span><span className="w-1 h-1 rounded-full bg-white/50"></span><span className="italic">{character.subclass}</span>
-            </div>
-            <p className="text-[10px] opacity-70 uppercase tracking-widest mt-0.5 max-w-[200px] truncate">{character.heritage}</p>
-          </div>
-          <div className="absolute right-3 opacity-0 group-hover:opacity-50 transition-opacity"><Scroll size={20} className="text-white" /></div>
+      {/* NOVO BOTÃO DE FICHA EM FORMATO DE BOLINHA */}
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-[40] animate-fade-in pointer-events-auto">
+        <button 
+          onClick={() => setSheetOpen(true)} 
+          className="group relative w-12 h-12 md:w-16 md:h-16 rounded-full border border-white/30 shadow-xl transition-all hover:scale-110 flex items-center justify-center bg-black/60 backdrop-blur-md"
+          title={`Ficha de ${character.name}`}
+        >
+          <div className="absolute inset-0 rounded-full opacity-40 mix-blend-color" style={{ background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` }}></div>
+          <span className="relative z-10 text-xl md:text-2xl font-rpg text-white font-bold">{character.level}</span>
+          <span className="absolute -bottom-2 text-[8px] md:text-[10px] uppercase tracking-widest text-white/80 bg-black/80 px-2 py-0.5 rounded-full border border-white/20">Ficha</span>
         </button>
       </div>
 
-      <div className="absolute top-2 right-2 md:top-6 md:right-6 z-[60] pointer-events-auto flex flex-col items-end scale-75 md:scale-100 origin-top-right">
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-[40] pointer-events-auto flex flex-col items-end">
           <button 
               onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className="relative w-12 h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/10 hover:border-gold transition-all shadow-lg backdrop-blur-md"
+              className="relative w-12 h-12 md:w-16 md:h-16 bg-black/60 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/10 hover:border-gold transition-all shadow-lg backdrop-blur-md"
           >
-              <ChatTeardropText size={24} weight={bondRequests.length > 0 ? "fill" : "regular"} className={bondRequests.length > 0 ? "text-gold" : "text-white/60"} />
+              <ChatTeardropText className="w-6 h-6 md:w-8 md:h-8" weight={bondRequests.length > 0 ? "fill" : "regular"} color={bondRequests.length > 0 ? "#fbbf24" : "rgba(255,255,255,0.6)"} />
               
               {bondRequests.length > 0 && (
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center text-[10px] font-bold text-white border border-black shadow-md animate-bounce">
@@ -1080,14 +1065,15 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      <div className="absolute bottom-20 right-4 md:bottom-36 md:right-8 z-40 pointer-events-auto scale-75 md:scale-100 origin-bottom-right">
-        <button onClick={() => setShowDiceRoller(true)} className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
+      {/* BOTÃO DE DADO (ÚNICO COM Z-INDEX SUPERIOR AO MAPA) */}
+      <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto">
+        <button onClick={() => setShowDiceRoller(true)} className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
             <div className="group-hover:animate-spin"><Dna className="w-6 h-6 md:w-8 md:h-8" weight="bold" /></div>
         </button>
       </div>
 
       {character.class === "Druida" && (
-        <div className="absolute bottom-36 right-4 md:bottom-56 md:right-8 z-40 pointer-events-auto scale-75 md:scale-100 origin-bottom-right">
+        <div className="absolute bottom-40 right-4 md:bottom-56 md:right-8 z-[40] pointer-events-auto">
             <button 
               onClick={() => setShowDruidModal(true)}
               className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500 text-green-400 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] hover:scale-110 hover:rotate-12 transition-all group"
@@ -1121,7 +1107,7 @@ export default function JogadorVTT() {
       )}
 
       {transformAlert && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4">
+        <div className="fixed inset-0 z-[9999999] flex items-center justify-center pointer-events-none px-4">
             <div className="relative w-full max-w-5xl flex flex-col items-center justify-center text-center animate-fade-in-up">
                 
                 <div className={`absolute inset-0 bg-gradient-to-r ${transformAlert.gradientClass || 'from-gray-800 to-black'} opacity-90 blur-xl h-40 top-1/2 -translate-y-1/2 rounded-full transform scale-x-110 -z-10`}></div>
@@ -1146,10 +1132,10 @@ export default function JogadorVTT() {
       )}
 
       {fearAlertVisible && (
-           <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
+           <div className="fixed inset-0 z-[9999999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
                <div className="relative w-full flex flex-col items-center animate-ds-text">
                    <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
-                   <h1 className="font-rpg text-7xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-900 uppercase tracking-[0.2em] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] py-4 text-center">
+                   <h1 className="font-rpg text-5xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-900 uppercase tracking-[0.2em] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] py-4 text-center">
                        O MESTRE USOU O MEDO
                    </h1>
                    <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
