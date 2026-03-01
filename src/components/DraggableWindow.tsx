@@ -26,7 +26,6 @@ export default function DraggableWindow({
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
-  // Define posição do botão minimizado
   const minPosClass = {
       'bottom-left': 'bottom-4 left-4',
       'bottom-right': 'bottom-4 right-4',
@@ -34,7 +33,6 @@ export default function DraggableWindow({
       'top-left': 'top-20 left-4'
   }[minimizedPosition];
 
-  // Listener Global de Mouse para Arrasto
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
         if (!isDragging.current || isMaximized) return;
@@ -46,14 +44,32 @@ export default function DraggableWindow({
 
     const handleMouseUp = () => {
         isDragging.current = false;
-        document.body.style.userSelect = 'auto'; // Reabilita seleção
+        document.body.style.userSelect = 'auto'; 
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+        if (!isDragging.current || isMaximized) return;
+        e.preventDefault(); 
+        setPosition({
+            x: e.touches[0].clientX - dragOffset.current.x,
+            y: e.touches[0].clientY - dragOffset.current.y
+        });
+    };
+
+    const handleTouchEnd = () => {
+        isDragging.current = false;
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    
     return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isMaximized]);
 
@@ -64,7 +80,16 @@ export default function DraggableWindow({
           x: e.clientX - position.x,
           y: e.clientY - position.y
       };
-      document.body.style.userSelect = 'none'; // Desabilita seleção durante arrasto
+      document.body.style.userSelect = 'none'; 
+  };
+
+  const startTouchDrag = (e: React.TouchEvent) => {
+      if (isMaximized) return;
+      isDragging.current = true;
+      dragOffset.current = {
+          x: e.touches[0].clientX - position.x,
+          y: e.touches[0].clientY - position.y
+      };
   };
 
   if (isMinimized) {
@@ -83,13 +108,13 @@ export default function DraggableWindow({
   return (
       <div 
         ref={windowRef}
-        className="fixed z-[99999] bg-[#1a120b] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in"
-        style={isMaximized ? { inset: 0, width: '100%', height: '100%' } : { left: position.x, top: position.y, width: size.w, height: size.h }}
+        className="fixed z-[99999] bg-[#1a120b] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in max-w-[100vw] max-h-[100dvh]"
+        style={isMaximized ? { inset: 0, width: '100%', height: '100%' } : { left: Math.max(0, position.x), top: Math.max(0, position.y), width: size.w, height: size.h }}
       >
-        {/* Header */}
         <div 
-            className="bg-black/80 p-3 border-b border-white/10 flex justify-between items-center cursor-move select-none"
+            className="bg-black/80 p-3 border-b border-white/10 flex justify-between items-center cursor-move select-none touch-none"
             onMouseDown={startDrag}
+            onTouchStart={startTouchDrag}
             onDoubleClick={() => setIsMaximized(!isMaximized)}
         >
             <div className="flex items-center gap-3 pointer-events-none">
@@ -97,7 +122,7 @@ export default function DraggableWindow({
                 <h3 className="text-white font-rpg font-bold tracking-wide">{title}</h3>
             </div>
             
-            <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()}>
                 <button onClick={() => setIsMinimized(true)} className="p-1 text-white/50 hover:text-white rounded hover:bg-white/5 transition-colors">
                    <Minus size={20} />
                 </button>
@@ -118,7 +143,7 @@ export default function DraggableWindow({
 
         {!isMaximized && (
             <div 
-                className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-50"
+                className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-50 touch-none"
                 style={{ backgroundImage: 'linear-gradient(135deg, transparent 50%, gold 50%)', opacity: 0.5 }}
                 onMouseDown={(e) => {
                     e.stopPropagation();

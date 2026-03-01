@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Dna, Sword, Shield, X, Check, Sparkle, Skull, Coins } from '@phosphor-icons/react';
 
-// Tipos de Resultado Daggerheart
 type RollOutcome = 
-  | 'CRITICAL'    // 5,5 (Sucesso Crítico)
-  | 'HOPE'        // Esperança > Medo
-  | 'FEAR';       // Medo > Esperança
+  | 'CRITICAL'    
+  | 'HOPE'        
+  | 'FEAR';       
 
 interface RollResult {
   hopeDie: number;
@@ -13,28 +12,25 @@ interface RollResult {
   modifier: number;
   total: number;
   outcome: RollOutcome;
-  isSuccess: boolean; // Comparado com a dificuldade (se fornecida)
+  isSuccess: boolean; 
 }
 
 export default function DiceSystem({ attributeValue = 0, onClose }: { attributeValue?: number, onClose: () => void }) {
   const [modifier, setModifier] = useState(attributeValue);
-  const [difficulty, setDifficulty] = useState<number>(12); // Dificuldade padrão média
+  const [difficulty, setDifficulty] = useState<number>(12); 
   const [result, setResult] = useState<RollResult | null>(null);
   const [isRolling, setIsRolling] = useState(false);
 
-  // Estados de Vantagem (d6)
   const [advantage, setAdvantage] = useState<'none' | 'advantage' | 'disadvantage'>('none');
 
   const rollDaggerheart = () => {
     setIsRolling(true);
     setResult(null);
 
-    // Simula tempo de rolagem
     setTimeout(() => {
       const hope = Math.floor(Math.random() * 12) + 1;
       const fear = Math.floor(Math.random() * 12) + 1;
       
-      // Lógica de Vantagem/Desvantagem (d6)
       let advRoll = 0;
       if (advantage !== 'none') {
         advRoll = Math.floor(Math.random() * 6) + 1;
@@ -43,11 +39,10 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
 
       const total = hope + fear + modifier + finalAdvMod;
 
-      // Determina Narrativa
       let outcome: RollOutcome = 'FEAR';
       if (hope === fear) outcome = 'CRITICAL';
       else if (hope > fear) outcome = 'HOPE';
-      else outcome = 'FEAR'; // fear > hope
+      else outcome = 'FEAR'; 
 
       setResult({
         hopeDie: hope,
@@ -58,14 +53,13 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
         isSuccess: total >= difficulty
       });
       setIsRolling(false);
-    }, 800); // 800ms de suspense
+    }, 800); 
   };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg md:max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden max-h-[90dvh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
         
-        {/* Cabeçalho */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-rpg text-gold flex items-center gap-2">
             <Dna size={28} /> Teste de Dualidade
@@ -73,11 +67,8 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
           <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
         </div>
 
-        {/* --- ÁREA DE CONFIGURAÇÃO (SÓ APARECE SE NÃO TIVER RESULTADO) --- */}
         {!result && !isRolling && (
           <div className="space-y-6 animate-fade-in">
-            
-            {/* 1. Modificadores */}
             <div className="flex justify-between gap-4">
               <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
                 <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
@@ -99,7 +90,6 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
               </div>
             </div>
 
-            {/* 2. Vantagem / Desvantagem */}
             <div className="flex gap-2">
               <button 
                 onClick={() => setAdvantage(v => v === 'advantage' ? 'none' : 'advantage')}
@@ -115,7 +105,6 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
               </button>
             </div>
 
-            {/* BOTÃO ROLAR */}
             <button 
               onClick={rollDaggerheart}
               className="w-full py-4 bg-gradient-to-r from-gold/80 to-yellow-600/80 hover:from-gold hover:to-yellow-500 text-black font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
@@ -125,7 +114,6 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
           </div>
         )}
 
-        {/* --- ANIMAÇÃO DE ROLAGEM --- */}
         {isRolling && (
           <div className="h-64 flex flex-col items-center justify-center gap-4 animate-pulse">
             <div className="flex gap-8">
@@ -136,13 +124,9 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
           </div>
         )}
 
-        {/* --- RESULTADO FINAL --- */}
         {result && !isRolling && (
           <div className="text-center animate-fade-in-up">
-            
-            {/* Visual dos Dados */}
             <div className="flex justify-center items-center gap-6 mb-6">
-              {/* Dado de Esperança */}
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-24 h-24 bg-gradient-to-br from-gold to-yellow-700 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-white/20">
                    <span className="text-5xl font-bold text-white drop-shadow-md">{result.hopeDie}</span>
@@ -152,7 +136,6 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
 
               <div className="text-2xl font-bold text-white/20">+</div>
 
-              {/* Dado de Medo */}
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-24 h-24 bg-gradient-to-br from-purple-600 to-black rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(147,51,234,0.3)] border border-white/20">
                    <span className="text-5xl font-bold text-purple-100 drop-shadow-md">{result.fearDie}</span>
@@ -161,7 +144,6 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
               </div>
             </div>
 
-            {/* Cálculo Total */}
             <div className="mb-6">
                 <div className="text-white/50 text-sm mb-1">
                    {result.hopeDie} (Esp) + {result.fearDie} (Medo) + {result.modifier} (Mod) = 
@@ -174,7 +156,6 @@ export default function DiceSystem({ attributeValue = 0, onClose }: { attributeV
                 </div>
             </div>
 
-            {/* Sentença Narrativa (O CORAÇÃO DO SISTEMA) */}
             <div className={`p-4 rounded-lg border-2 mb-6 ${
                 result.outcome === 'CRITICAL' ? 'bg-gold/10 border-gold text-gold' :
                 result.outcome === 'HOPE' ? 'bg-blue-900/20 border-blue-400 text-blue-200' :

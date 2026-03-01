@@ -269,7 +269,7 @@ function InternalDiceSystem({ characterName, onClose }: { characterName: string,
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg md:max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden max-h-[90dvh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
         
         <div className="flex justify-between items-start mb-6">
             <div className="flex gap-4">
@@ -453,7 +453,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const handRef = useRef(hand);
   const reserveRef = useRef(reserve);
 
-  // Inicializa com dados do banco se existirem
   useEffect(() => {
     if (character && !isDataLoaded) {
       if (character.cards) {
@@ -464,7 +463,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     }
   }, [character, isDataLoaded]);
 
-  // Sync com Servidor
   useEffect(() => {
       if (character?.cards) {
           const serverHand = JSON.stringify(character.cards.hand || []);
@@ -662,7 +660,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       )}
 
       {/* MESA (Cartas Fixas) */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-start gap-4 z-40 pointer-events-none">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-start gap-4 z-40 pointer-events-none hidden md:flex">
         <div className="flex gap-2 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
           <TableCard card={ancestryCard} label="Ancestralidade" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
           <TableCard card={communityCard} label="Comunidade" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
@@ -686,15 +684,15 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </div>
       )}
 
-      <div className="absolute bottom-8 right-8 z-40">
-        <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-28 h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
+      <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-40 scale-75 md:scale-100 origin-bottom-right">
+        <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-16 h-16 md:w-28 md:h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
           <img src="/pote_deck.png" className="w-full h-full object-contain" />
-          <div className="absolute inset-0 flex items-center justify-center pt-4"><span className="font-rpg text-gold font-bold text-shadow text-lg group-hover:text-white transition-colors">Grimório</span></div>
+          <div className="absolute inset-0 flex items-center justify-center pt-2 md:pt-4"><span className="font-rpg text-gold font-bold text-shadow text-xs md:text-lg group-hover:text-white transition-colors">Grimório</span></div>
         </button>
       </div>
 
-      <div className="absolute bottom-8 left-8 z-40">
-        <button onClick={() => !isSwapping && setShowReserve(true)} className={`relative w-24 h-32 bg-dungeon-stone border border-white/20 rounded-lg shadow-2xl transition-all group flex items-center justify-center ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:border-gold'}`}>
+      <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 z-40 scale-75 md:scale-100 origin-bottom-left">
+        <button onClick={() => !isSwapping && setShowReserve(true)} className={`relative w-16 h-24 md:w-24 md:h-32 bg-dungeon-stone border border-white/20 rounded-lg shadow-2xl transition-all group flex items-center justify-center ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:border-gold'}`}>
           {reserve.length > 0 ? (
              <div className="w-full h-full rounded-lg overflow-hidden relative"><img src={reserve[reserve.length-1].caminho} className="w-full h-full object-cover opacity-60 group-hover:opacity-100" /><div className="absolute inset-0 flex items-center justify-center bg-black/40"><span className="text-2xl font-bold text-white">{reserve.length}</span></div></div>
           ) : (
@@ -703,8 +701,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         </button>
       </div>
 
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-48 flex items-end justify-center z-30 pointer-events-none">
-        <div className="flex items-end justify-center -space-x-12 pb-6 pointer-events-auto perspective-500">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[100vw] h-40 md:h-48 flex items-end justify-center z-30 pointer-events-none">
+        <div className="flex items-end justify-center -space-x-8 md:-space-x-12 pb-2 md:pb-6 pointer-events-auto perspective-500 scale-75 md:scale-100 origin-bottom">
           {hand.map((card, idx) => (
             <div 
                 key={card.uniqueId} 
@@ -725,13 +723,13 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
       {(showGrimoire || showReserve) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-[85%] h-[85%] bg-[#0f0b15]/90 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-4">
-              <h2 className="text-3xl text-gold font-rpg">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
+          <div className="w-[95%] md:w-[85%] h-[90%] md:h-[85%] bg-[#0f0b15]/90 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-4 md:p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-4">
+              <h2 className="text-xl md:text-3xl text-gold font-rpg">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
               {showGrimoire && (<div className="relative w-full md:w-96"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none" autoFocus /></div>)}
               <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); }}><X size={28} className="text-white/50 hover:text-red-400" /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 custom-scrollbar">
               {showGrimoire && filteredGrimoire.map((card, idx) => (
                 <div key={idx} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
                   <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"><img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /></div>
@@ -751,8 +749,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 animate-fade-in" onClick={() => setSelectedCardState(null)}>
           <div className="absolute inset-0 backdrop-blur-sm pointer-events-none"></div>
 
-          <div className="relative flex flex-col md:flex-row items-center gap-10 max-w-5xl w-full p-4 z-10" onClick={e => e.stopPropagation()}>
-            <div className="relative h-[65vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden shrink-0 bg-[#0a080c]">
+          <div className="relative flex flex-col md:flex-row items-center gap-4 md:gap-10 max-w-5xl w-full p-4 z-10 max-h-screen overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="relative h-[45vh] md:h-[65vh] aspect-[2/3] rounded-xl shadow-2xl border border-white/20 overflow-hidden shrink-0 bg-[#0a080c]">
                 <img src={currentSelectedCard.caminho} className={`w-full h-full object-contain ${(currentSelectedCard as ActiveCard).isExhausted ? 'grayscale' : ''}`} />
                 {(currentSelectedCard as ActiveCard).isExhausted && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px]">
@@ -763,8 +761,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                 )}
             </div>
             
-            <div className="flex flex-col gap-4 min-w-[300px] subpixel-antialiased pl-4">
-              <h3 className="text-3xl font-rpg text-white">{currentSelectedCard.nome}</h3>
+            <div className="flex flex-col gap-4 min-w-[300px] subpixel-antialiased md:pl-4">
+              <h3 className="text-xl md:text-3xl font-rpg text-white">{currentSelectedCard.nome}</h3>
               <span className="text-xs uppercase text-gold border border-gold/30 px-2 py-1 rounded w-fit">{currentSelectedCard.categoria}</span>
               
               {selectedCardState?.source === 'hand' && (
@@ -833,7 +831,6 @@ export default function JogadorVTT() {
   const [groupCharacters, setGroupCharacters] = useState<Character[]>([]); 
   const [isNotifOpen, setIsNotifOpen] = useState(false); 
 
-  // SOLUÇÃO: Não precisamos mais de um state para bondRequests, ele deriva diretamente do objeto
   const bondRequests = character?.bondRequests || [];
 
   useEffect(() => {
@@ -959,7 +956,6 @@ export default function JogadorVTT() {
     return () => unsub();
   }, [sessaoData?.id]); 
 
-  // SOLUÇÃO: setTimeout garante que a tela atualize sem travar a thread do hook
   useEffect(() => {
     if (sessaoData?.fear_data?.last_trigger) {
         const diff = Date.now() - sessaoData.fear_data.last_trigger;
@@ -997,7 +993,7 @@ export default function JogadorVTT() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
 
-      <div className="absolute top-6 left-6 z-50 animate-fade-in pointer-events-auto flex items-center gap-4">
+      <div className="absolute top-2 left-2 md:top-6 md:left-6 z-50 animate-fade-in pointer-events-auto flex items-center gap-2 md:gap-4 scale-75 md:scale-100 origin-top-left">
         <button onClick={() => setSheetOpen(true)} className="group relative flex items-center gap-4 pr-8 pl-2 py-2 rounded-full border border-white/20 shadow-xl transition-all hover:scale-[1.02]" style={{ background: `linear-gradient(135deg, ${color1}AA 0%, ${color2}99 100%)`, backdropFilter: 'blur(12px)' }}>
           <div className="relative w-14 h-14 rounded-full bg-black/40 border border-white/30 flex items-center justify-center shrink-0">
             <span className="text-xl font-rpg text-white font-bold">{character.level}</span>
@@ -1014,7 +1010,7 @@ export default function JogadorVTT() {
         </button>
       </div>
 
-      <div className="absolute top-6 right-6 z-[60] pointer-events-auto flex flex-col items-end">
+      <div className="absolute top-2 right-2 md:top-6 md:right-6 z-[60] pointer-events-auto flex flex-col items-end scale-75 md:scale-100 origin-top-right">
           <button 
               onClick={() => setIsNotifOpen(!isNotifOpen)}
               className="relative w-12 h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/10 hover:border-gold transition-all shadow-lg backdrop-blur-md"
@@ -1084,20 +1080,20 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      <div className="absolute bottom-36 right-8 z-40 pointer-events-auto">
-        <button onClick={() => setShowDiceRoller(true)} className="w-16 h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
-            <div className="group-hover:animate-spin"><Dna size={32} weight="bold" /></div>
+      <div className="absolute bottom-20 right-4 md:bottom-36 md:right-8 z-40 pointer-events-auto scale-75 md:scale-100 origin-bottom-right">
+        <button onClick={() => setShowDiceRoller(true)} className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
+            <div className="group-hover:animate-spin"><Dna className="w-6 h-6 md:w-8 md:h-8" weight="bold" /></div>
         </button>
       </div>
 
       {character.class === "Druida" && (
-        <div className="absolute bottom-56 right-8 z-40 pointer-events-auto">
+        <div className="absolute bottom-36 right-4 md:bottom-56 md:right-8 z-40 pointer-events-auto scale-75 md:scale-100 origin-bottom-right">
             <button 
               onClick={() => setShowDruidModal(true)}
-              className="w-16 h-16 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500 text-green-400 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] hover:scale-110 hover:rotate-12 transition-all group"
+              className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500 text-green-400 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] hover:scale-110 hover:rotate-12 transition-all group"
               title="Forma Selvagem"
             >
-              <PawPrint size={32} weight="fill" className="group-hover:text-white transition-colors" />
+              <PawPrint className="w-6 h-6 md:w-8 md:h-8 group-hover:text-white transition-colors" weight="fill" />
             </button>
         </div>
       )}

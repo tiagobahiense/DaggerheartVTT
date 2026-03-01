@@ -153,7 +153,6 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
   const panStartView = useRef({ x: 0, y: 0 }); 
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // SOLUÇÃO: Atualiza a câmera (zoom/pan) de forma limpa quando o Mapa muda (Render-phase state update)
   const activeMapUrl = sessaoData?.active_map?.url || null;
   if (activeMapUrl !== currentMapUrl) {
       setCurrentMapUrl(activeMapUrl);
@@ -445,6 +444,54 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       setLocalView(prev => ({ ...prev, zoom: newZoom }));
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+      if (!activeMap) return;
+      if ((e.target as HTMLElement).closest('button')) return;
+
+      const touch = e.touches[0];
+      if (isRulerMode) {
+          const coords = getSceneCoord(touch.clientX, touch.clientY);
+          setRulerStart(coords);
+          setRulerEnd(coords);
+          return;
+      }
+      if (!draggingTokenId) {
+          setIsPanning(true);
+          panStart.current = { x: touch.clientX, y: touch.clientY };
+          panStartView.current = { x: localView.panX, y: localView.panY };
+      }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+      if (!activeMap) return;
+      const touch = e.touches[0];
+
+      if (isRulerMode && rulerStart) {
+          const coords = getSceneCoord(touch.clientX, touch.clientY);
+          setRulerEnd(coords);
+          return;
+      }
+      if (draggingTokenId) {
+          const coords = getSceneCoord(touch.clientX, touch.clientY);
+          const gridX = Math.round((coords.x - dragOffset.current.x) / activeMap.gridSizePx);
+          const gridY = Math.round((coords.y - dragOffset.current.y) / activeMap.gridSizePx);
+          setLocalTokens(prev => prev.map(t => {
+              if (t.id === draggingTokenId) return { ...t, x: gridX, y: gridY };
+              return t;
+          }));
+          return;
+      }
+      if (isPanning) {
+          const dx = touch.clientX - panStart.current.x;
+          const dy = touch.clientY - panStart.current.y;
+          setLocalView(prev => ({
+              ...prev,
+              panX: panStartView.current.x + dx,
+              panY: panStartView.current.y + dy
+          }));
+      }
+  };
+
   const handleTokenMouseDown = (e: React.MouseEvent, token: Token) => {
       e.stopPropagation();
       e.preventDefault(); 
@@ -452,6 +499,21 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       if (!isTokenOwner(token)) return;
 
       const coords = getSceneCoord(e.clientX, e.clientY);
+      dragOffset.current = {
+          x: coords.x - (token.x * activeMap!.gridSizePx),
+          y: coords.y - (token.y * activeMap!.gridSizePx)
+      };
+      setDraggingTokenId(token.id);
+      if (editingToken?.id !== token.id) setEditingToken(null);
+  };
+
+  const handleTokenTouchStart = (e: React.TouchEvent, token: Token) => {
+      e.stopPropagation();
+      if (isRulerMode) return;
+      if (!isTokenOwner(token)) return;
+
+      const touch = e.touches[0];
+      const coords = getSceneCoord(touch.clientX, touch.clientY);
       dragOffset.current = {
           x: coords.x - (token.x * activeMap!.gridSizePx),
           y: coords.y - (token.y * activeMap!.gridSizePx)
@@ -493,12 +555,16 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
             >
                 <div 
                     ref={containerRef}
-                    className={`relative w-full h-full bg-[#101010] overflow-hidden ${isRulerMode ? 'cursor-crosshair' : isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                    className={`relative w-full h-full bg-[#101010] overflow-hidden touch-none overscroll-none ${isRulerMode ? 'cursor-crosshair' : isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                     onWheel={handleWheel}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleMouseUp}
+                    onTouchCancel={handleMouseUp}
                 >
                     <div style={{ transform: `translate3d(${localView.panX}px, ${localView.panY}px, 0) scale(${localView.zoom})`, transformOrigin: 'top left', width: '0px', height: '0px' }}>
                         <img src={activeMap.url} className="max-w-none select-none pointer-events-none" draggable={false} />
@@ -524,6 +590,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                 <div key={token.id} className={`absolute z-[10] group transition-opacity ${isEditing ? 'z-[30] ring-2 ring-gold' : ''} ${canMove ? 'cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-white/50' : 'cursor-default'}`}
                                     style={{ left: token.x * activeMap.gridSizePx, top: token.y * activeMap.gridSizePx, width: width, height: height, opacity: !token.visible ? 0.5 : 1 }}
                                     onMouseDown={(e) => handleTokenMouseDown(e, token)}
+                                    onTouchStart={(e) => handleTokenTouchStart(e, token)}
                                     onDoubleClick={(e) => handleTokenDoubleClick(e, token)}
                                     onDragStart={(e) => e.preventDefault()} 
                                 >
@@ -586,7 +653,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
         {isMaster && showManager && (
              <div className="fixed inset-0 z-[10000000] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                 <div className="w-[900px] h-[700px] bg-[#1a120b] border border-gold/30 rounded-xl shadow-2xl flex flex-col p-4 animate-scale-up">
+                 <div className="w-[900px] h-[700px] bg-[#1a120b] border border-gold/30 rounded-xl shadow-2xl flex flex-col p-4 animate-scale-up max-w-[95vw] max-h-[90vh]">
                      <div className="flex justify-between mb-4 border-b border-white/10 pb-2">
                          <div className="flex gap-4">
                              <h2 className="text-gold font-bold flex items-center gap-2"><MapTrifold /> Gerenciador de Mesa</h2>
@@ -604,7 +671,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                             <div className="flex flex-col gap-4 h-full">
                                 <div className="bg-black/40 p-4 rounded border border-white/10">
                                     <h3 className="text-white text-sm mb-2 font-bold">Definir Mapa Ativo</h3>
-                                    <div className="flex gap-2 mb-2">
+                                    <div className="flex gap-2 mb-2 flex-wrap">
                                         <input className="bg-black/50 border border-white/20 p-2 text-white text-sm flex-1" placeholder="Nome do Mapa" value={inputMapName} onChange={e=>setInputMapName(e.target.value)} />
                                         <input className="bg-black/50 border border-white/20 p-2 text-white text-sm flex-[2]" placeholder="URL da Imagem" value={inputMapUrl} onChange={e=>setInputMapUrl(e.target.value)} />
                                         <div className="flex items-center gap-2 bg-black/50 border border-white/20 px-2 rounded">
@@ -654,7 +721,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         )}
 
                         {managerTab === 'SAVED' && (
-                            <div className="grid grid-cols-3 gap-4 h-full overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 h-full overflow-y-auto custom-scrollbar">
                                 {savedMaps.map((map, i) => (
                                     <div key={i} className="group relative aspect-video bg-black border border-white/20 rounded hover:border-gold transition-all overflow-hidden">
                                         <img src={map.url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -678,7 +745,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                         <Plus size={16} /> CRIAR NOVO MODELO
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
                                     {savedEnemies.map((enemy, i) => (
                                         <div key={i} className="group relative bg-[#0a0a0a] border border-white/20 rounded-lg hover:border-gold transition-all flex flex-col overflow-hidden">
                                             <div className="relative aspect-square cursor-pointer overflow-hidden bg-black" onClick={() => spawnSavedEnemy(enemy)} title="Clique para Spawnar no Mapa">
