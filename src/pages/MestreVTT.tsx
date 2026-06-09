@@ -6,6 +6,7 @@ import {
 import { db } from '../lib/firebase';
 import { subscribeSession, DEFAULT_SESSION_FIELDS } from '../lib/session';
 import { createFearEventId } from '../lib/fearEvents';
+import { FearTokenGrid, FearUseOverlay, triggerFearAlertLocally } from '../components/FearDisplay';
 import { 
   Users, Eye, Skull, Campfire, MoonStars, 
   Dna, X, Cube, Coins, Sparkle, HandPalm, 
@@ -830,6 +831,7 @@ export default function MestreVTT() {
 
   const [showFearModal, setShowFearModal] = useState(false);
   const [fearTokens, setFearTokens] = useState(0);
+  const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
@@ -931,20 +933,30 @@ useEffect(() => {
   const toggleFearToken = async (index: number) => {
       const newCount = index < fearTokens ? index : index + 1;
       if (sessaoData?.id) {
-          await updateDoc(doc(db, 'sessoes', sessaoData.id), { "fear_data.tokens": newCount });
+          const current = (sessaoData.fear_data as Record<string, unknown>) || {};
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              fear_data: { ...current, tokens: newCount },
+          });
       }
   };
 
   const triggerFearAlert = async () => {
-      if (sessaoData?.id) {
-          const eventId = createFearEventId();
-          const now = Date.now();
-          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
-              'fear_data.last_event_id': eventId,
-              'fear_data.last_event_at': now,
-          });
-          setShowFearModal(false);
-      }
+      if (!sessaoData?.id) return;
+      const eventId = createFearEventId();
+      const now = Date.now();
+      const current = (sessaoData.fear_data as Record<string, unknown>) || {};
+
+      triggerFearAlertLocally(setFearAlertVisible);
+
+      await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+          fear_data: {
+              ...current,
+              tokens: fearTokens,
+              last_event_id: eventId,
+              last_event_at: now,
+          },
+      });
+      setShowFearModal(false);
   };
 
   const getVisibleCharacters = () => {
@@ -981,6 +993,8 @@ useEffect(() => {
              {sessaoData && <Tabletop sessaoData={sessaoData} isMaster={true} charactersData={characters} showManager={showTabletopManager} onCloseManager={() => setShowTabletopManager(false)} />}
            </div>
        </div>
+
+       <FearUseOverlay visible={fearAlertVisible} />
 
        {/* ALERTA DE DRUIDA NO MESTRE */}
        {transformAlert && (
@@ -1075,14 +1089,8 @@ useEffect(() => {
                    {showFearModal && (
                        <div className="absolute bottom-20 right-0 bg-[#1a0b2e] border-2 border-purple-500/50 rounded-xl p-4 w-64 shadow-[0_0_30px_rgba(0,0,0,0.9)] animate-scale-up z-50">
                            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2"><h3 className="text-purple-300 font-rpg text-lg">Caixa do Medo</h3><X className="text-white/50 cursor-pointer hover:text-white" onClick={() => setShowFearModal(false)} /></div>
-                           <div className="grid grid-cols-5 gap-3 mb-6 place-items-center">
-                               {Array.from({ length: 10 }).map((_, i) => (
-                                   <button key={i} onClick={() => toggleFearToken(i)} className={`w-8 h-8 rounded-full border border-purple-500/30 flex items-center justify-center transition-all duration-300 ${i < fearTokens ? 'bg-purple-600 shadow-[0_0_15px_#a855f7]' : 'bg-black/50'}`}>
-                                       {i < fearTokens && <Fire size={20} weight="fill" className="text-white animate-pulse" />}
-                                   </button>
-                               ))}
-                           </div>
-                           <button onClick={triggerFearAlert} className="w-full py-2 bg-gradient-to-r from-red-900 to-purple-900 border border-purple-500 text-white font-rpg tracking-widest text-lg rounded hover:brightness-125 transition-all active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)]">USAR MEDO</button>
+                           <FearTokenGrid count={fearTokens} onToggle={toggleFearToken} />
+                           <button onClick={triggerFearAlert} className="w-full mt-6 py-2 bg-gradient-to-r from-red-900 to-purple-900 border border-purple-500 text-white font-rpg tracking-widest text-lg rounded hover:brightness-125 transition-all active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)]">USAR MEDO</button>
                        </div>
                    )}
                </div>

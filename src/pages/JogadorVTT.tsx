@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { subscribeSession } from '../lib/session';
-import { parseFearEvent, shouldShowFearAlert, markFearEventSeen } from '../lib/fearEvents';
+import { PlayerFearStash, FearUseOverlay, useFearAlertListener } from '../components/FearDisplay';
 import { searchCards, suggestCards } from '../lib/cardSearch';
 import { 
   X, HandGrabbing, Stack, ArrowsOutSimple, 
@@ -969,15 +969,9 @@ export default function JogadorVTT() {
       }
   };
 
-  useEffect(() => {
-    const fearEvent = parseFearEvent(sessaoData?.fear_data);
-    if (!shouldShowFearAlert(fearEvent, false)) return;
+  useFearAlertListener(sessaoData?.fear_data, setFearAlertVisible);
 
-    setFearAlertVisible(true);
-    markFearEventSeen(fearEvent!.id);
-    const timer = setTimeout(() => setFearAlertVisible(false), 5000);
-    return () => clearTimeout(timer);
-  }, [sessaoData?.fear_data?.last_event_id, sessaoData?.fear_data?.last_trigger]);
+  const fearTokens = (sessaoData?.fear_data as { tokens?: number } | undefined)?.tokens ?? 0;
 
   const tabletopCharacters = useMemo(() => {
     if (!character) return [];
@@ -1001,6 +995,15 @@ export default function JogadorVTT() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black select-none">
+      <style>{`
+        @keyframes ds-fade-in {
+          0% { opacity: 0; transform: scale(1.2); }
+          15% { opacity: 1; transform: scale(1); }
+          85% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(0.9); }
+        }
+        .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
+      `}</style>
       
       <div className="absolute inset-0 z-0 pointer-events-none">
         <img src="/jogador-vtt-fundo.webp" className="w-full h-full object-cover opacity-60" />
@@ -1011,6 +1014,8 @@ export default function JogadorVTT() {
           <NPCViewer sessaoData={sessaoData} isMaster={false} />
       )}
       
+      {sessaoData && <PlayerFearStash tokens={fearTokens} />}
+
       {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={false} />}
 
       {sessaoData && (
@@ -1168,17 +1173,7 @@ export default function JogadorVTT() {
         </div>
       )}
 
-      {fearAlertVisible && (
-           <div className="fixed inset-0 z-[9999999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
-               <div className="relative w-full flex flex-col items-center animate-ds-text">
-                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
-                   <h1 className="font-rpg text-5xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-900 uppercase tracking-[0.2em] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] py-4 text-center">
-                       O MESTRE USOU O MEDO
-                   </h1>
-                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
-               </div>
-           </div>
-      )}
+      <FearUseOverlay visible={fearAlertVisible} />
 
     </div>
   );
