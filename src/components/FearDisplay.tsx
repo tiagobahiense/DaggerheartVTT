@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Fire, Skull } from '@phosphor-icons/react';
+import { Fire, Skull, Minus, ArrowsOutSimple } from '@phosphor-icons/react';
 import { playFearAlertSound, playFearTokenSound } from '../lib/fearAudio';
 import { markFearEventSeen, parseFearEvent, shouldShowFearAlert } from '../lib/fearEvents';
 
 const MAX_FEAR_TOKENS = 10;
+const FEAR_MINIMIZED_KEY = 'fear-stash-minimized';
 
 interface FearTokenGridProps {
   count: number;
@@ -65,6 +66,31 @@ export function FearUseOverlay({ visible }: { visible: boolean }) {
   );
 }
 
+function FearTokenBar({
+  count,
+  highlightIndex = null,
+}: {
+  count: number;
+  highlightIndex?: number | null;
+}) {
+  return (
+    <div className="flex gap-0.5 w-full min-w-[72px] sm:min-w-[96px]">
+      {Array.from({ length: MAX_FEAR_TOKENS }).map((_, i) => {
+        const filled = i < count;
+        const isHighlighted = highlightIndex === i;
+        return (
+          <div
+            key={i}
+            className={`flex-1 h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
+              filled ? 'bg-purple-500 shadow-[0_0_6px_#a855f7]' : 'bg-white/10'
+            } ${isHighlighted ? 'ring-1 ring-purple-300 scale-y-150' : ''}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 interface PlayerFearStashProps {
   tokens: number;
 }
@@ -72,11 +98,20 @@ interface PlayerFearStashProps {
 export function PlayerFearStash({ tokens }: PlayerFearStashProps) {
   const prevTokens = useRef(tokens);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+  const [isMinimized, setIsMinimized] = useState(
+    () => localStorage.getItem(FEAR_MINIMIZED_KEY) === 'true'
+  );
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(FEAR_MINIMIZED_KEY, String(isMinimized));
+  }, [isMinimized]);
 
   useEffect(() => {
     if (tokens > prevTokens.current) {
       setHighlightIndex(tokens - 1);
       playFearTokenSound();
+      setIsMinimized(false);
       const timer = setTimeout(() => setHighlightIndex(null), 900);
       prevTokens.current = tokens;
       return () => clearTimeout(timer);
@@ -84,17 +119,79 @@ export function PlayerFearStash({ tokens }: PlayerFearStashProps) {
     prevTokens.current = tokens;
   }, [tokens]);
 
+  const positionClass =
+    'fixed top-[4.75rem] right-3 sm:top-24 sm:right-6 z-[45] pointer-events-auto animate-fade-in';
+
+  if (isMinimized) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsMinimized(false)}
+        className={`${positionClass} group flex items-center gap-1.5 bg-[#1a0b2e]/90 border border-purple-500/40 rounded-full pl-1.5 pr-2.5 py-1 shadow-[0_0_12px_rgba(168,85,247,0.2)] backdrop-blur-md hover:border-purple-400/60 transition-colors`}
+        title="Medo do Mestre — expandir"
+      >
+        <div className="relative w-7 h-7 rounded-full bg-purple-900/50 flex items-center justify-center">
+          <Skull size={14} weight="fill" className="text-purple-400" />
+          {tokens > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-purple-600 text-[9px] font-bold text-white flex items-center justify-center border border-purple-300/50">
+              {tokens}
+            </span>
+          )}
+        </div>
+        <ArrowsOutSimple size={12} className="text-purple-300/50 group-hover:text-purple-200" />
+      </button>
+    );
+  }
+
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[45] pointer-events-none animate-fade-in">
-      <div className="bg-[#1a0b2e]/90 border-2 border-purple-500/40 rounded-xl px-4 py-3 shadow-[0_0_25px_rgba(168,85,247,0.25)] backdrop-blur-md">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Skull size={18} weight="fill" className="text-purple-400" />
-          <h3 className="text-purple-300 font-rpg text-sm uppercase tracking-widest">Medo do Mestre</h3>
-          <span className="text-purple-200/80 text-xs font-bold bg-purple-900/50 px-2 py-0.5 rounded-full border border-purple-500/30">
+    <div className={positionClass}>
+      <div className="bg-[#1a0b2e]/90 border border-purple-500/40 rounded-lg sm:rounded-xl px-2.5 py-2 sm:px-3 sm:py-2.5 shadow-[0_0_15px_rgba(168,85,247,0.2)] backdrop-blur-md max-w-[calc(100vw-1.5rem)]">
+        <div className="flex items-center gap-2">
+          <Skull size={14} weight="fill" className="text-purple-400 shrink-0" />
+          <span className="text-purple-300 font-rpg text-[10px] sm:text-xs uppercase tracking-wider whitespace-nowrap">
+            Medo
+          </span>
+          <span className="text-purple-200/90 text-[10px] sm:text-xs font-bold tabular-nums">
             {tokens}/{MAX_FEAR_TOKENS}
           </span>
+          <div className="flex-1 min-w-0 hidden sm:block">
+            {!isExpanded && <FearTokenBar count={tokens} highlightIndex={highlightIndex} />}
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0 ml-auto">
+            <button
+              type="button"
+              onClick={() => setIsExpanded((v) => !v)}
+              className="p-1 text-purple-300/40 hover:text-purple-200 rounded hover:bg-white/5 transition-colors"
+              title={isExpanded ? 'Recolher' : 'Ver fichas'}
+            >
+              <ArrowsOutSimple
+                size={12}
+                className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsExpanded(false);
+                setIsMinimized(true);
+              }}
+              className="p-1 text-purple-300/40 hover:text-purple-200 rounded hover:bg-white/5 transition-colors"
+              title="Minimizar"
+            >
+              <Minus size={12} weight="bold" />
+            </button>
+          </div>
         </div>
-        <FearTokenGrid count={tokens} readOnly compact highlightIndex={highlightIndex} />
+
+        <div className="mt-1.5 sm:hidden">
+          {!isExpanded && <FearTokenBar count={tokens} highlightIndex={highlightIndex} />}
+        </div>
+
+        {isExpanded && (
+          <div className="mt-2 pt-2 border-t border-purple-500/20">
+            <FearTokenGrid count={tokens} readOnly compact highlightIndex={highlightIndex} />
+          </div>
+        )}
       </div>
     </div>
   );
