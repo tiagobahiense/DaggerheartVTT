@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit, a
 import { auth, db } from '../lib/firebase';
 import { subscribeSession } from '../lib/session';
 import { PlayerFearStash, FearUseOverlay, useFearAlertListener } from '../components/FearDisplay';
-import { searchCards, suggestCards } from '../lib/cardSearch';
+import { searchCards, suggestCards, sortGrimoireCards, formatCardMeta } from '../lib/cardSearch';
 import { 
   X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Plus, 
@@ -28,6 +28,11 @@ interface Card {
   caminho: string;
   nome: string;
   categoria: string;
+  dominio?: number;
+  rank?: number;
+  nivel?: string;
+  profissao?: string;
+  atributo_conjuracao?: string;
 }
 
 interface ActiveCard extends Card {
@@ -620,9 +625,9 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     setHand(hand.map(c => c.uniqueId === uniqueId ? { ...c, tokens: Math.max(0, c.tokens + delta) } : c));
   };
 
-  const filteredGrimoire = useMemo(() => searchCards(safeCards, searchTerm, {
+  const filteredGrimoire = useMemo(() => sortGrimoireCards(searchCards(safeCards, searchTerm, {
     categories: ["Feitiço", "Grimório", "Talento"],
-  }), [safeCards, searchTerm]);
+  })), [safeCards, searchTerm]);
 
   const grimoireSuggestions = useMemo(() => {
     if (filteredGrimoire.length > 0 || searchTerm.trim().length < 2) return [];
@@ -744,16 +749,30 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
           <div className="w-[95%] md:w-[85%] lg:w-[80%] h-[90dvh] md:h-[85dvh] landscape:h-[95dvh] bg-[#0f0b15]/95 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
             <div className="p-3 md:p-6 border-b border-white/5 flex flex-row flex-wrap md:flex-nowrap justify-between items-center bg-white/5 gap-3 md:gap-4 shrink-0">
               <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
-              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
+              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Nome, tipo ou domínio (ex: 5 feitiço)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
               <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); }} className="ml-auto md:ml-0"><X size={28} className="text-white/50 hover:text-red-400" /></button>
             </div>
             <div className="flex-1 overflow-y-auto p-3 md:p-8 grid grid-cols-3 landscape:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-6 custom-scrollbar">
-              {showGrimoire && filteredGrimoire.map((card, idx) => (
-                <div key={idx} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
-                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"><img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /></div>
-                  <p className="text-center text-xs text-white/40 mt-3 truncate w-full group-hover:text-white">{card.nome}</p>
+              {showGrimoire && filteredGrimoire.map((card) => {
+                const meta = formatCardMeta(card);
+                const displayName = card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '');
+                return (
+                <div key={card.caminho} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
+                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                    {card.dominio != null && (
+                      <span className="absolute top-1 left-1 z-10 px-1.5 py-0.5 rounded bg-black/70 border border-gold/30 text-gold text-[10px] font-bold leading-none">
+                        {card.dominio}
+                      </span>
+                    )}
+                    <span className="absolute top-1 right-1 z-10 px-1.5 py-0.5 rounded bg-black/70 border border-white/20 text-white/70 text-[9px] uppercase leading-none">
+                      {card.categoria === 'Grimório' ? 'Grim.' : card.categoria.slice(0, 4)}
+                    </span>
+                    <img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <p className="text-center text-xs text-white/40 mt-2 truncate w-full group-hover:text-white" title={card.nome}>{displayName}</p>
+                  {meta && <p className="text-center text-[10px] text-white/25 truncate w-full">{meta}</p>}
                 </div>
-              ))}
+              );})}
               {showReserve && reserve.map((card, idx) => (
                 <div key={idx} onClick={() => initiateDraw(card, 'reserve', idx)} className="cursor-pointer hover:-translate-y-2 transition-transform"><img src={card.caminho} className="w-full rounded-lg shadow-lg" /><p className="text-center text-xs text-white/30 mt-2">Recuperar</p></div>
               ))}

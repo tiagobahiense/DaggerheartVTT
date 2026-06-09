@@ -2,6 +2,11 @@ export interface SearchableCard {
   nome: string;
   caminho: string;
   categoria: string;
+  dominio?: number;
+  rank?: number;
+  nivel?: string;
+  profissao?: string;
+  atributo_conjuracao?: string;
 }
 
 const PREFIXES = [
@@ -14,6 +19,10 @@ const PREFIXES = [
   /^ancestralidade\s*-\s*/i,
   /^comunidade\s*-\s*/i,
   /^classes\s*-\s*/i,
+  /^especialização\s*-\s*/i,
+  /^especializacao\s*-\s*/i,
+  /^fundamental\s*-\s*/i,
+  /^maestria\s*-\s*/i,
 ];
 
 function stripAccents(value: string): string {
@@ -70,7 +79,28 @@ function buildSearchHaystack(card: SearchableCard): string {
     .replace(/\.[^.]+$/, '')
     .replace(/[/\\]/g, ' ');
   const strippedName = stripCardPrefixes(card.nome);
-  return normalizeCardText(`${card.nome} ${strippedName} ${pathHint} ${card.categoria}`);
+  const parts = [
+    card.nome,
+    strippedName,
+    pathHint,
+    card.categoria,
+    card.nivel,
+    card.profissao,
+    card.atributo_conjuracao,
+  ];
+  if (card.dominio != null) {
+    parts.push(`dominio ${card.dominio}`, `nivel ${card.dominio}`, `d${card.dominio}`);
+  }
+  if (card.rank != null) {
+    parts.push(`rank ${card.rank}`);
+  }
+  return normalizeCardText(parts.filter(Boolean).join(' '));
+}
+
+function matchesNumericFilter(card: SearchableCard, word: string): boolean {
+  if (!/^\d+$/.test(word)) return false;
+  const num = Number(word);
+  return card.dominio === num || card.rank === num;
 }
 
 export function searchCards<T extends SearchableCard>(
@@ -87,7 +117,7 @@ export function searchCards<T extends SearchableCard>(
     }
     if (words.length === 0) return true;
     const haystack = buildSearchHaystack(card);
-    return words.every((word) => fuzzyWordMatch(word, haystack));
+    return words.every((word) => fuzzyWordMatch(word, haystack) || matchesNumericFilter(card, word));
   });
 }
 
@@ -106,6 +136,7 @@ export function suggestCards<T extends SearchableCard>(
       let score = 0;
       if (stripped.startsWith(query)) score += 10;
       if (haystack.includes(query)) score += 5;
+      if (card.dominio != null && query === String(card.dominio)) score += 8;
       score -= levenshtein(query, stripped.slice(0, query.length + 3));
       return { card, score };
     })
@@ -113,4 +144,32 @@ export function suggestCards<T extends SearchableCard>(
     .sort((a, b) => b.score - a.score);
 
   return scored.slice(0, limit).map(({ card }) => card);
+}
+
+export function sortGrimoireCards<T extends SearchableCard>(cards: T[]): T[] {
+  return [...cards].sort((a, b) => {
+    const catOrder = (c: string) => {
+      if (c === 'Feitiço') return 0;
+      if (c === 'Talento') return 1;
+      if (c === 'Grimório') return 2;
+      return 3;
+    };
+    const catDiff = catOrder(a.categoria) - catOrder(b.categoria);
+    if (catDiff !== 0) return catDiff;
+    const domA = a.dominio ?? 99;
+    const domB = b.dominio ?? 99;
+    if (domA !== domB) return domA - domB;
+    const rankA = a.rank ?? 99;
+    const rankB = b.rank ?? 99;
+    if (rankA !== rankB) return rankA - rankB;
+    return a.nome.localeCompare(b.nome, 'pt-BR');
+  });
+}
+
+export function formatCardMeta(card: SearchableCard): string | null {
+  const parts: string[] = [];
+  if (card.dominio != null) parts.push(`Dom. ${card.dominio}`);
+  if (card.rank != null && card.rank > 0) parts.push(`#${card.rank}`);
+  if (card.nivel) parts.push(card.nivel);
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
