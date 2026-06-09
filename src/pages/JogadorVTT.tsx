@@ -6,7 +6,10 @@ import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit, a
 import { auth, db } from '../lib/firebase';
 import { subscribeSession } from '../lib/session';
 import { PlayerFearStash, FearUseOverlay, useFearAlertListener } from '../components/FearDisplay';
-import { searchCards, suggestCards, sortGrimoireCards, formatCardMeta } from '../lib/cardSearch';
+import {
+  searchCards, suggestCards, sortGrimoireCards, formatCardMeta,
+  DOMAIN_OPTIONS, NIVEL_OPTIONS,
+} from '../lib/cardSearch';
 import { 
   X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Plus, 
@@ -29,7 +32,11 @@ interface Card {
   nome: string;
   categoria: string;
   dominio?: number;
-  rank?: number;
+  nivel_dominio?: number;
+  tipo_dominio?: string;
+  cor_dominio?: string;
+  tipo_carta?: string;
+  custo_troca?: number;
   nivel?: string;
   profissao?: string;
   atributo_conjuracao?: string;
@@ -529,6 +536,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const [showGrimoire, setShowGrimoire] = useState(false);
   const [showReserve, setShowReserve] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [domainFilter, setDomainFilter] = useState<string | null>(null);
+  const [nivelFilter, setNivelFilter] = useState<number | null>(null);
   
   const [selectedCardState, setSelectedCardState] = useState<{ id: string | null, staticCard: Card | null, source: 'hand' | 'grimoire' | 'reserve' | 'table' } | null>(null);
 
@@ -627,7 +636,9 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
   const filteredGrimoire = useMemo(() => sortGrimoireCards(searchCards(safeCards, searchTerm, {
     categories: ["Feitiço", "Grimório", "Talento"],
-  })), [safeCards, searchTerm]);
+    domain: domainFilter,
+    nivel: nivelFilter,
+  })), [safeCards, searchTerm, domainFilter, nivelFilter]);
 
   const grimoireSuggestions = useMemo(() => {
     if (filteredGrimoire.length > 0 || searchTerm.trim().length < 2) return [];
@@ -750,22 +761,75 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
             <div className="p-3 md:p-6 border-b border-white/5 flex flex-row flex-wrap md:flex-nowrap justify-between items-center bg-white/5 gap-3 md:gap-4 shrink-0">
               <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
               {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Nome, tipo ou domínio (ex: 5 feitiço)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
-              <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); }} className="ml-auto md:ml-0"><X size={28} className="text-white/50 hover:text-red-400" /></button>
+              <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); setDomainFilter(null); setNivelFilter(null); }} className="ml-auto md:ml-0"><X size={28} className="text-white/50 hover:text-red-400" /></button>
             </div>
+            {showGrimoire && (
+              <div className="shrink-0 px-3 md:px-6 py-3 border-b border-white/5 bg-black/20 space-y-3">
+                <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+                  <button
+                    onClick={() => setDomainFilter(null)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${domainFilter === null ? 'bg-gold/20 border-gold text-gold' : 'border-white/20 text-white/50 hover:border-white/40'}`}
+                  >
+                    Todos
+                  </button>
+                  {DOMAIN_OPTIONS.map((domain) => (
+                    <button
+                      key={domain.id}
+                      onClick={() => setDomainFilter(domainFilter === domain.id ? null : domain.id)}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${domainFilter === domain.id ? 'text-white shadow-lg scale-105' : 'text-white/80 hover:scale-105'}`}
+                      style={{
+                        backgroundColor: domainFilter === domain.id ? domain.color : `${domain.color}33`,
+                        borderColor: domain.color,
+                      }}
+                    >
+                      {domain.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+                  <button
+                    onClick={() => setNivelFilter(null)}
+                    className={`shrink-0 w-8 h-8 rounded-full text-xs font-bold border transition-colors ${nivelFilter === null ? 'bg-gold/20 border-gold text-gold' : 'border-white/20 text-white/50 hover:border-white/40'}`}
+                  >
+                    ∅
+                  </button>
+                  {NIVEL_OPTIONS.map((nivel) => (
+                    <button
+                      key={nivel}
+                      onClick={() => setNivelFilter(nivelFilter === nivel ? null : nivel)}
+                      className={`shrink-0 w-8 h-8 rounded-full text-xs font-bold border transition-colors ${nivelFilter === nivel ? 'bg-gold/20 border-gold text-gold' : 'border-white/20 text-white/50 hover:border-gold/50 hover:text-white'}`}
+                    >
+                      {nivel}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex-1 overflow-y-auto p-3 md:p-8 grid grid-cols-3 landscape:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-6 custom-scrollbar">
               {showGrimoire && filteredGrimoire.map((card) => {
                 const meta = formatCardMeta(card);
                 const displayName = card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '');
                 return (
                 <div key={card.caminho} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
-                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]">
-                    {card.dominio != null && (
-                      <span className="absolute top-1 left-1 z-10 px-1.5 py-0.5 rounded bg-black/70 border border-gold/30 text-gold text-[10px] font-bold leading-none">
-                        {card.dominio}
+                  <div
+                    className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+                    style={card.cor_dominio ? { borderColor: `${card.cor_dominio}66` } : undefined}
+                  >
+                    {(card.nivel_dominio ?? card.dominio) != null && (
+                      <span
+                        className="absolute top-1 left-1 z-10 px-1.5 py-0.5 rounded text-[10px] font-bold leading-none text-white shadow"
+                        style={{ backgroundColor: card.cor_dominio ?? '#000000b3' }}
+                      >
+                        {card.nivel_dominio ?? card.dominio}
                       </span>
                     )}
-                    <span className="absolute top-1 right-1 z-10 px-1.5 py-0.5 rounded bg-black/70 border border-white/20 text-white/70 text-[9px] uppercase leading-none">
-                      {card.categoria === 'Grimório' ? 'Grim.' : card.categoria.slice(0, 4)}
+                    {card.custo_troca != null && (
+                      <span className="absolute top-1 right-1 z-10 px-1.5 py-0.5 rounded bg-black/80 border border-white/20 text-white/80 text-[9px] font-bold leading-none">
+                        ⇄{card.custo_troca}
+                      </span>
+                    )}
+                    <span className="absolute bottom-1 left-1 right-1 z-10 px-1 py-0.5 rounded bg-black/75 text-[8px] uppercase leading-none text-center truncate" style={{ color: card.cor_dominio ?? '#ffffff99' }}>
+                      {card.tipo_dominio ?? (card.categoria === 'Grimório' ? 'Grimório' : card.categoria)}
                     </span>
                     <img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   </div>

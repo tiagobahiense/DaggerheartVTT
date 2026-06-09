@@ -3,11 +3,29 @@ export interface SearchableCard {
   caminho: string;
   categoria: string;
   dominio?: number;
-  rank?: number;
+  nivel_dominio?: number;
+  tipo_dominio?: string;
+  cor_dominio?: string;
+  tipo_carta?: string;
+  custo_troca?: number;
   nivel?: string;
   profissao?: string;
   atributo_conjuracao?: string;
 }
+
+export const DOMAIN_OPTIONS = [
+  { id: 'Arcano', label: 'Arcano', color: '#7C3AED' },
+  { id: 'Graça', label: 'Graça', color: '#DB2777' },
+  { id: 'Códice', label: 'Códice', color: '#2563EB' },
+  { id: 'Lâmina', label: 'Lâmina', color: '#DC2626' },
+  { id: 'Esplendor', label: 'Esplendor', color: '#CA8A04' },
+  { id: 'Meia-noite', label: 'Meia-noite', color: '#374151' },
+  { id: 'Falange', label: 'Falange', color: '#9CA3AF' },
+  { id: 'Sabedoria', label: 'Sabedoria', color: '#16A34A' },
+  { id: 'Valor', label: 'Valor', color: '#EA580C' },
+] as const;
+
+export const NIVEL_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 const PREFIXES = [
   /^feitiço\s*-\s*/i,
@@ -39,6 +57,10 @@ export function stripCardPrefixes(name: string): string {
     result = result.replace(pattern, '');
   }
   return result.trim();
+}
+
+function cardLevel(card: SearchableCard): number | undefined {
+  return card.nivel_dominio ?? card.dominio;
 }
 
 function levenshtein(a: string, b: string): number {
@@ -79,20 +101,23 @@ function buildSearchHaystack(card: SearchableCard): string {
     .replace(/\.[^.]+$/, '')
     .replace(/[/\\]/g, ' ');
   const strippedName = stripCardPrefixes(card.nome);
+  const level = cardLevel(card);
   const parts = [
     card.nome,
     strippedName,
     pathHint,
     card.categoria,
+    card.tipo_carta,
+    card.tipo_dominio,
     card.nivel,
     card.profissao,
     card.atributo_conjuracao,
   ];
-  if (card.dominio != null) {
-    parts.push(`dominio ${card.dominio}`, `nivel ${card.dominio}`, `d${card.dominio}`);
+  if (level != null) {
+    parts.push(`dominio ${level}`, `nivel ${level}`, `d${level}`);
   }
-  if (card.rank != null) {
-    parts.push(`rank ${card.rank}`);
+  if (card.custo_troca != null) {
+    parts.push(`troca ${card.custo_troca}`, `custo ${card.custo_troca}`);
   }
   return normalizeCardText(parts.filter(Boolean).join(' '));
 }
@@ -100,22 +125,44 @@ function buildSearchHaystack(card: SearchableCard): string {
 function matchesNumericFilter(card: SearchableCard, word: string): boolean {
   if (!/^\d+$/.test(word)) return false;
   const num = Number(word);
-  return card.dominio === num || card.rank === num;
+  const level = cardLevel(card);
+  return level === num || card.custo_troca === num;
+}
+
+export function filterGrimoireCards<T extends SearchableCard>(
+  cards: T[],
+  options?: {
+    categories?: string[];
+    domain?: string | null;
+    nivel?: number | null;
+  }
+): T[] {
+  return cards.filter((card) => {
+    if (options?.categories && !options.categories.includes(card.categoria)) {
+      return false;
+    }
+    if (options?.domain && card.tipo_dominio !== options.domain) {
+      return false;
+    }
+    if (options?.nivel != null && cardLevel(card) !== options.nivel) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function searchCards<T extends SearchableCard>(
   cards: T[],
   rawQuery: string,
-  options?: { categories?: string[] }
+  options?: { categories?: string[]; domain?: string | null; nivel?: number | null }
 ): T[] {
+  const filtered = filterGrimoireCards(cards, options);
   const query = normalizeCardText(rawQuery);
   const words = query.split(/\s+/).filter(Boolean);
 
-  return cards.filter((card) => {
-    if (options?.categories && !options.categories.includes(card.categoria)) {
-      return false;
-    }
-    if (words.length === 0) return true;
+  if (words.length === 0) return filtered;
+
+  return filtered.filter((card) => {
     const haystack = buildSearchHaystack(card);
     return words.every((word) => fuzzyWordMatch(word, haystack) || matchesNumericFilter(card, word));
   });
@@ -133,10 +180,11 @@ export function suggestCards<T extends SearchableCard>(
     .map((card) => {
       const haystack = buildSearchHaystack(card);
       const stripped = normalizeCardText(stripCardPrefixes(card.nome));
+      const level = cardLevel(card);
       let score = 0;
       if (stripped.startsWith(query)) score += 10;
       if (haystack.includes(query)) score += 5;
-      if (card.dominio != null && query === String(card.dominio)) score += 8;
+      if (level != null && query === String(level)) score += 8;
       score -= levenshtein(query, stripped.slice(0, query.length + 3));
       return { card, score };
     })
@@ -147,7 +195,17 @@ export function suggestCards<T extends SearchableCard>(
 }
 
 export function sortGrimoireCards<T extends SearchableCard>(cards: T[]): T[] {
+  const domainOrder = Object.fromEntries(DOMAIN_OPTIONS.map((d, i) => [d.id, i]));
+
   return [...cards].sort((a, b) => {
+    const levelA = cardLevel(a) ?? 99;
+    const levelB = cardLevel(b) ?? 99;
+    if (levelA !== levelB) return levelA - levelB;
+
+    const domA = domainOrder[a.tipo_dominio ?? ''] ?? 99;
+    const domB = domainOrder[b.tipo_dominio ?? ''] ?? 99;
+    if (domA !== domB) return domA - domB;
+
     const catOrder = (c: string) => {
       if (c === 'Feitiço') return 0;
       if (c === 'Talento') return 1;
@@ -156,20 +214,16 @@ export function sortGrimoireCards<T extends SearchableCard>(cards: T[]): T[] {
     };
     const catDiff = catOrder(a.categoria) - catOrder(b.categoria);
     if (catDiff !== 0) return catDiff;
-    const domA = a.dominio ?? 99;
-    const domB = b.dominio ?? 99;
-    if (domA !== domB) return domA - domB;
-    const rankA = a.rank ?? 99;
-    const rankB = b.rank ?? 99;
-    if (rankA !== rankB) return rankA - rankB;
+
     return a.nome.localeCompare(b.nome, 'pt-BR');
   });
 }
 
 export function formatCardMeta(card: SearchableCard): string | null {
   const parts: string[] = [];
-  if (card.dominio != null) parts.push(`Dom. ${card.dominio}`);
-  if (card.rank != null && card.rank > 0) parts.push(`#${card.rank}`);
-  if (card.nivel) parts.push(card.nivel);
+  if (card.tipo_dominio) parts.push(card.tipo_dominio);
+  const level = cardLevel(card);
+  if (level != null) parts.push(`Nv. ${level}`);
+  if (card.custo_troca != null) parts.push(`Troca ${card.custo_troca}`);
   return parts.length > 0 ? parts.join(' · ') : null;
 }

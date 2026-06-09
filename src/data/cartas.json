@@ -612,8 +612,12 @@
     "nome": "Feitiço - Adivinhação",
     "categoria": "Feitiço",
     "numero": 236,
-    "dominio": 4,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Ajustar Realidade.jpg",
@@ -621,7 +625,11 @@
     "categoria": "Feitiço",
     "numero": 101,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Aspecto Selvagem.jpg",
@@ -629,7 +637,11 @@
     "categoria": "Feitiço",
     "numero": 222,
     "dominio": 7,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 7,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Aura de Confusão.jpg",
@@ -637,7 +649,11 @@
     "categoria": "Feitiço",
     "numero": 98,
     "dominio": 8,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 8,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Aura Defensora.jpg",
@@ -645,7 +661,11 @@
     "categoria": "Feitiço",
     "numero": 244,
     "dominio": 8,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 8,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Aura Esmagadora.jpg",
@@ -653,7 +673,11 @@
     "categoria": "Feitiço",
     "numero": 246,
     "dominio": 9,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 9,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Banir.jpg",
@@ -661,7 +685,11 @@
     "categoria": "Feitiço",
     "numero": 156,
     "dominio": 6,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 6,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Barreira Revigorante.jpg",
@@ -669,7 +697,11 @@
     "categoria": "Feitiço",
     "numero": 224,
     "dominio": 8,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Caminhar na Parede.jpg",
@@ -677,7 +709,11 @@
     "categoria": "Feitiço",
     "numero": 84,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Campo Curativo.jpg",
@@ -685,7 +721,11 @@
     "categoria": "Feitiço",
     "numero": 216,
     "dominio": 4,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 4,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - CAOS LIBERTO.jpg",
@@ -693,7 +733,11 @@
     "categoria": "Feitiço",
     "numero": 83,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Carga Mágica.jpg",
@@ -701,7 +745,11 @@
     "categoria": "Feitiço",
     "numero": 203,
     "dominio": 8,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Chuva Arcana.jpg",
@@ -709,7 +757,11 @@
     "categoria": "Feitiço",
     "numero": 102,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Chuva de Lâminas.jpg",
@@ -717,7 +769,11 @@
     "categoria": "Feitiço",
     "numero": 188,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Conjurar Enxame.jpg",
@@ -725,7 +781,11 @@
     "categoria": "Feitiço",
     "numero": 211,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Conjurar Montarias.jpg",
@@ -733,15 +793,23 @@
     "categoria": "Feitiço",
     "numero": 219,
     "dominio": 6,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 6,
+    "custo_troca": 0
   },
   {
-    "caminho": "/cards/Feitiço/Feitiço - ConstriSçpãelol Mortal.jpg",
-    "nome": "Feitiço - ConstriSçpãelol Mortal",
+    "caminho": "/cards/Feitiço/Feitiço - Constrição Mortal.jpg",
+    "nome": "Feitiço - Constrição Mortal",
     "categoria": "Feitiço",
     "numero": 215,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Contramágica.jpg",
@@ -749,7 +817,11 @@
     "categoria": "Feitiço",
     "numero": 87,
     "dominio": 3,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 3,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - corrente de relÂmpagos.jpg",
@@ -757,23 +829,35 @@
     "categoria": "Feitiço",
     "numero": 91,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
-    {
-      "caminho": "/cards/Feitiço/Feitiço - da Natureza.jpg",
-      "nome": "Feitiço - da Natureza",
-      "categoria": "Feitiço",
-      "numero": 212,
-      "dominio": 2,
-      "rank": 1
-    },
+  {
+    "caminho": "/cards/Feitiço/Feitiço - da Natureza.jpg",
+    "nome": "Feitiço - da Natureza",
+    "categoria": "Feitiço",
+    "numero": 212,
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 1,
+    "custo_troca": 0
+  },
   {
     "caminho": "/cards/Feitiço/Feitiço - Disfarce em Massa.jpg",
     "nome": "Feitiço - Disfarce em Massa",
     "categoria": "Feitiço",
     "numero": 199,
-    "dominio": 6,
-    "rank": 0
+    "dominio": 5,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Disfarce Inquietante.jpg",
@@ -781,7 +865,11 @@
     "categoria": "Feitiço",
     "numero": 189,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Dom Arcano.jpg",
@@ -789,7 +877,11 @@
     "categoria": "Feitiço",
     "numero": 95,
     "dominio": 7,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 7,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - ECLIPSE.jpg",
@@ -797,7 +889,11 @@
     "categoria": "Feitiço",
     "numero": 206,
     "dominio": 10,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Em Dobro.jpg",
@@ -805,7 +901,11 @@
     "categoria": "Feitiço",
     "numero": 185,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - enfeitiçar em Massa.jpg",
@@ -813,7 +913,11 @@
     "categoria": "Feitiço",
     "numero": 182,
     "dominio": 8,
-    "rank": 3
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 8,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - enfeitiçar.jpg",
@@ -821,7 +925,11 @@
     "categoria": "Feitiço",
     "numero": 167,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Espectro das Trevas.jpg",
@@ -829,7 +937,11 @@
     "categoria": "Feitiço",
     "numero": 207,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Espionar.jpg",
@@ -837,15 +949,23 @@
     "categoria": "Feitiço",
     "numero": 174,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Espírito da meia-noite.jpg",
     "nome": "Feitiço - Espírito da meia-noite",
     "categoria": "Feitiço",
     "numero": 190,
-    "dominio": 2,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Espíritos da Floresta.jpg",
@@ -853,7 +973,11 @@
     "categoria": "Feitiço",
     "numero": 223,
     "dominio": 8,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 8,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Esvanecer.jpg",
@@ -861,7 +985,11 @@
     "categoria": "Feitiço",
     "numero": 201,
     "dominio": 7,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 7,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Feixe de Remissão.jpg",
@@ -869,7 +997,11 @@
     "categoria": "Feitiço",
     "numero": 247,
     "dominio": 9,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 9,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Fenda Espacial.jpg",
@@ -877,15 +1009,23 @@
     "categoria": "Feitiço",
     "numero": 93,
     "dominio": 6,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Fortaleza Selvagem.jpg",
     "nome": "Feitiço - Fortaleza Selvagem",
     "categoria": "Feitiço",
     "numero": 218,
-    "dominio": 5,
-    "rank": 1
+    "dominio": 3,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Força da Natureza.jpg",
@@ -893,7 +1033,11 @@
     "categoria": "Feitiço",
     "numero": 227,
     "dominio": 10,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Fulgor Atordoante.jpg",
@@ -901,7 +1045,11 @@
     "categoria": "Feitiço",
     "numero": 245,
     "dominio": 8,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 8,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Glifo do Ocaso.jpg",
@@ -909,7 +1057,11 @@
     "categoria": "Feitiço",
     "numero": 195,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Golpe Curativo.jpg",
@@ -917,7 +1069,11 @@
     "categoria": "Feitiço",
     "numero": 242,
     "dominio": 7,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 7,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - imitador.jpg",
@@ -925,7 +1081,11 @@
     "categoria": "Feitiço",
     "numero": 183,
     "dominio": 9,
-    "rank": 3
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 9,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Impacto Defensivo.jpg",
@@ -933,31 +1093,47 @@
     "categoria": "Feitiço",
     "numero": 90,
     "dominio": 4,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 4,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Incendiar.jpg",
     "nome": "Feitiço - Incendiar",
     "categoria": "Feitiço",
     "numero": 85,
-    "dominio": 2,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Invisibilidade.jpg",
     "nome": "Feitiço - Invisibilidade",
     "categoria": "Feitiço",
     "numero": 172,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 8,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 8,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Lampejo Hipnótico.jpg",
     "nome": "Feitiço - Lampejo Hipnótico",
     "categoria": "Feitiço",
     "numero": 171,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 6,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Moldar Material.jpg",
@@ -965,15 +1141,22 @@
     "categoria": "Feitiço",
     "numero": 238,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Muralha.jpg",
     "nome": "Feitiço - Muralha",
     "categoria": "Feitiço",
     "numero": 154,
-    "dominio": 5,
-    "rank": 2
+    "dominio": 2,
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Mãos Curativas.jpg",
@@ -981,7 +1164,11 @@
     "categoria": "Feitiço",
     "numero": 233,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Não Minta para Mim.jpg",
@@ -989,7 +1176,11 @@
     "categoria": "Feitiço",
     "numero": 169,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Ocultação.jpg",
@@ -997,7 +1188,11 @@
     "categoria": "Feitiço",
     "numero": 96,
     "dominio": 7,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 7,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Olho Flutuante.jpg",
@@ -1005,7 +1200,11 @@
     "categoria": "Feitiço",
     "numero": 86,
     "dominio": 2,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Onda Desintegradora.jpg",
@@ -1013,7 +1212,11 @@
     "categoria": "Feitiço",
     "numero": 163,
     "dominio": 9,
-    "rank": 4
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 9,
+    "custo_troca": 4
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Palavras de Discórdia.jpg",
@@ -1021,7 +1224,11 @@
     "categoria": "Feitiço",
     "numero": 176,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Partilhar o Fardo.jpg",
@@ -1029,7 +1236,11 @@
     "categoria": "Feitiço",
     "numero": 178,
     "dominio": 6,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 6,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Pele de Espinhos.jpg",
@@ -1037,7 +1248,11 @@
     "categoria": "Feitiço",
     "numero": 217,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Premonição.jpg",
@@ -1045,7 +1260,11 @@
     "categoria": "Feitiço",
     "numero": 92,
     "dominio": 5,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Projeção Astral.jpg",
@@ -1053,7 +1272,11 @@
     "categoria": "Feitiço",
     "numero": 181,
     "dominio": 8,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 8,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Projeção Sensorial.jpg",
@@ -1061,7 +1284,11 @@
     "categoria": "Feitiço",
     "numero": 100,
     "dominio": 9,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 9,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Projétil Corrosivo.jpg",
@@ -1069,7 +1296,11 @@
     "categoria": "Feitiço",
     "numero": 213,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Proteção Rúnica.jpg",
@@ -1077,7 +1308,11 @@
     "categoria": "Feitiço",
     "numero": 82,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Punição.jpg",
@@ -1085,7 +1320,11 @@
     "categoria": "Feitiço",
     "numero": 239,
     "dominio": 5,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Raio Luminoso.jpg",
@@ -1093,7 +1332,11 @@
     "categoria": "Feitiço",
     "numero": 229,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Recuo Espectral.jpg",
@@ -1101,7 +1344,11 @@
     "categoria": "Feitiço",
     "numero": 197,
     "dominio": 5,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Reflexo Arcano.jpg",
@@ -1109,15 +1356,23 @@
     "categoria": "Feitiço",
     "numero": 97,
     "dominio": 8,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Refúgio Seguro.jpg",
     "nome": "Feitiço - Refúgio Seguro",
     "categoria": "Feitiço",
     "numero": 161,
-    "dominio": 8,
-    "rank": 3
+    "dominio": 10,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Ressurreição.jpg",
@@ -1125,7 +1380,11 @@
     "categoria": "Feitiço",
     "numero": 249,
     "dominio": 10,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Restauração.jpg",
@@ -1133,7 +1392,11 @@
     "categoria": "Feitiço",
     "numero": 240,
     "dominio": 6,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Revigorar.jpg",
@@ -1141,7 +1404,11 @@
     "categoria": "Feitiço",
     "numero": 248,
     "dominio": 10,
-    "rank": 3
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 10,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Sigilo da Retaliação.jpg",
@@ -1149,7 +1416,11 @@
     "categoria": "Feitiço",
     "numero": 157,
     "dominio": 6,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Sigilo da Vida.jpg",
@@ -1157,7 +1428,11 @@
     "categoria": "Feitiço",
     "numero": 237,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Silêncio.jpg",
@@ -1165,7 +1440,11 @@
     "categoria": "Feitiço",
     "numero": 196,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Soberania Vegetal.jpg",
@@ -1173,7 +1452,11 @@
     "categoria": "Feitiço",
     "numero": 226,
     "dominio": 9,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 9,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Sombra Traiçoeira.jpg",
@@ -1181,7 +1464,11 @@
     "categoria": "Feitiço",
     "numero": 191,
     "dominio": 2,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 2,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Sondar Pensamentos.jpg",
@@ -1189,7 +1476,11 @@
     "categoria": "Feitiço",
     "numero": 175,
     "dominio": 5,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Sussurros Sombrios.jpg",
@@ -1197,7 +1488,11 @@
     "categoria": "Feitiço",
     "numero": 198,
     "dominio": 6,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 6,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Telecinese.jpg",
@@ -1205,7 +1500,11 @@
     "categoria": "Feitiço",
     "numero": 94,
     "dominio": 6,
-    "rank": 0
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 6,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Teleporte.jpg",
@@ -1213,15 +1512,23 @@
     "categoria": "Feitiço",
     "numero": 155,
     "dominio": 5,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Tempestade.jpg",
     "nome": "Feitiço - Tempestade",
     "categoria": "Feitiço",
     "numero": 228,
-    "dominio": 10,
-    "rank": 2
+    "dominio": 9,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 9,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Terremoto.jpg",
@@ -1229,7 +1536,11 @@
     "categoria": "Feitiço",
     "numero": 99,
     "dominio": 9,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 9,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Terror Noturno.jpg",
@@ -1237,7 +1548,11 @@
     "categoria": "Feitiço",
     "numero": 204,
     "dominio": 9,
-    "rank": 2
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 9,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Toque Reparador.jpg",
@@ -1245,15 +1560,23 @@
     "categoria": "Feitiço",
     "numero": 230,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Translocação.jpg",
     "nome": "Feitiço - Translocação",
     "categoria": "Feitiço",
     "numero": 89,
-    "dominio": 4,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Tronco Descomunal.jpg",
@@ -1261,7 +1584,11 @@
     "categoria": "Feitiço",
     "numero": 214,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - União Transcendental.jpg",
@@ -1269,7 +1596,11 @@
     "categoria": "Feitiço",
     "numero": 165,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Vinha Voraz.jpg",
@@ -1277,7 +1608,11 @@
     "categoria": "Feitiço",
     "numero": 210,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Voo.jpg",
@@ -1285,23 +1620,35 @@
     "categoria": "Feitiço",
     "numero": 88,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Arcano",
+    "cor_dominio": "#7C3AED",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Véu da Noite.jpg",
     "nome": "Feitiço - Véu da Noite",
     "categoria": "Feitiço",
     "numero": 193,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Zona de Proteção.jpg",
     "nome": "Feitiço - Zona de Proteção",
     "categoria": "Feitiço",
     "numero": 241,
-    "dominio": 6,
-    "rank": 2
+    "dominio": 2,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Feitiço/Feitiço - Últimas Palavras.jpg",
@@ -1309,12 +1656,22 @@
     "categoria": "Feitiço",
     "numero": 232,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
-    "caminho": "/cards/Grimório/Grimório - Livro de Tryfar.jpg",
-    "nome": "Grimório - Livro de Tryfar",
-    "categoria": "Grimório"
+    "caminho": "/cards/Grimório/Grimório - Livro de Tyfar.jpg",
+    "nome": "Grimório - Livro de Tyfar",
+    "categoria": "Grimório",
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 1,
+    "dominio": 1,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Ava.jpg",
@@ -1322,7 +1679,11 @@
     "categoria": "Grimório",
     "numero": 145,
     "dominio": 1,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 1,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Ecsota.jpg",
@@ -1330,7 +1691,11 @@
     "categoria": "Grimório",
     "numero": 152,
     "dominio": 4,
-    "rank": 3
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 4,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Grynn.jpg",
@@ -1338,7 +1703,11 @@
     "categoria": "Grimório",
     "numero": 153,
     "dominio": 4,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 4,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Homet.jpg",
@@ -1346,7 +1715,11 @@
     "categoria": "Grimório",
     "numero": 158,
     "dominio": 7,
-    "rank": 0
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 7,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Illiat.jpg",
@@ -1354,7 +1727,11 @@
     "categoria": "Grimório",
     "numero": 146,
     "dominio": 1,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 1,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Korvax.jpg",
@@ -1362,7 +1739,11 @@
     "categoria": "Grimório",
     "numero": 150,
     "dominio": 3,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 3,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Norai.jpg",
@@ -1370,7 +1751,11 @@
     "categoria": "Grimório",
     "numero": 151,
     "dominio": 3,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 3,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Ronin.jpg",
@@ -1378,7 +1763,11 @@
     "categoria": "Grimório",
     "numero": 162,
     "dominio": 9,
-    "rank": 4
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 9,
+    "custo_troca": 4
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Sitil.jpg",
@@ -1386,7 +1775,11 @@
     "categoria": "Grimório",
     "numero": 148,
     "dominio": 2,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 2,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Vagras.jpg",
@@ -1394,7 +1787,11 @@
     "categoria": "Grimório",
     "numero": 149,
     "dominio": 2,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 2,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Vyola.jpg",
@@ -1402,7 +1799,11 @@
     "categoria": "Grimório",
     "numero": 160,
     "dominio": 8,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 8,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Grimório/Grimório - Livro de Yarrow.jpg",
@@ -1410,15 +1811,23 @@
     "categoria": "Grimório",
     "numero": 164,
     "dominio": 10,
-    "rank": 2
+    "tipo_carta": "Grimório",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Abalo Sísmico.jpg",
     "nome": "Talento - Abalo Sísmico",
     "categoria": "Talento",
     "numero": 266,
-    "dominio": 8,
-    "rank": 2
+    "dominio": 6,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - ACUIDADE Cruel.jpg",
@@ -1426,7 +1835,11 @@
     "categoria": "Talento",
     "numero": 138,
     "dominio": 7,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 7,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Altivez.jpg",
@@ -1434,7 +1847,11 @@
     "categoria": "Talento",
     "numero": 262,
     "dominio": 6,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - amontoar.jpg",
@@ -1442,15 +1859,23 @@
     "categoria": "Talento",
     "numero": 140,
     "dominio": 8,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Aproximação Estratégica.jpg",
     "nome": "Talento - Aproximação Estratégica",
     "categoria": "Talento",
     "numero": 128,
-    "dominio": 2,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Armadura Corporal.jpg",
@@ -1458,7 +1883,11 @@
     "categoria": "Talento",
     "numero": 250,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Armadura Fortificada.jpg",
@@ -1466,7 +1895,11 @@
     "categoria": "Talento",
     "numero": 111,
     "dominio": 4,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 4,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Armeiro.jpg",
@@ -1474,7 +1907,11 @@
     "categoria": "Talento",
     "numero": 259,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Ataque Fragmentado.jpg",
@@ -1482,7 +1919,11 @@
     "categoria": "Talento",
     "numero": 142,
     "dominio": 9,
-    "rank": 3
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 9,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Talento/Talento - Ataque Imprudente.jpg",
@@ -1490,15 +1931,23 @@
     "categoria": "Talento",
     "numero": 107,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Bastião.jpg",
     "nome": "Talento - Bastião",
     "categoria": "Talento",
     "numero": 258,
-    "dominio": 4,
-    "rank": 2
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Calejado pela Batalha.jpg",
@@ -1506,7 +1955,11 @@
     "categoria": "Talento",
     "numero": 114,
     "dominio": 6,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Carisma Infinito.jpg",
@@ -1514,15 +1967,23 @@
     "categoria": "Talento",
     "numero": 179,
     "dominio": 7,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 7,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Caçador Sombrio.jpg",
     "nome": "Talento - Caçador Sombrio",
     "categoria": "Talento",
     "numero": 202,
-    "dominio": 8,
-    "rank": 2
+    "dominio": 10,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Coletor.jpg",
@@ -1530,7 +1991,11 @@
     "categoria": "Talento",
     "numero": 220,
     "dominio": 6,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 6,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Concentração Mortal.jpg",
@@ -1538,7 +2003,11 @@
     "categoria": "Talento",
     "numero": 110,
     "dominio": 4,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 4,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Conhece teu inimigo.jpg",
@@ -1546,15 +2015,23 @@
     "categoria": "Talento",
     "numero": 133,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Contra-Ataque Rápido.jpg",
     "nome": "Talento - Contra-Ataque Rápido",
     "categoria": "Talento",
     "numero": 135,
-    "dominio": 6,
-    "rank": 0
+    "dominio": 8,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 8,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Talento/Talento - Defesa Irredutível.jpg",
@@ -1562,7 +2039,11 @@
     "categoria": "Talento",
     "numero": 270,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Delinquente.jpg",
@@ -1570,15 +2051,23 @@
     "categoria": "Talento",
     "numero": 187,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - desprezar fraqueza.jpg",
     "nome": "Talento - desprezar fraqueza",
     "categoria": "Talento",
     "numero": 263,
-    "dominio": 7,
-    "rank": 1
+    "dominio": 5,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Dissimulação.jpg",
@@ -1586,7 +2075,11 @@
     "categoria": "Talento",
     "numero": 166,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Dom da Falange.jpg",
@@ -1594,23 +2087,35 @@
     "categoria": "Talento",
     "numero": 137,
     "dominio": 7,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 7,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Dom da Graça.jpg",
     "nome": "Talento - Dom da Graça",
     "categoria": "Talento",
     "numero": 180,
-    "dominio": 7,
-    "rank": 2
+    "dominio": 2,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Dom da Lâmina.jpg",
     "nome": "Talento - Dom da Lâmina",
     "categoria": "Talento",
     "numero": 116,
-    "dominio": 7,
-    "rank": 1
+    "dominio": 2,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Dom da meia-noite.jpg",
@@ -1618,7 +2123,11 @@
     "categoria": "Talento",
     "numero": 200,
     "dominio": 7,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 7,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Dom da sabedoria.jpg",
@@ -1626,23 +2135,35 @@
     "categoria": "Talento",
     "numero": 221,
     "dominio": 7,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 7,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Dom do Códice.jpg",
     "nome": "Talento - Dom do Códice",
     "categoria": "Talento",
     "numero": 159,
-    "dominio": 7,
-    "rank": 2
+    "dominio": 5,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Códice",
+    "cor_dominio": "#2563EB",
+    "nivel_dominio": 5,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Dom do Esplendor.jpg",
     "nome": "Talento - Dom do Esplendor",
     "categoria": "Talento",
     "numero": 243,
-    "dominio": 7,
-    "rank": 2
+    "dominio": 5,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Dom do valor.jpg",
@@ -1650,15 +2171,23 @@
     "categoria": "Talento",
     "numero": 264,
     "dominio": 7,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 7,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Estrangulamento.jpg",
     "nome": "Talento - Estrangulamento",
     "categoria": "Talento",
     "numero": 192,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 4,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 4,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Ferocidade.jpg",
@@ -1666,7 +2195,11 @@
     "categoria": "Talento",
     "numero": 127,
     "dominio": 2,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 2,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Força Esmagadora.jpg",
@@ -1674,7 +2207,11 @@
     "categoria": "Talento",
     "numero": 253,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Fraternidade Marcial.jpg",
@@ -1682,7 +2219,11 @@
     "categoria": "Talento",
     "numero": 106,
     "dominio": 2,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 2,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Frenesi.jpg",
@@ -1690,15 +2231,23 @@
     "categoria": "Talento",
     "numero": 119,
     "dominio": 8,
-    "rank": 3
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 8,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Fúria.jpg",
     "nome": "Talento - Fúria",
     "categoria": "Talento",
     "numero": 115,
-    "dominio": 6,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Golpe da Morte.jpg",
@@ -1706,7 +2255,11 @@
     "categoria": "Talento",
     "numero": 121,
     "dominio": 9,
-    "rank": 3
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 9,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - golpe De Raspão.jpg",
@@ -1714,7 +2267,11 @@
     "categoria": "Talento",
     "numero": 117,
     "dominio": 7,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 7,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Golpe Debilitante.jpg",
@@ -1722,31 +2279,47 @@
     "categoria": "Talento",
     "numero": 139,
     "dominio": 8,
-    "rank": 3
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 8,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Talento/Talento - Golpe Inspirador.jpg",
     "nome": "Talento - Golpe Inspirador",
     "categoria": "Talento",
     "numero": 260,
-    "dominio": 5,
-    "rank": 1
+    "dominio": 9,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 9,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - golpe pessoal.jpg",
     "nome": "Talento - golpe pessoal",
     "categoria": "Talento",
     "numero": 134,
-    "dominio": 5,
-    "rank": 1
+    "dominio": 8,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - grito de guerra.jpg",
     "nome": "Talento - grito de guerra",
     "categoria": "Talento",
     "numero": 118,
-    "dominio": 8,
-    "rank": 2
+    "dominio": 5,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 5,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - guerra e glória.jpg",
@@ -1754,7 +2327,11 @@
     "categoria": "Talento",
     "numero": 120,
     "dominio": 9,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 9,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Talento/Talento - Imposição.jpg",
@@ -1762,7 +2339,11 @@
     "categoria": "Talento",
     "numero": 251,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Impulso.jpg",
@@ -1770,7 +2351,11 @@
     "categoria": "Talento",
     "numero": 131,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Incitar.jpg",
@@ -1778,7 +2363,11 @@
     "categoria": "Talento",
     "numero": 257,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Inevitável.jpg",
@@ -1786,7 +2375,11 @@
     "categoria": "Talento",
     "numero": 261,
     "dominio": 6,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 6,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Insolência.jpg",
@@ -1794,15 +2387,23 @@
     "categoria": "Talento",
     "numero": 170,
     "dominio": 2,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 2,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Inspiração Crítica.jpg",
     "nome": "Talento - Inspiração Crítica",
     "categoria": "Talento",
     "numero": 255,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Intocável.jpg",
@@ -1810,15 +2411,23 @@
     "categoria": "Talento",
     "numero": 126,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Invencível.jpg",
     "nome": "Talento - Invencível",
     "categoria": "Talento",
     "numero": 269,
-    "dominio": 10,
-    "rank": 4
+    "dominio": 8,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Jamais esquecido.jpg",
@@ -1826,7 +2435,11 @@
     "categoria": "Talento",
     "numero": 177,
     "dominio": 6,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Levante-se.jpg",
@@ -1834,15 +2447,23 @@
     "categoria": "Talento",
     "numero": 103,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Líder Exemplar.jpg",
     "nome": "Talento - Líder Exemplar",
     "categoria": "Talento",
     "numero": 268,
-    "dominio": 9,
-    "rank": 3
+    "dominio": 5,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Manter Posição.jpg",
@@ -1850,7 +2471,11 @@
     "categoria": "Talento",
     "numero": 267,
     "dominio": 9,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 9,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Massacrar.jpg",
@@ -1858,7 +2483,11 @@
     "categoria": "Talento",
     "numero": 123,
     "dominio": 10,
-    "rank": 3
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 10,
+    "custo_troca": 3
   },
   {
     "caminho": "/cards/Talento/Talento - Mestre da Furtividade.jpg",
@@ -1866,7 +2495,11 @@
     "categoria": "Talento",
     "numero": 194,
     "dominio": 4,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 4,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Mestre do Ofício.jpg",
@@ -1874,7 +2507,11 @@
     "categoria": "Talento",
     "numero": 184,
     "dominio": 9,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 9,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Mexa-se.jpg",
@@ -1882,7 +2519,11 @@
     "categoria": "Talento",
     "numero": 108,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Monstro de Batalha.jpg",
@@ -1890,7 +2531,11 @@
     "categoria": "Talento",
     "numero": 122,
     "dominio": 10,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 10,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Movimento Ligeiro.jpg",
@@ -1898,7 +2543,11 @@
     "categoria": "Talento",
     "numero": 124,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Notoriedade.jpg",
@@ -1906,7 +2555,11 @@
     "categoria": "Talento",
     "numero": 186,
     "dominio": 10,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 10,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Novo Fôlego.jpg",
@@ -1914,15 +2567,23 @@
     "categoria": "Talento",
     "numero": 234,
     "dominio": 3,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 3,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Não o Suficiente.jpg",
     "nome": "Talento - Não o Suficiente",
     "categoria": "Talento",
     "numero": 104,
-    "dominio": 1,
-    "rank": 1
+    "dominio": 6,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 6,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Palavras de Conforto.jpg",
@@ -1930,7 +2591,11 @@
     "categoria": "Talento",
     "numero": 256,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Palavras Inspiradoras.jpg",
@@ -1938,7 +2603,11 @@
     "categoria": "Talento",
     "numero": 168,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Palavras Tranquilizantes.jpg",
@@ -1946,7 +2615,11 @@
     "categoria": "Talento",
     "numero": 173,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Graça",
+    "cor_dominio": "#DB2777",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Passo Célere.jpg",
@@ -1954,15 +2627,23 @@
     "categoria": "Talento",
     "numero": 144,
     "dominio": 10,
-    "rank": 2
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Presença Corajosa.jpg",
     "nome": "Talento - Presença Corajosa",
     "categoria": "Talento",
     "numero": 254,
-    "dominio": 2,
-    "rank": 0
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Quase Lá.jpg",
@@ -1970,7 +2651,11 @@
     "categoria": "Talento",
     "numero": 141,
     "dominio": 9,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 9,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Rastreador Talentoso.jpg",
@@ -1978,15 +2663,23 @@
     "categoria": "Talento",
     "numero": 208,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Recuperação.jpg",
     "nome": "Talento - Recuperação",
     "categoria": "Talento",
     "numero": 136,
-    "dominio": 6,
-    "rank": 1
+    "dominio": 4,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Redirecionar.jpg",
@@ -1994,23 +2687,35 @@
     "categoria": "Talento",
     "numero": 132,
     "dominio": 4,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 4,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Resistir.jpg",
     "nome": "Talento - Resistir",
     "categoria": "Talento",
     "numero": 129,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Santuário Selvagem.jpg",
     "nome": "Talento - Santuário Selvagem",
     "categoria": "Talento",
     "numero": 225,
-    "dominio": 9,
-    "rank": 2
+    "dominio": 10,
+    "tipo_carta": "Feitiço",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 10,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - sou seu escudo.jpg",
@@ -2018,7 +2723,11 @@
     "categoria": "Talento",
     "numero": 252,
     "dominio": 1,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Testar os Limites.jpg",
@@ -2026,7 +2735,11 @@
     "categoria": "Talento",
     "numero": 265,
     "dominio": 8,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Valor",
+    "cor_dominio": "#EA580C",
+    "nivel_dominio": 8,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Trajeto Mortal.jpg",
@@ -2034,7 +2747,11 @@
     "categoria": "Talento",
     "numero": 143,
     "dominio": 10,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 10,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Tributo do Anoitecer.jpg",
@@ -2042,7 +2759,11 @@
     "categoria": "Talento",
     "numero": 205,
     "dominio": 9,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Meia-noite",
+    "cor_dominio": "#374151",
+    "nivel_dominio": 9,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Turbilhão.jpg",
@@ -2050,7 +2771,11 @@
     "categoria": "Talento",
     "numero": 105,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Táticas.jpg",
@@ -2058,15 +2783,23 @@
     "categoria": "Talento",
     "numero": 130,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Um Passo à Frente.jpg",
     "nome": "Talento - Um Passo à Frente",
     "categoria": "Talento",
     "numero": 125,
-    "dominio": 1,
-    "rank": 1
+    "dominio": 2,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Falange",
+    "cor_dominio": "#9CA3AF",
+    "nivel_dominio": 2,
+    "custo_troca": 2
   },
   {
     "caminho": "/cards/Talento/Talento - Validação.jpg",
@@ -2074,7 +2807,11 @@
     "categoria": "Talento",
     "numero": 231,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - vantagem do campeão.jpg",
@@ -2082,15 +2819,23 @@
     "categoria": "Talento",
     "numero": 112,
     "dominio": 5,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 5,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Versatilidade.jpg",
     "nome": "Talento - Versatilidade",
     "categoria": "Talento",
     "numero": 109,
-    "dominio": 3,
-    "rank": 1
+    "dominio": 1,
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 1,
+    "custo_troca": 1
   },
   {
     "caminho": "/cards/Talento/Talento - Vitalidade.jpg",
@@ -2098,7 +2843,11 @@
     "categoria": "Talento",
     "numero": 113,
     "dominio": 5,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Lâmina",
+    "cor_dominio": "#DC2626",
+    "nivel_dominio": 5,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - voz da Natureza.jpg",
@@ -2106,7 +2855,11 @@
     "categoria": "Talento",
     "numero": 209,
     "dominio": 1,
-    "rank": 0
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Sabedoria",
+    "cor_dominio": "#16A34A",
+    "nivel_dominio": 1,
+    "custo_troca": 0
   },
   {
     "caminho": "/cards/Talento/Talento - Voz da Razão.jpg",
@@ -2114,6 +2867,10 @@
     "categoria": "Talento",
     "numero": 235,
     "dominio": 3,
-    "rank": 1
+    "tipo_carta": "Talento",
+    "tipo_dominio": "Esplendor",
+    "cor_dominio": "#CA8A04",
+    "nivel_dominio": 3,
+    "custo_troca": 1
   }
 ]
