@@ -465,33 +465,35 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const reserveRef = useRef(reserve);
   const cardsDirtyRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const serverCardsSnapshotRef = useRef('');
+
+  const cardsFingerprint = (cards?: Character['cards']) =>
+    JSON.stringify({ hand: cards?.hand ?? [], reserve: cards?.reserve ?? [] });
+
+  const markCardsDirty = () => {
+    cardsDirtyRef.current = true;
+  };
 
   useEffect(() => {
     if (character && !isDataLoaded) {
       if (character.cards) {
         setHand(character.cards.hand || []);
         setReserve(character.cards.reserve || []);
+        serverCardsSnapshotRef.current = cardsFingerprint(character.cards);
       }
       setIsDataLoaded(true);
     }
   }, [character, isDataLoaded]);
 
   useEffect(() => {
-      if (!isDataLoaded || cardsDirtyRef.current) return;
-      if (character?.cards) {
-          const serverHand = JSON.stringify(character.cards.hand || []);
-          const localHand = JSON.stringify(hand);
-          if (serverHand !== localHand) {
-              setHand(character.cards.hand || []);
-          }
+    if (!isDataLoaded || cardsDirtyRef.current) return;
+    const serverSnapshot = cardsFingerprint(character?.cards);
+    if (!character?.cards || serverSnapshot === serverCardsSnapshotRef.current) return;
 
-          const serverReserve = JSON.stringify(character.cards.reserve || []);
-          const localReserve = JSON.stringify(reserve);
-          if (serverReserve !== localReserve) {
-              setReserve(character.cards.reserve || []);
-          }
-      }
-  }, [character, isDataLoaded, hand, reserve]);
+    serverCardsSnapshotRef.current = serverSnapshot;
+    setHand(character.cards.hand || []);
+    setReserve(character.cards.reserve || []);
+  }, [character?.cards, isDataLoaded]);
 
   useEffect(() => {
     handRef.current = hand;
@@ -505,10 +507,15 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     saveTimerRef.current = setTimeout(async () => {
       try {
         const charRef = doc(db, 'characters', character.id);
+        const nextCards = {
+          hand: handRef.current,
+          reserve: reserveRef.current,
+        };
         await updateDoc(charRef, {
-          "cards.hand": handRef.current,
-          "cards.reserve": reserveRef.current
+          "cards.hand": nextCards.hand,
+          "cards.reserve": nextCards.reserve,
         });
+        serverCardsSnapshotRef.current = cardsFingerprint(nextCards);
       } catch (error) {
         console.error("Erro ao salvar cartas:", error);
       } finally {
@@ -568,6 +575,11 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     ...card, uniqueId: crypto.randomUUID(), isExhausted: false, exhaustionType: null, tokens: 0
   });
 
+  const toReserveCard = (card: ActiveCard): Card => {
+    const { uniqueId, isExhausted, exhaustionType, tokens, ...stored } = card;
+    return stored;
+  };
+
   const handleCastCard = (card: ActiveCard) => {
     if (card.isExhausted) return alert("Esta carta está exaurida.");
     setSelectedCardState(null);
@@ -576,61 +588,80 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   };
 
   const initiateDraw = (card: Card, source: 'grimoire' | 'reserve', reserveIndex: number = -1) => {
+    if (isSwapping) return;
     if (hand.some(c => c.nome === card.nome)) return alert("Você já tem essa carta.");
+    markCardsDirty();
     if (hand.length < 5) {
       setHand(prev => [...prev, createActiveCard(card)]);
-      
-      if (source === 'reserve') { 
-          setReserve(prev => prev.filter((_, i) => i !== reserveIndex)); 
-          setShowReserve(false); 
+
+      if (source === 'reserve') {
+          setReserve(prev => prev.filter((_, i) => i !== reserveIndex));
+          setShowReserve(false);
       } else if (source === 'grimoire') {
-          setShowGrimoire(false); 
-          setSearchTerm(''); 
+          setShowGrimoire(false);
+          setSearchTerm('');
+          setDomainFilter(null);
+          setNivelFilter(null);
       }
       return;
     }
-    setPendingCard(card); setSwapSource(source); setReserveIndexToSwap(reserveIndex); setIsSwapping(true); setShowGrimoire(false); setShowReserve(false); setSearchTerm('');
+    setPendingCard(card);
+    setSwapSource(source);
+    setReserveIndexToSwap(reserveIndex);
+    setIsSwapping(true);
+    setShowGrimoire(false);
+    setShowReserve(false);
+    setSearchTerm('');
+    setDomainFilter(null);
+    setNivelFilter(null);
   };
 
   const executeSwap = (indexToRemove: number) => {
     if (!pendingCard) return;
+    markCardsDirty();
     const cardToRemove = hand[indexToRemove];
-    
-    const cardToReserve = { nome: cardToRemove.nome, caminho: cardToRemove.caminho, categoria: cardToRemove.categoria };
+    const cardToReserve = toReserveCard(cardToRemove);
     let newReserve = [...reserve, cardToReserve];
-    
+
     if (swapSource === 'reserve' && reserveIndexToSwap > -1) {
         const filtered = reserve.filter((_, i) => i !== reserveIndexToSwap);
         newReserve = [...filtered, cardToReserve];
     }
 
     setReserve(newReserve);
-    
+
     const newHand = [...hand];
     newHand[indexToRemove] = createActiveCard(pendingCard);
     setHand(newHand);
-    
-    setIsSwapping(false); setPendingCard(null); setSwapSource(null); setReserveIndexToSwap(-1);
+
+    setIsSwapping(false);
+    setPendingCard(null);
+    setSwapSource(null);
+    setReserveIndexToSwap(-1);
   };
 
   const manualMoveToReserve = (index: number) => {
+    markCardsDirty();
     const card = hand[index];
     setHand(prev => prev.filter((_, i) => i !== index));
-    setReserve(prev => [...prev, { nome: card.nome, caminho: card.caminho, categoria: card.categoria }]);
+    setReserve(prev => [...prev, toReserveCard(card)]);
     setSelectedCardState(null);
   };
 
   const returnToGrimoire = (uniqueId: string) => {
+      markCardsDirty();
       setHand(prev => prev.filter(c => c.uniqueId !== uniqueId));
       setSelectedCardState(null);
   };
 
   const applyExhaustion = (uniqueId: string, type: 'short' | 'long') => {
-    setHand(hand.map(c => c.uniqueId === uniqueId ? { ...c, isExhausted: true, exhaustionType: type } : c));
+    markCardsDirty();
+    setHand(prev => prev.map(c => c.uniqueId === uniqueId ? { ...c, isExhausted: true, exhaustionType: type } : c));
   };
 
   const updateTokens = (uniqueId: string, delta: number) => {
-    setHand(hand.map(c => c.uniqueId === uniqueId ? { ...c, tokens: Math.max(0, c.tokens + delta) } : c));
+    markCardsDirty();
+    setHand(prev => prev.map(c => c.uniqueId === uniqueId ? { ...c, tokens: Math.max(0, c.tokens + delta) } : c));
   };
 
   const filteredGrimoire = useMemo(() => sortGrimoireCards(searchCards(safeCards, searchTerm, {

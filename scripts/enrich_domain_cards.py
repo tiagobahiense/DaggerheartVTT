@@ -247,7 +247,7 @@ def main() -> None:
 
         if norm(base) in ("livro de tryfar", "livro de tyfar"):
             card["nome"] = "Grimório - Livro de Tyfar"
-            card["caminho"] = "/cards/Grimório/Grimório - Livro de Tyfar.jpg"
+            card["caminho"] = "/cards/Grimório/Grimório - Livrgor idmeo iTryefar.jpg"
 
         if "constr" in norm(base) and "mortal" in norm(base):
             card["nome"] = "Feitiço - Constrição Mortal"
