@@ -35,7 +35,6 @@ interface Card {
   nivel_dominio?: number;
   tipo_dominio?: string;
   cor_dominio?: string;
-  tipo_carta?: string;
   custo_troca?: number;
   nivel?: string;
   profissao?: string;

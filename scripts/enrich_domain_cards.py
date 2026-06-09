@@ -58,20 +58,22 @@ SEARCH_ALIASES: dict[str, list[str]] = {
 
 MANUAL_OVERRIDES: dict[str, dict] = {
     "impacto defensivo": {
-        "tipo_carta": "Feitiço",
         "tipo_dominio": "Arcano",
         "cor_dominio": "#7C3AED",
         "nivel_dominio": 4,
-        "dominio": 4,
         "custo_troca": 2,
     },
     "constricao mortal": {
-        "tipo_carta": "Feitiço",
         "tipo_dominio": "Sabedoria",
         "cor_dominio": "#16A34A",
         "nivel_dominio": 4,
-        "dominio": 4,
         "custo_troca": 1,
+    },
+    "dom arcano": {
+        "tipo_dominio": "Arcano",
+        "cor_dominio": "#7C3AED",
+        "nivel_dominio": 7,
+        "custo_troca": 2,
     },
 }
 
@@ -95,6 +97,14 @@ def strip_prefix(nome: str) -> str:
     return nome
 
 
+def normalize_tipo(raw: str) -> str:
+    if raw.lower().startswith("grim"):
+        return "Grimório"
+    if raw.lower().startswith("feit"):
+        return "Feitiço"
+    return "Talento"
+
+
 def resolve_domain(dom_raw: str) -> tuple[str, str]:
     key = norm(dom_raw)
     for k, (domain, color) in DOMAIN_MAP.items():
@@ -103,48 +113,50 @@ def resolve_domain(dom_raw: str) -> tuple[str, str]:
     return dom_raw.title(), "#6B7280"
 
 
-def parse_tipo_block(snippet: str) -> dict | None:
-    tipo_m = TIPO_RE.search(snippet)
-    alt_m = TIPO_ALT_RE.search(snippet) if not tipo_m else None
-    if not tipo_m and not alt_m:
-        return None
+def parse_tipo_match(match: re.Match[str], snippet: str) -> dict:
+    raw_tipo = match.group(1)
+    tipo_carta = normalize_tipo(raw_tipo)
+    dominio, cor = resolve_domain(match.group(2))
+    nivel = int(match.group(3))
+    after = snippet[match.end() : match.end() + 120]
+    custo_m = CUSTO_RE.search(after)
+    meta = {
+        "tipo_carta": tipo_carta,
+        "tipo_dominio": dominio,
+        "cor_dominio": cor,
+        "nivel_dominio": nivel,
+    }
+    if custo_m:
+        meta["custo_troca"] = int(custo_m.group(1))
+    return meta
 
-    custo_m = CUSTO_RE.search(snippet)
-    meta: dict = {}
 
-    if tipo_m:
-        raw_tipo = tipo_m.group(1)
-        if raw_tipo.lower().startswith("grim"):
-            tipo_carta = "Grimório"
-        elif raw_tipo.lower().startswith("feit"):
-            tipo_carta = "Feitiço"
-        else:
-            tipo_carta = "Talento"
-
-        dominio, cor = resolve_domain(tipo_m.group(2))
-        nivel = int(tipo_m.group(3))
-        meta = {
-            "tipo_carta": tipo_carta,
-            "tipo_dominio": dominio,
-            "cor_dominio": cor,
-            "nivel_dominio": nivel,
-            "dominio": nivel,
-        }
-    else:
-        assert alt_m is not None
-        nivel = int(alt_m.group(1))
-        dominio, cor = resolve_domain(alt_m.group(2))
+def parse_all_tipos(snippet: str) -> list[dict]:
+    matches: list[dict] = []
+    for m in TIPO_RE.finditer(snippet):
+        matches.append(parse_tipo_match(m, snippet))
+    for m in TIPO_ALT_RE.finditer(snippet):
+        nivel = int(m.group(1))
+        dominio, cor = resolve_domain(m.group(2))
+        after = snippet[m.end() : m.end() + 120]
+        custo_m = CUSTO_RE.search(after)
         meta = {
             "tipo_carta": "Feitiço",
             "tipo_dominio": dominio,
             "cor_dominio": cor,
             "nivel_dominio": nivel,
-            "dominio": nivel,
         }
+        if custo_m:
+            meta["custo_troca"] = int(custo_m.group(1))
+        matches.append(meta)
+    return matches
 
-    if custo_m:
-        meta["custo_troca"] = int(custo_m.group(1))
-    return meta
+
+def pick_tipo(matches: list[dict], categoria: str) -> dict | None:
+    for m in matches:
+        if m["tipo_carta"] == categoria:
+            return m
+    return matches[0] if matches else None
 
 
 def find_title_positions(text: str, title: str) -> list[int]:
@@ -167,7 +179,7 @@ def find_title_positions(text: str, title: str) -> list[int]:
     return positions
 
 
-def extract_metadata(text: str, base: str) -> dict | None:
+def extract_metadata(text: str, base: str, categoria: str) -> dict | None:
     base_norm = norm(base)
     manual = MANUAL_OVERRIDES.get(base_norm)
     if not manual and "constr" in base_norm and "mortal" in base_norm:
@@ -176,22 +188,33 @@ def extract_metadata(text: str, base: str) -> dict | None:
         return dict(manual)
 
     search_titles = [base.upper()]
-    search_titles.extend(SEARCH_ALIASES.get(norm(base), []))
+    search_titles.extend(SEARCH_ALIASES.get(base_norm, []))
 
     for title in search_titles:
         if title == "DEFENSIVO":
             continue
         for idx in find_title_positions(text, title):
-            snippet = text[idx : idx + 450]
+            snippet = text[idx : idx + 500]
             if title == "IMPACTO" and "DEFENSIVO" not in snippet[:120]:
                 continue
             if title == "PALAVRAS" and "TRANQUILIZANTES" not in snippet[:80]:
                 continue
-            meta = parse_tipo_block(snippet)
+            matches = parse_all_tipos(snippet)
+            meta = pick_tipo(matches, categoria)
             if meta:
                 return meta
 
     return None
+
+
+def normalize_card(card: dict) -> None:
+    """Apply canonical schema for domain cards."""
+    card.pop("rank", None)
+    card.pop("dominio", None)
+    card.pop("tipo_carta", None)
+
+    if "nivel_dominio" in card:
+        card["dominio"] = card["nivel_dominio"]
 
 
 def main() -> None:
@@ -204,21 +227,23 @@ def main() -> None:
     grimorio_cats = {"Feitiço", "Grimório", "Talento"}
     matched = 0
     not_found: list[str] = []
+    mismatches: list[str] = []
 
     for card in cards:
         if card["categoria"] not in grimorio_cats:
+            for stale in ("rank", "dominio", "tipo_carta", "tipo_dominio", "cor_dominio", "nivel_dominio", "custo_troca"):
+                card.pop(stale, None)
             continue
 
-        card.pop("rank", None)
-
         base = strip_prefix(card["nome"])
-        meta = extract_metadata(text, base)
+        meta = extract_metadata(text, base, card["categoria"])
         if not meta:
             not_found.append(card["nome"])
             continue
 
         matched += 1
         card.update(meta)
+        normalize_card(card)
 
         if norm(base) in ("livro de tryfar", "livro de tyfar"):
             card["nome"] = "Grimório - Livro de Tyfar"

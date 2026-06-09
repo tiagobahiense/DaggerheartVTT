@@ -6,7 +6,6 @@ export interface SearchableCard {
   nivel_dominio?: number;
   tipo_dominio?: string;
   cor_dominio?: string;
-  tipo_carta?: string;
   custo_troca?: number;
   nivel?: string;
   profissao?: string;
@@ -107,7 +106,6 @@ function buildSearchHaystack(card: SearchableCard): string {
     strippedName,
     pathHint,
     card.categoria,
-    card.tipo_carta,
     card.tipo_dominio,
     card.nivel,
     card.profissao,
