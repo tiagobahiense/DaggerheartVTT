@@ -4,6 +4,8 @@ import {
   addDoc, serverTimestamp, limit, writeBatch, doc, updateDoc, getDocs 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { subscribeSession, DEFAULT_SESSION_FIELDS } from '../lib/session';
+import { createFearEventId } from '../lib/fearEvents';
 import { 
   Users, Eye, Skull, Campfire, MoonStars, 
   Dna, X, Cube, Coins, Sparkle, HandPalm, 
@@ -828,7 +830,6 @@ export default function MestreVTT() {
 
   const [showFearModal, setShowFearModal] = useState(false);
   const [fearTokens, setFearTokens] = useState(0);
-  const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
   const [transformAlert, setTransformAlert] = useState<any>(null);
 
@@ -860,43 +861,32 @@ export default function MestreVTT() {
 
   // 1. Inicializa Sessão e Listeners Globais
   useEffect(() => {
-    const q = query(collection(db, 'sessoes'), limit(1));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-            const docSnap = snapshot.docs[0];
-            const data = docSnap.data();
-            setSessaoData({ id: docSnap.id, ...data });
-            
-            // Sync Medo
-            if (data.fear_data) {
-                setFearTokens(data.fear_data.tokens || 0);
-                const now = Date.now();
-                if (data.fear_data.last_trigger && (now - data.fear_data.last_trigger) < 5000) {
-                    setFearAlertVisible(true);
-                    setTimeout(() => setFearAlertVisible(false), 5000);
-                }
-            }
+    const unsubscribe = subscribeSession(
+      (data) => {
+        setSessaoData(data);
 
-            // --- NOVO: LISTENER DE TRANSFORMAÇÃO NO MESTRE ---
-            if (data.latestTransformation) {
-                const now = Date.now();
-                const timeDiff = now - (data.latestTransformation.id || 0);
-                if (timeDiff < 8000) {
-                    setTransformAlert(data.latestTransformation);
-                    const timer = setTimeout(() => setTransformAlert(null), 6000);
-                    return () => clearTimeout(timer);
-                }
-            }
-
-        } else {
-            // Cria sessão se não existir
-            addDoc(collection(db, 'sessoes'), {
-                createdAt: serverTimestamp(),
-                fear_data: { tokens: 0, last_trigger: 0 },
-                player_groups: []
-            }).catch(console.error);
+        if (data.fear_data) {
+          const fearData = data.fear_data as { tokens?: number };
+          setFearTokens(fearData.tokens || 0);
         }
-    });
+
+        if (data.latestTransformation) {
+          const transformation = data.latestTransformation as { id?: number };
+          const now = Date.now();
+          const timeDiff = now - (transformation.id || 0);
+          if (timeDiff < 8000) {
+            setTransformAlert(data.latestTransformation);
+            setTimeout(() => setTransformAlert(null), 6000);
+          }
+        }
+      },
+      () => {
+        addDoc(collection(db, 'sessoes'), {
+          createdAt: serverTimestamp(),
+          ...DEFAULT_SESSION_FIELDS,
+        }).catch(console.error);
+      }
+    );
     return () => unsubscribe();
   }, []);
 
@@ -947,7 +937,12 @@ useEffect(() => {
 
   const triggerFearAlert = async () => {
       if (sessaoData?.id) {
-          await updateDoc(doc(db, 'sessoes', sessaoData.id), { "fear_data.last_trigger": Date.now() });
+          const eventId = createFearEventId();
+          const now = Date.now();
+          await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+              'fear_data.last_event_id': eventId,
+              'fear_data.last_event_at': now,
+          });
           setShowFearModal(false);
       }
   };
@@ -987,18 +982,7 @@ useEffect(() => {
            </div>
        </div>
 
-       {/* === ALERTA DE MEDO === */}
-       {fearAlertVisible && (
-           <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-black/60 backdrop-blur-sm animate-fade-in">
-               <div className="relative w-full flex flex-col items-center animate-ds-text">
-                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
-                   <h1 className="font-rpg text-7xl md:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-purple-400 to-purple-900 uppercase tracking-[0.2em] drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] py-4 text-center">O MESTRE USOU O MEDO</h1>
-                   <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#4c1d95] to-transparent shadow-[0_0_20px_#8b5cf6]"></div>
-               </div>
-           </div>
-       )}
-
-       {/* === NOVO: ALERTA DE DRUIDA NO MESTRE === */}
+       {/* ALERTA DE DRUIDA NO MESTRE */}
        {transformAlert && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4">
             <div className="relative w-full max-w-5xl flex flex-col items-center justify-center text-center animate-fade-in-up">

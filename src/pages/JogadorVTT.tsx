@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, onSnapshot, limit, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { subscribeSession } from '../lib/session';
+import { parseFearEvent, shouldShowFearAlert, markFearEventSeen } from '../lib/fearEvents';
+import { searchCards, suggestCards } from '../lib/cardSearch';
 import { 
   X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Plus, 
@@ -36,6 +39,7 @@ interface ActiveCard extends Card {
 
 interface Character {
   id: string;
+  playerId: string;
   name: string;
   class: string;
   subclass: string;
@@ -48,6 +52,8 @@ interface Character {
   weapons?: any;
   armor?: any;
   imageUrl?: string;
+  companionName?: string;
+  companion?: { image?: string };
   paSpent?: number;
   bondRequests?: any[]; 
   cards?: {
@@ -446,6 +452,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   
   const handRef = useRef(hand);
   const reserveRef = useRef(reserve);
+  const cardsDirtyRef = useRef(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (character && !isDataLoaded) {
@@ -458,6 +466,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   }, [character, isDataLoaded]);
 
   useEffect(() => {
+      if (!isDataLoaded || cardsDirtyRef.current) return;
       if (character?.cards) {
           const serverHand = JSON.stringify(character.cards.hand || []);
           const localHand = JSON.stringify(hand);
@@ -471,17 +480,18 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
               setReserve(character.cards.reserve || []);
           }
       }
-  }, [character]);
+  }, [character, isDataLoaded, hand, reserve]);
 
   useEffect(() => {
     handRef.current = hand;
     reserveRef.current = reserve;
   }, [hand, reserve]);
 
-  useEffect(() => {
-    if (!isDataLoaded || !character.id) return;
-
-    const saveData = async () => {
+  const persistCards = () => {
+    if (!character.id) return;
+    cardsDirtyRef.current = true;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
       try {
         const charRef = doc(db, 'characters', character.id);
         await updateDoc(charRef, {
@@ -490,11 +500,18 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         });
       } catch (error) {
         console.error("Erro ao salvar cartas:", error);
+      } finally {
+        cardsDirtyRef.current = false;
       }
-    };
+    }, 800);
+  };
 
-    const debounce = setTimeout(saveData, 800); 
-    return () => clearTimeout(debounce);
+  useEffect(() => {
+    if (!isDataLoaded || !character.id) return;
+    persistCards();
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
   }, [hand, reserve, character.id, isDataLoaded]);
 
   const [pendingCard, setPendingCard] = useState<Card | null>(null);
@@ -603,11 +620,18 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     setHand(hand.map(c => c.uniqueId === uniqueId ? { ...c, tokens: Math.max(0, c.tokens + delta) } : c));
   };
 
-  const filteredGrimoire = useMemo(() => safeCards.filter(c => {
-    if (!c) return false;
-    if (!["Feitiço", "Grimório", "Talento"].includes(c.categoria)) return false;
-    return c.nome.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredGrimoire = useMemo(() => searchCards(safeCards, searchTerm, {
+    categories: ["Feitiço", "Grimório", "Talento"],
   }), [safeCards, searchTerm]);
+
+  const grimoireSuggestions = useMemo(() => {
+    if (filteredGrimoire.length > 0 || searchTerm.trim().length < 2) return [];
+    return suggestCards(
+      safeCards.filter(c => ["Feitiço", "Grimório", "Talento"].includes(c.categoria)),
+      searchTerm,
+      4
+    );
+  }, [safeCards, searchTerm, filteredGrimoire.length]);
 
   return (
     <>
@@ -733,7 +757,27 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
               {showReserve && reserve.map((card, idx) => (
                 <div key={idx} onClick={() => initiateDraw(card, 'reserve', idx)} className="cursor-pointer hover:-translate-y-2 transition-transform"><img src={card.caminho} className="w-full rounded-lg shadow-lg" /><p className="text-center text-xs text-white/30 mt-2">Recuperar</p></div>
               ))}
-              {(showGrimoire && filteredGrimoire.length === 0) && <div className="col-span-full text-center text-white/30">Nenhuma carta encontrada.</div>}
+              {(showGrimoire && filteredGrimoire.length === 0) && (
+                <div className="col-span-full text-center text-white/30 py-6">
+                  <p>Nenhuma carta encontrada.</p>
+                  {grimoireSuggestions.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-white/40 text-sm mb-3">Você quis dizer:</p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {grimoireSuggestions.map((card) => (
+                          <button
+                            key={card.caminho}
+                            onClick={() => setSearchTerm(card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, ''))}
+                            className="px-3 py-1 rounded-full border border-gold/30 text-gold text-xs hover:bg-gold/10 transition-colors"
+                          >
+                            {card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '')}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -855,12 +899,17 @@ export default function JogadorVTT() {
   }, [navigate]);
 
   useEffect(() => {
-    const q = query(collection(db, 'sessoes'), limit(1));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-            const docSnap = snapshot.docs[0];
-            setSessaoData({ id: docSnap.id, ...docSnap.data() });
+    const unsubscribe = subscribeSession((data) => {
+      setSessaoData(data);
+
+      if (data.latestTransformation) {
+        const transformation = data.latestTransformation as { id?: number };
+        const timeDiff = Date.now() - (transformation.id || 0);
+        if (timeDiff < 8000) {
+          setTransformAlert(data.latestTransformation);
+          setTimeout(() => setTransformAlert(null), 6000);
         }
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -921,40 +970,28 @@ export default function JogadorVTT() {
   };
 
   useEffect(() => {
-    if (!sessaoData?.id) return; 
+    const fearEvent = parseFearEvent(sessaoData?.fear_data);
+    if (!shouldShowFearAlert(fearEvent, false)) return;
 
-    const unsub = onSnapshot(doc(db, "sessoes", sessaoData.id), (snapshot) => {
-      const data = snapshot.data();
-      
-      if (data?.latestTransformation) {
-        const now = Date.now();
-        const timeDiff = now - (data.latestTransformation.id || 0);
+    setFearAlertVisible(true);
+    markFearEventSeen(fearEvent!.id);
+    const timer = setTimeout(() => setFearAlertVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, [sessaoData?.fear_data?.last_event_id, sessaoData?.fear_data?.last_trigger]);
 
-        if (timeDiff < 8000) {
-          setTransformAlert(data.latestTransformation);
-
-          const timer = setTimeout(() => {
-            setTransformAlert(null);
-          }, 6000);
-
-          return () => clearTimeout(timer);
-        }
-      }
-    });
-
-    return () => unsub();
-  }, [sessaoData?.id]); 
-
-  useEffect(() => {
-    if (sessaoData?.fear_data?.last_trigger) {
-        const diff = Date.now() - sessaoData.fear_data.last_trigger;
-        if (diff < 5000) {
-            const timerShow = setTimeout(() => setFearAlertVisible(true), 0);
-            const timerHide = setTimeout(() => setFearAlertVisible(false), 5000 - diff);
-            return () => { clearTimeout(timerShow); clearTimeout(timerHide); };
-        }
-    }
-  }, [sessaoData?.fear_data?.last_trigger]);
+  const tabletopCharacters = useMemo(() => {
+    if (!character) return [];
+    return [{
+      id: character.id,
+      playerId: character.playerId,
+      name: character.name,
+      imageUrl: character.imageUrl,
+      class: character.class,
+      subclass: character.subclass,
+      companionName: character.companionName,
+      companion: character.companion,
+    }];
+  }, [character]);
 
   if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando Grimório...</div>;
   if (!character) return null;
@@ -977,7 +1014,7 @@ export default function JogadorVTT() {
       {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={false} />}
 
       {sessaoData && (
-         <Tabletop sessaoData={sessaoData} isMaster={false} charactersData={[]} />
+         <Tabletop sessaoData={sessaoData} isMaster={false} charactersData={tabletopCharacters} />
       )}
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>

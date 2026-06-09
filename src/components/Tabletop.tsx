@@ -56,6 +56,10 @@ interface MapData {
   url: string;
   name: string;
   gridSizePx: number;
+  imageWidth?: number;
+  imageHeight?: number;
+  gridOffsetX?: number;
+  gridOffsetY?: number;
   globalZoom: number; 
   globalPanX: number;
   globalPanY: number;
@@ -147,17 +151,31 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
   const savedEnemies: SavedEnemy[] = sessaoData?.saved_enemies || [];
 
   const [editingEnemyBank, setEditingEnemyBank] = useState<SavedEnemy | null>(null); 
+  const [mapWidthFallback, setMapWidthFallback] = useState(0);
+  const [mapHeightFallback, setMapHeightFallback] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const panStart = useRef({ x: 0, y: 0 }); 
   const panStartView = useRef({ x: 0, y: 0 }); 
   const dragOffset = useRef({ x: 0, y: 0 });
+  const localTokensRef = useRef<Token[]>([]);
+  const draggingTokenIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    localTokensRef.current = localTokens;
+  }, [localTokens]);
+
+  useEffect(() => {
+    draggingTokenIdRef.current = draggingTokenId;
+  }, [draggingTokenId]);
 
   const activeMapUrl = sessaoData?.active_map?.url || null;
-  if (activeMapUrl !== currentMapUrl) {
+  useEffect(() => {
+    if (activeMapUrl !== currentMapUrl) {
       setCurrentMapUrl(activeMapUrl);
       setLocalView({ zoom: 1, panX: 0, panY: 0 });
-  }
+    }
+  }, [activeMapUrl, currentMapUrl]);
 
   useEffect(() => {
     if (sessaoData) {
@@ -174,13 +192,15 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                 return {
                     ...serverMap,
                     gridSizePx: serverMap.gridSizePx || 50,
+                    gridOffsetX: serverMap.gridOffsetX || 0,
+                    gridOffsetY: serverMap.gridOffsetY || 0,
                     globalZoom: serverMap.globalZoom || 1,
                     globalPanX: serverMap.globalPanX || 0,
                     globalPanY: serverMap.globalPanY || 0,
                 };
             });
 
-            if (!draggingTokenId) {
+            if (!draggingTokenIdRef.current) {
                 setLocalTokens(serverMap.tokens || []);
             }
         } else {
@@ -188,7 +208,41 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
             setLocalTokens([]);
         }
     }
-  }, [sessaoData, draggingTokenId]);
+  }, [sessaoData]);
+
+  const persistMapDimensions = async (width: number, height: number) => {
+      if (!sessaoData?.id || !activeMap) return;
+      if (activeMap.imageWidth === width && activeMap.imageHeight === height) return;
+      await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+          'active_map.imageWidth': width,
+          'active_map.imageHeight': height,
+      });
+  };
+
+  const handleMapImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          setMapWidthFallback(img.naturalWidth);
+          setMapHeightFallback(img.naturalHeight);
+          setActiveMap(prev => prev ? { ...prev, imageWidth: img.naturalWidth, imageHeight: img.naturalHeight } : prev);
+          persistMapDimensions(img.naturalWidth, img.naturalHeight);
+      }
+  };
+
+  const gridOffsetX = activeMap?.gridOffsetX ?? 0;
+  const gridOffsetY = activeMap?.gridOffsetY ?? 0;
+  const mapWidth = activeMap?.imageWidth || mapWidthFallback || 1;
+  const mapHeight = activeMap?.imageHeight || mapHeightFallback || 1;
+
+  const sceneToGrid = (worldX: number, worldY: number) => ({
+      x: Math.round((worldX - gridOffsetX) / (activeMap?.gridSizePx || 50)),
+      y: Math.round((worldY - gridOffsetY) / (activeMap?.gridSizePx || 50)),
+  });
+
+  const gridToScene = (gridX: number, gridY: number) => ({
+      x: gridX * (activeMap?.gridSizePx || 50) + gridOffsetX,
+      y: gridY * (activeMap?.gridSizePx || 50) + gridOffsetY,
+  });
 
   const isTokenOwner = (token: Token) => {
       if (isMaster) return true;
@@ -409,8 +463,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       }
       if (draggingTokenId) {
           const coords = getSceneCoord(e.clientX, e.clientY);
-          const gridX = Math.round((coords.x - dragOffset.current.x) / activeMap.gridSizePx);
-          const gridY = Math.round((coords.y - dragOffset.current.y) / activeMap.gridSizePx);
+          const { x: gridX, y: gridY } = sceneToGrid(coords.x - dragOffset.current.x, coords.y - dragOffset.current.y);
           setLocalTokens(prev => prev.map(t => {
               if (t.id === draggingTokenId) return { ...t, x: gridX, y: gridY };
               return t;
@@ -430,8 +483,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   const handleMouseUp = () => {
       if (isRulerMode) { setRulerStart(null); setRulerEnd(null); }
-      if (draggingTokenId) {
-          pushTokensUpdate(localTokens);
+      if (draggingTokenIdRef.current) {
+          pushTokensUpdate(localTokensRef.current);
           setDraggingTokenId(null);
       }
       if (isPanning) setIsPanning(false);
@@ -473,8 +526,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       }
       if (draggingTokenId) {
           const coords = getSceneCoord(touch.clientX, touch.clientY);
-          const gridX = Math.round((coords.x - dragOffset.current.x) / activeMap.gridSizePx);
-          const gridY = Math.round((coords.y - dragOffset.current.y) / activeMap.gridSizePx);
+          const { x: gridX, y: gridY } = sceneToGrid(coords.x - dragOffset.current.x, coords.y - dragOffset.current.y);
           setLocalTokens(prev => prev.map(t => {
               if (t.id === draggingTokenId) return { ...t, x: gridX, y: gridY };
               return t;
@@ -499,9 +551,10 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
       if (!isTokenOwner(token)) return;
 
       const coords = getSceneCoord(e.clientX, e.clientY);
+      const scenePos = gridToScene(token.x, token.y);
       dragOffset.current = {
-          x: coords.x - (token.x * activeMap!.gridSizePx),
-          y: coords.y - (token.y * activeMap!.gridSizePx)
+          x: coords.x - scenePos.x,
+          y: coords.y - scenePos.y
       };
       setDraggingTokenId(token.id);
       if (editingToken?.id !== token.id) setEditingToken(null);
@@ -514,9 +567,10 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
       const touch = e.touches[0];
       const coords = getSceneCoord(touch.clientX, touch.clientY);
+      const scenePos = gridToScene(token.x, token.y);
       dragOffset.current = {
-          x: coords.x - (token.x * activeMap!.gridSizePx),
-          y: coords.y - (token.y * activeMap!.gridSizePx)
+          x: coords.x - scenePos.x,
+          y: coords.y - scenePos.y
       };
       setDraggingTokenId(token.id);
       if (editingToken?.id !== token.id) setEditingToken(null);
@@ -567,8 +621,9 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                     onTouchCancel={handleMouseUp}
                 >
                     <div style={{ transform: `translate3d(${localView.panX}px, ${localView.panY}px, 0) scale(${localView.zoom})`, transformOrigin: 'top left', width: '0px', height: '0px' }}>
-                        <img src={activeMap.url} className="max-w-none select-none pointer-events-none" draggable={false} />
-                        <div className="absolute inset-0 pointer-events-none opacity-30 z-[5]" style={{ width: '5000px', height: '5000px', backgroundSize: `${activeMap.gridSizePx}px ${activeMap.gridSizePx}px`, backgroundImage: 'linear-gradient(to right, #808080 1px, transparent 1px), linear-gradient(to bottom, #808080 1px, transparent 1px)' }} />
+                        <div className="relative inline-block">
+                        <img src={activeMap.url} onLoad={handleMapImageLoad} className="max-w-none select-none pointer-events-none block" draggable={false} />
+                        <div className="absolute pointer-events-none opacity-30 z-[5]" style={{ left: gridOffsetX, top: gridOffsetY, width: mapWidth, height: mapHeight, backgroundSize: `${activeMap.gridSizePx}px ${activeMap.gridSizePx}px`, backgroundImage: 'linear-gradient(to right, #808080 1px, transparent 1px), linear-gradient(to bottom, #808080 1px, transparent 1px)' }} />
 
                         {localTokens.map(token => {
                             if (!isMaster && !token.visible) return null; 
@@ -588,7 +643,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
                             return (
                                 <div key={token.id} className={`absolute z-[10] group transition-opacity ${isEditing ? 'z-[30] ring-2 ring-gold' : ''} ${canMove ? 'cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-white/50' : 'cursor-default'}`}
-                                    style={{ left: token.x * activeMap.gridSizePx, top: token.y * activeMap.gridSizePx, width: width, height: height, opacity: !token.visible ? 0.5 : 1 }}
+                                    style={{ left: gridToScene(token.x, token.y).x, top: gridToScene(token.x, token.y).y, width: width, height: height, opacity: !token.visible ? 0.5 : 1 }}
                                     onMouseDown={(e) => handleTokenMouseDown(e, token)}
                                     onTouchStart={(e) => handleTokenTouchStart(e, token)}
                                     onDoubleClick={(e) => handleTokenDoubleClick(e, token)}
@@ -604,11 +659,12 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         })}
 
                         {rulerStart && rulerEnd && (
-                            <svg className="absolute top-0 left-0 w-[5000px] h-[5000px] pointer-events-none z-[100] overflow-visible">
+                            <svg className="absolute top-0 left-0 pointer-events-none z-[100] overflow-visible" style={{ width: mapWidth, height: mapHeight }}>
                                 <line x1={rulerStart.x} y1={rulerStart.y} x2={rulerEnd.x} y2={rulerEnd.y} stroke="#fbbf24" strokeWidth={2 / localView.zoom} strokeDasharray={`${10/localView.zoom},${5/localView.zoom}`} />
                                 <text x={rulerEnd.x + 10} y={rulerEnd.y} fill="#fbbf24" fontSize={20 / localView.zoom} fontWeight="bold" style={{ textShadow: '2px 2px 0px black' }}>{`${(Math.sqrt(Math.pow(rulerEnd.x - rulerStart.x, 2) + Math.pow(rulerEnd.y - rulerStart.y, 2)) / activeMap.gridSizePx * 1.5).toFixed(1)}m`}</text>
                             </svg>
                         )}
+                        </div>
                     </div>
 
                     <div className="absolute top-4 left-4 flex flex-col gap-2 bg-black/80 p-2 rounded border border-white/20 z-[500]">

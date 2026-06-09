@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { searchCards } from '../lib/cardSearch';
 import { X, HandGrabbing, Stack, MagnifyingGlass, ArrowUUpLeft, Eye } from '@phosphor-icons/react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -227,7 +228,9 @@ export default function CardSystem({ character, allCards }: CardSystemProps) {
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
-                {safeCards.filter(c => (filterCategory === 'Todas' || c.categoria === filterCategory) && c.nome.toLowerCase().includes(searchTerm.toLowerCase())).map((card, i) => (
+                {searchCards(safeCards, searchTerm, {
+                    categories: filterCategory === 'Todas' ? undefined : [filterCategory],
+                }).map((card, i) => (
                     <div key={i} className="flex flex-col gap-2 group cursor-pointer" onClick={() => setSelectedCard({ card, origin: 'library' })}>
                         <div className="relative aspect-[2.5/3.5] rounded-lg overflow-hidden border border-white/10 hover:border-gold hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all">
                             <img src={card.caminho} alt={card.nome} className="w-full h-full object-fill" />
