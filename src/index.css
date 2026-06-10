@@ -37,3 +37,29 @@ html, body {
   background: #d4af37;
   border-radius: 4px;
 }
+
+/* Canvas 3D dos dados — sempre no DOM, visível só durante rolagem */
+.dice-roll-canvas-host {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  width: min(94vw, 820px);
+  height: min(62vh, 480px);
+  z-index: 50001;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dice-roll-canvas-host--visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.dice-roll-canvas-host canvas.dice-box-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}

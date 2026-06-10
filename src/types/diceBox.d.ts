@@ -29,6 +29,8 @@ declare module '@3d-dice/dice-box' {
     gravity?: number;
     throwForce?: number;
     spinForce?: number;
+    startingHeight?: number;
+    settleTimeout?: number;
     enableShadows?: boolean;
     offscreen?: boolean;
   }

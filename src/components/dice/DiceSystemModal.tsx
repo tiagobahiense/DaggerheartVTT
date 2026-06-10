@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { X, Dna, Cube, Skull, Sparkle, Coins } from '@phosphor-icons/react';
 import { db } from '../../lib/firebase';
@@ -9,6 +9,7 @@ import {
 } from '../../lib/diceRollHelpers';
 import { DamageRollPanel } from './DamageRollPanel';
 import { GroupTestPanel } from './GroupTestPanel';
+import { warmUpDiceBox } from '../../stores/diceRollStore';
 
 interface DualityResult {
   type: 'DUALITY';
@@ -57,6 +58,10 @@ export function DiceSystemModal({
   const [selectedDie, setSelectedDie] = useState(20);
   const [diceCount, setDiceCount] = useState(1);
   const [standardMod, setStandardMod] = useState(0);
+
+  useEffect(() => {
+    warmUpDiceBox();
+  }, []);
 
   const pushRollToFirebase = async (rollResult: unknown, type: string) => {
     try {
@@ -310,17 +315,6 @@ export function DiceSystemModal({
             >
               <Cube size={24} weight="fill" /> ROLAR DADOS
             </button>
-          </div>
-        )}
-
-        {isRolling && (
-          <div className="h-40 flex flex-col items-center justify-center gap-3">
-            <p className="text-gold font-rpg tracking-widest text-lg animate-pulse">
-              O DESTINO GIRA...
-            </p>
-            <p className="text-white/30 text-xs text-center">
-              Dois d12 de dualidade ou seus dados estão rolando na tela.
-            </p>
           </div>
         )}
 

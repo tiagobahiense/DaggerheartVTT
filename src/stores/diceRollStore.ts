@@ -1,68 +1,44 @@
 import { create } from 'zustand';
 import type { DieRollResult, RollNotation } from '@3d-dice/dice-box';
-
-interface RollHandlers {
-  resolve: (results: DieRollResult[]) => void;
-  reject: (error: Error) => void;
-}
+import { preloadDiceBox, rollWithDiceBox } from '../lib/diceBoxService';
 
 interface DiceRollStore {
   isRolling: boolean;
   isReady: boolean;
-  rollRequestId: number;
-  rollNotation: RollNotation | null;
-  rollHandlers: RollHandlers | null;
-  setReady: (ready: boolean) => void;
   requestRoll: (notation: RollNotation) => Promise<DieRollResult[]>;
-  settleRoll: (results: DieRollResult[]) => void;
-  failRoll: (error: Error) => void;
+  markReady: () => void;
 }
 
 export const useDiceRollStore = create<DiceRollStore>((set, get) => ({
   isRolling: false,
   isReady: false,
-  rollRequestId: 0,
-  rollNotation: null,
-  rollHandlers: null,
 
-  setReady: (ready) => set({ isReady: ready }),
+  markReady: () => set({ isReady: true }),
 
-  requestRoll: (notation) =>
-    new Promise((resolve, reject) => {
-      if (get().rollHandlers) {
-        reject(new Error('Já existe uma rolagem em andamento.'));
-        return;
-      }
+  requestRoll: async (notation) => {
+    if (get().isRolling) {
+      throw new Error('Já existe uma rolagem em andamento.');
+    }
 
-      set((state) => ({
-        isRolling: true,
-        rollRequestId: state.rollRequestId + 1,
-        rollNotation: notation,
-        rollHandlers: { resolve, reject },
-      }));
-    }),
+    set({ isRolling: true });
 
-  settleRoll: (results) => {
-    const handlers = get().rollHandlers;
-    handlers?.resolve(results);
-    set({
-      isRolling: false,
-      rollNotation: null,
-      rollHandlers: null,
-    });
-  },
-
-  failRoll: (error) => {
-    const handlers = get().rollHandlers;
-    handlers?.reject(error);
-    set({
-      isRolling: false,
-      rollNotation: null,
-      rollHandlers: null,
-    });
+    try {
+      const results = await rollWithDiceBox(notation);
+      set({ isRolling: false, isReady: true });
+      return results;
+    } catch (error) {
+      set({ isRolling: false });
+      throw error;
+    }
   },
 }));
 
 export function requestDiceRoll(notation: RollNotation): Promise<DieRollResult[]> {
   return useDiceRollStore.getState().requestRoll(notation);
+}
+
+export function warmUpDiceBox(): void {
+  preloadDiceBox().then((ok) => {
+    if (ok) useDiceRollStore.getState().markReady();
+  });
 }
