@@ -5,7 +5,7 @@ import {
   TrendUp, PersonSimpleRun, BookOpen, 
   CaretUp, User, PencilSimple, Target,
   Plus, Trash, Fingerprint, PawPrint,
-  Info, DiceSix, ShieldWarning
+  Info, DiceSix
 } from '@phosphor-icons/react';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -20,7 +20,7 @@ import {
 import { SheetMarkersWidget } from './sheet/SheetMarkersWidget';
 import { ConditionsDisplay } from './conditions/ConditionsPicker';
 import { DamageAssistantModal } from './sheet/DamageAssistantModal';
-import { mergeSheetMarkers } from '../lib/sheetMarkers';
+import { sanitizeSheetMarkers } from '../lib/sheetMarkers';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
 
 // --- COMPONENTE LOCAL PARA ITEM DE EXPERIÊNCIA ---
@@ -66,7 +66,7 @@ const ExperienceItem = ({ item, onChange, onDelete }: any) => {
                 value={localValue}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                className="w-10 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-xs font-bold text-white outline-none focus:border-gold shrink-0"
+                className="w-12 bg-black/40 px-1 py-0.5 rounded border border-white/5 text-center text-xs font-bold text-white outline-none focus:border-gold shrink-0"
                 style={{ borderColor: item.value !== 0 ? (item.value > 0 ? '#fbbf24' : '#ef4444') : 'transparent' }}
             />
             <button onClick={onDelete} className="p-1 text-white/20 hover:text-red-400 transition-colors shrink-0"><Trash size={14} /></button>
@@ -201,6 +201,13 @@ interface SheetModalProps {
         const defaultHP = classData.stats.hp;
         const defaultStress = classData.stats.stress;
         const defaultHope = classData.stats.hope;
+        const cleanedMarkers = sanitizeSheetMarkers(character.sheetMarkers);
+        const normalizedExperiences = Array.isArray(character.experiences)
+          ? character.experiences.map((e: { name?: string; label?: string; value?: number | string }) => ({
+              name: e?.name ?? e?.label ?? '',
+              value: typeof e?.value === 'number' ? e.value : parseInt(String(e?.value ?? 0), 10) || 0,
+            }))
+          : [];
 
         setSheetData({
             weapons: character.weapons || { main: {}, sec: {}, inv1: {}, inv2: {}, inv3: {} },
@@ -221,7 +228,7 @@ interface SheetModalProps {
                 },
                 evasion: character.stats?.evasion ?? classData.stats.evasion ?? 10
             },
-            experiences: character.experiences || [],
+            experiences: normalizedExperiences,
             inventory: character.inventory || [],
             evolution: character.evolution || {},
             proficiency: character.proficiency || 0,
@@ -239,16 +246,26 @@ interface SheetModalProps {
                 imageOffsetX: 50,
                 imageOffsetY: 50
             },
-            sheetMarkers: mergeSheetMarkers(
-                character.sheetMarkers,
-                character.class,
-                character.community || '',
-                character.level || 1
-            ),
+            sheetMarkers: cleanedMarkers,
         });
         setCharacterImage(character.imageUrl || '');
         setPaSpent(character.paSpent || 0);
         setSelectedTraits(character.selectedTraits || {});
+
+        if (character.id) {
+          const rawMarkers = character.sheetMarkers ?? [];
+          const needsMarkerCleanup = rawMarkers.some(
+            (m: ISheetMarker) =>
+              m.source === 'class' ||
+              m.source === 'community' ||
+              m.isClassSpecific ||
+              (m.description && m.description.length > 20) ||
+              (m.note && m.note.length > 40)
+          );
+          if (needsMarkerCleanup) {
+            updateDoc(doc(db, 'characters', character.id), { sheetMarkers: cleanedMarkers }).catch(console.error);
+          }
+        }
     }
   }, [character]);
 
@@ -509,193 +526,172 @@ interface SheetModalProps {
           
           {/* === ABA GERAL === */}
           {activeTab === 'principal' && (
-            <div className="h-full flex flex-col gap-4 md:gap-6 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
-              
-              <div className="flex flex-col lg:flex-row shrink-0 lg:flex-1 gap-6 h-auto lg:min-h-0 lg:overflow-hidden">
-                  
-                  {/* ATRIBUTOS & EXPERIÊNCIAS */}
-                  <div className="w-full lg:w-1/4 flex flex-col h-auto lg:h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg shrink-0">
-                    <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2 shrink-0">
-                        <PersonSimpleRun className="text-white/50" />
-                        <h3 className="text-xs font-bold text-white uppercase tracking-widest">Atributos</h3>
-                    </div>
-                    
-                    <div className="p-4 space-y-2 shrink-0 border-b border-white/5 pb-4">
-                         <AttributeBox label="Agilidade" value={getAttr('agility')} onChange={(v: number) => updateAttribute('agility', v)} icon={<PersonSimpleRun />} color={classData.color} />
-                         <AttributeBox label="Força" value={getAttr('strength')} onChange={(v: number) => updateAttribute('strength', v)} icon={<Sword />} color={classData.color} />
-                         <AttributeBox label="Acuidade" value={getAttr('finesse')} onChange={(v: number) => updateAttribute('finesse', v)} icon={<TrendUp />} color={classData.color} />
-                         <AttributeBox label="Instinto" value={getAttr('instinct')} onChange={(v: number) => updateAttribute('instinct', v)} icon={<Lightning />} color={classData.color} />
-                         <AttributeBox label="Presença" value={getAttr('presence')} onChange={(v: number) => updateAttribute('presence', v)} icon={<Shield />} color={classData.color} />
-                         <AttributeBox label="Conhec." value={getAttr('knowledge')} onChange={(v: number) => updateAttribute('knowledge', v)} icon={<Scroll />} color={classData.color} />
-                    </div>
+            <div className="h-full overflow-y-auto custom-scrollbar pr-1 pb-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3 md:gap-4">
 
-                    <div className="bg-[#1a1520]/50 p-3 border-b border-white/5 flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-2">
-                            <Scroll className="text-white/50" />
-                            <h3 className="text-xs font-bold text-white uppercase tracking-widest">Experiências</h3>
-                        </div>
-                        <button onClick={addExperience} className="text-gold hover:text-white transition-colors"><Plus /></button>
+                {/* COL 1 — Atributos + Experiências */}
+                <div className="md:col-span-1 xl:col-span-3 flex flex-col gap-3 min-w-0">
+                  <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg">
+                    <div className="bg-[#1a1520] px-3 py-2 border-b border-white/10 flex items-center gap-2">
+                      <PersonSimpleRun className="text-white/50" size={16} />
+                      <h3 className="text-xs font-bold text-white uppercase tracking-widest">Atributos</h3>
                     </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar min-h-[150px] lg:min-h-0 bg-black/10">
-                        {sheetData.experiences?.map((exp, i) => (
-                            <ExperienceItem 
-                                key={i} 
-                                item={exp} 
-                                onChange={(val: any) => updateExperience(i, val)} 
-                                onDelete={() => deleteExperience(i)} 
-                            />
-                        ))}
+                    <div className="p-3 space-y-1.5">
+                      <AttributeBox label="Agilidade" value={getAttr('agility')} onChange={(v: number) => updateAttribute('agility', v)} icon={<PersonSimpleRun />} color={classData.color} />
+                      <AttributeBox label="Força" value={getAttr('strength')} onChange={(v: number) => updateAttribute('strength', v)} icon={<Sword />} color={classData.color} />
+                      <AttributeBox label="Acuidade" value={getAttr('finesse')} onChange={(v: number) => updateAttribute('finesse', v)} icon={<TrendUp />} color={classData.color} />
+                      <AttributeBox label="Instinto" value={getAttr('instinct')} onChange={(v: number) => updateAttribute('instinct', v)} icon={<Lightning />} color={classData.color} />
+                      <AttributeBox label="Presença" value={getAttr('presence')} onChange={(v: number) => updateAttribute('presence', v)} icon={<Shield />} color={classData.color} />
+                      <AttributeBox label="Conhec." value={getAttr('knowledge')} onChange={(v: number) => updateAttribute('knowledge', v)} icon={<Scroll />} color={classData.color} />
                     </div>
                   </div>
 
-                  {/* CENTRO (STATS + FOTO) */}
-                  <div className="flex-1 flex flex-col items-center order-first lg:order-none mb-4 lg:mb-0 shrink-0">
-                      <div className="flex gap-2 md:gap-4 mb-6 w-full justify-center shrink-0">
-                         <div className="flex-1 max-w-[100px]">
-                             <ResourceDisplay 
-                                label="Vida (PV)" 
-                                current={sheetData.stats.hp.current} 
-                                max={sheetData.stats.hp.max} 
-                                onChangeCurrent={(v: number) => updateStat('hp', 'current', v)}
-                                onChangeMax={(v: number) => updateStat('hp', 'max', v)}
-                                color="text-red-500" 
-                                icon={<Heart weight="fill" />} 
-                             />
-                         </div>
-                         <div className="flex-1 max-w-[100px]">
-                             <ResourceDisplay 
-                                label="Estresse (PF)" 
-                                current={sheetData.stats.stress.current} 
-                                max={sheetData.stats.stress.max} 
-                                onChangeCurrent={(v: number) => updateStat('stress', 'current', v)}
-                                onChangeMax={(v: number) => updateStat('stress', 'max', v)}
-                                color="text-purple-500" 
-                                icon={<Lightning weight="fill" />} 
-                             />
-                         </div>
-                         <div className="flex-1 max-w-[100px]">
-                             <ResourceDisplay 
-                                label="Esperança" 
-                                current={sheetData.stats.hope.current} 
-                                max={sheetData.stats.hope.max} 
-                                onChangeCurrent={(v: number) => updateStat('hope', 'current', v)}
-                                onChangeMax={(v: number) => updateStat('hope', 'max', v)}
-                                color="text-gold" 
-                                icon={<Coins weight="fill" />} 
-                             />
-                         </div>
+                  <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-[160px] max-h-[280px]">
+                    <div className="bg-[#1a1520] px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2">
+                        <Scroll className="text-white/50" size={16} />
+                        <h3 className="text-xs font-bold text-white uppercase tracking-widest">Experiências</h3>
                       </div>
+                      <button type="button" onClick={addExperience} className="text-gold hover:text-white transition-colors"><Plus size={16} /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-black/10 min-h-[80px]">
+                      {sheetData.experiences.length === 0 ? (
+                        <p className="text-[10px] text-white/30 italic text-center py-4">Nenhuma experiência. Clique + para adicionar.</p>
+                      ) : (
+                        sheetData.experiences.map((exp, i) => (
+                          <ExperienceItem
+                            key={`exp-${i}-${exp.name}`}
+                            item={exp}
+                            onChange={(val: any) => updateExperience(i, val)}
+                            onDelete={() => deleteExperience(i)}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-                      <div className="group relative cursor-pointer w-full max-w-[200px] md:max-w-[260px] aspect-[3/4] rounded-[50%] border-[6px] border-[#1a1520] ring-1 ring-white/10 bg-black overflow-hidden shadow-2xl shrink-0 transition-transform hover:scale-[1.02]" 
-                        onClick={() => {
-                            setEditingImageTarget('character');
-                            setIsImageModalOpen(true);
-                        }}>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 z-10"></div>
-                            {characterImage ? <img src={characterImage} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-white/20 bg-[#0f0c13]"><User size={64} weight="thin" /><span className="text-xs uppercase mt-3 tracking-widest">Sem Imagem</span></div>}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20"><span className="flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-full backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest"><PencilSimple /> Alterar</span></div>
-                      </div>
+                {/* COL 2 — Recursos + Retrato */}
+                <div className="md:col-span-1 xl:col-span-4 flex flex-col items-center gap-3 min-w-0">
+                  <div className="flex gap-2 sm:gap-3 w-full justify-center">
+                    <div className="flex-1 max-w-[88px] sm:max-w-[100px]">
+                      <ResourceDisplay label="Vida (PV)" current={sheetData.stats.hp.current} max={sheetData.stats.hp.max}
+                        onChangeCurrent={(v: number) => updateStat('hp', 'current', v)} onChangeMax={(v: number) => updateStat('hp', 'max', v)}
+                        color="text-red-500" icon={<Heart weight="fill" />} />
+                    </div>
+                    <div className="flex-1 max-w-[88px] sm:max-w-[100px]">
+                      <ResourceDisplay label="Estresse (PF)" current={sheetData.stats.stress.current} max={sheetData.stats.stress.max}
+                        onChangeCurrent={(v: number) => updateStat('stress', 'current', v)} onChangeMax={(v: number) => updateStat('stress', 'max', v)}
+                        color="text-purple-500" icon={<Lightning weight="fill" />} />
+                    </div>
+                    <div className="flex-1 max-w-[88px] sm:max-w-[100px]">
+                      <ResourceDisplay label="Esperança" current={sheetData.stats.hope.current} max={sheetData.stats.hope.max}
+                        onChangeCurrent={(v: number) => updateStat('hope', 'current', v)} onChangeMax={(v: number) => updateStat('hope', 'max', v)}
+                        color="text-gold" icon={<Coins weight="fill" />} />
+                    </div>
                   </div>
 
-                  {/* HABILIDADES */}
-                  <div className="w-full lg:w-1/4 flex flex-col h-[300px] lg:h-full bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg shrink-0">
-                      <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2 shrink-0"><Scroll className="text-gold" /><h3 className="text-xs font-bold text-white uppercase tracking-widest">Habilidades</h3></div>
-                      <div className="p-4 overflow-y-auto custom-scrollbar space-y-4 flex-1">
-                          {classData.startingFeatures && classData.startingFeatures.map((feature: any, i: number) => (
-                              <div key={i} className="bg-black/20 p-3 rounded border border-white/5">
-                                  <h4 className="text-sm font-bold text-gold mb-2 border-b border-white/5 pb-1">{feature.title}</h4>
-                                  <p className="text-xs text-white/80 leading-relaxed text-justify">{feature.description}</p>
-                              </div>
-                          ))}
-                          {classData.hopeAbility && (
-                              <div className="bg-blue-900/20 p-3 rounded border border-blue-500/30">
-                                  <h4 className="text-sm font-bold text-blue-300 mb-2 border-b border-blue-500/20 pb-1 flex items-center gap-2">
-                                      <Coins size={14} weight="fill" /> {classData.hopeAbility.name}
-                                  </h4>
-                                  <p className="text-xs text-white/80 leading-relaxed text-justify">{classData.hopeAbility.description}</p>
-                              </div>
-                          )}
-                          {ancestryData && (
-                              <div className="bg-green-900/20 p-3 rounded border border-green-500/30">
-                                  <h4 className="text-sm font-bold text-green-300 mb-2 border-b border-green-500/20 pb-1 flex items-center gap-2">
-                                      <Fingerprint size={14} weight="fill" /> {ancestryData.ability}
-                                  </h4>
-                                  <p className="text-xs text-white/80 leading-relaxed text-justify">{ancestryData.abilityDesc}</p>
-                              </div>
-                          )}
+                  <div
+                    className="group relative cursor-pointer w-full max-w-[180px] sm:max-w-[220px] aspect-[4/5] rounded-2xl border-4 border-[#1a1520] ring-1 ring-white/10 bg-black overflow-hidden shadow-2xl transition-transform hover:scale-[1.01]"
+                    onClick={() => { setEditingImageTarget('character'); setIsImageModalOpen(true); }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-70 z-10 pointer-events-none" />
+                    {characterImage ? (
+                      <img src={characterImage} alt="Avatar" className="w-full h-full object-cover object-top" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-white/20 bg-[#0f0c13]">
+                        <User size={48} weight="thin" />
+                        <span className="text-[10px] uppercase mt-2 tracking-widest">Sem Imagem</span>
                       </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20">
+                      <span className="flex items-center gap-1.5 bg-white/10 border border-white/20 px-3 py-1.5 rounded-full text-white text-[10px] font-bold uppercase"><PencilSimple size={14} /> Alterar</span>
+                    </div>
                   </div>
-              </div>
 
-              {/* FOOTER */}
-              <div className="h-auto lg:h-24 shrink-0 flex flex-col md:flex-row gap-4 md:gap-6 pb-4 lg:pb-0 mt-4 lg:mt-0">
-                 <div className="w-full md:w-1/4 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg relative overflow-hidden group min-h-[80px]">
-                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><Shield size={48} /></div>
-                    
-                    <input 
-                        type="number"
-                        value={sheetData.stats.evasion}
-                        onChange={(e) => {
-                            const val = parseInt(e.target.value) || 0;
-                            const newStats = { ...sheetData.stats, evasion: val };
-                            updateSheet('stats', newStats);
-                        }}
-                        className="text-4xl font-bold text-cyan-400 bg-transparent text-center w-full outline-none p-0 leading-none drop-shadow-[0_0_10px_rgba(34,211,238,0.3)] z-10"
+                  {tokenConditions.length > 0 && (
+                    <div className="w-full max-w-sm bg-purple-950/20 border border-purple-500/20 rounded-lg px-3 py-2">
+                      <span className="text-[9px] uppercase text-purple-300/70 font-bold block mb-1">Condições (Mestre)</span>
+                      <ConditionsDisplay active={tokenConditions} compact />
+                    </div>
+                  )}
+                </div>
+
+                {/* COL 3 — Habilidades */}
+                <div className="md:col-span-2 xl:col-span-5 bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-[200px] max-h-[50vh] xl:max-h-[calc(90vh-220px)]">
+                  <div className="bg-[#1a1520] px-3 py-2 border-b border-white/10 flex items-center gap-2 shrink-0">
+                    <Scroll className="text-gold" size={16} />
+                    <h3 className="text-xs font-bold text-white uppercase tracking-widest">Habilidades</h3>
+                  </div>
+                  <div className="p-3 overflow-y-auto custom-scrollbar space-y-3 flex-1">
+                    {classData.startingFeatures?.map((feature: any, i: number) => (
+                      <div key={i} className="bg-black/20 p-2.5 rounded border border-white/5">
+                        <h4 className="text-xs font-bold text-gold mb-1 border-b border-white/5 pb-1">{feature.title}</h4>
+                        <p className="text-[11px] text-white/75 leading-relaxed">{feature.description}</p>
+                      </div>
+                    ))}
+                    {classData.hopeAbility && (
+                      <div className="bg-blue-900/20 p-2.5 rounded border border-blue-500/30">
+                        <h4 className="text-xs font-bold text-blue-300 mb-1 flex items-center gap-1"><Coins size={12} weight="fill" /> {classData.hopeAbility.name}</h4>
+                        <p className="text-[11px] text-white/75 leading-relaxed">{classData.hopeAbility.description}</p>
+                      </div>
+                    )}
+                    {ancestryData && (
+                      <div className="bg-green-900/20 p-2.5 rounded border border-green-500/30">
+                        <h4 className="text-xs font-bold text-green-300 mb-1 flex items-center gap-1"><Fingerprint size={12} weight="fill" /> {ancestryData.ability}</h4>
+                        <p className="text-[11px] text-white/75 leading-relaxed">{ancestryData.abilityDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* RODAPÉ — Evasão, Limiares, Armadura, Marcadores */}
+                <div className="col-span-full grid grid-cols-2 xl:grid-cols-4 gap-3">
+                  <div className="bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-3 min-h-[72px] relative overflow-hidden">
+                    <Shield size={32} className="absolute top-1 right-1 text-white/5" />
+                    <input
+                      type="number"
+                      value={sheetData.stats.evasion}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        updateSheet('stats', { ...sheetData.stats, evasion: val });
+                      }}
+                      className="text-3xl font-bold text-cyan-400 bg-transparent text-center w-full outline-none leading-none z-10"
                     />
-                    <span className="text-[10px] uppercase text-white/40 tracking-[0.2em] mt-1 font-bold">Evasão</span>
-                 </div>
-                 <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg min-h-[80px] relative">
-                    <div className="flex items-center gap-2 mb-2 opacity-50"><Skull size={14} /><span className="text-[10px] uppercase tracking-widest font-bold">Limiares de Dano</span></div>
-                    <div className="flex justify-center gap-4 md:gap-6 w-full px-2 md:px-4">
-                        <ThresholdBox label="Menor" range={thresholdRangeText.minor} />
-                        <ThresholdBox label="Maior" range={thresholdRangeText.major} highlight />
-                        <ThresholdBox label="Grave" range={thresholdRangeText.severe} />
+                    <span className="text-[9px] uppercase text-white/40 tracking-widest mt-0.5 font-bold">Evasão</span>
+                  </div>
+
+                  <div className="bg-[#1a1520] border border-white/10 rounded-xl p-2 flex items-center justify-center min-h-[72px]">
+                    <ArmorWidget maxPA={maxPA} currentPA={paSpent} name="Armadura" onUpdatePA={handleUpdatePA} />
+                  </div>
+
+                  <div className="col-span-2 xl:col-span-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 min-h-[72px] relative">
+                    <div className="flex items-center gap-1 mb-1 opacity-50"><Skull size={12} /><span className="text-[9px] uppercase font-bold">Limiares</span></div>
+                    <div className="flex justify-center gap-2 w-full">
+                      <ThresholdBox label="Menor" range={thresholdRangeText.minor} />
+                      <ThresholdBox label="Maior" range={thresholdRangeText.major} highlight />
+                      <ThresholdBox label="Grave" range={thresholdRangeText.severe} />
                     </div>
                     {userBaseMajor > 0 && (
-                      <button
-                        onClick={() => setShowDamageAssistant(true)}
-                        className="absolute top-1 right-1 text-[9px] text-red-400/70 hover:text-red-300 uppercase tracking-wide px-2 py-0.5 border border-red-500/20 rounded hover:border-red-500/50 transition-colors"
-                      >
-                        Receber dano
+                      <button type="button" onClick={() => setShowDamageAssistant(true)}
+                        className="absolute top-1 right-1 text-[8px] text-red-400/70 hover:text-red-300 uppercase px-1.5 py-0.5 border border-red-500/20 rounded">
+                        Dano
                       </button>
                     )}
-                 </div>
-                 <div className="w-full md:w-1/4 bg-[#1a1520] border border-white/10 rounded-xl p-2 shadow-lg flex items-center justify-center min-h-[80px]">
-                    <ArmorWidget maxPA={maxPA} currentPA={paSpent} name="Armadura" onUpdatePA={handleUpdatePA} />
-                 </div>
-              </div>
-
-              {/* MARCADORES */}
-              <div className="shrink-0">
-                <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden">
-                  <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2">
-                    <DiceSix className="text-gold" size={16} />
-                    <h3 className="text-xs font-bold text-white uppercase tracking-widest">Marcadores</h3>
-                    <span className="text-[9px] text-white/30 ml-auto">Visível ao Mestre</span>
                   </div>
-                  <div className="p-3">
-                    <SheetMarkersWidget
-                      markers={sheetData.sheetMarkers}
-                      onChange={updateSheetMarkers}
-                    />
+
+                  <div className="col-span-2 xl:col-span-1 bg-[#1a1520]/80 border border-white/10 rounded-xl overflow-hidden min-h-[72px]">
+                    <div className="px-2 py-1.5 border-b border-white/5 flex items-center gap-1.5">
+                      <DiceSix className="text-gold" size={14} />
+                      <span className="text-[9px] font-bold text-white uppercase tracking-widest">Marcadores</span>
+                      <span className="text-[8px] text-white/25 ml-auto">Mestre vê</span>
+                    </div>
+                    <div className="p-2 max-h-[120px] overflow-y-auto custom-scrollbar">
+                      <SheetMarkersWidget markers={sheetData.sheetMarkers} onChange={updateSheetMarkers} compact />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* CONDIÇÕES (somente leitura — Mestre aplica no mapa / rastreador) */}
-              {tokenConditions.length > 0 && (
-                <div className="shrink-0 bg-[#1a1520]/50 border border-purple-500/20 rounded-xl overflow-hidden">
-                  <div className="bg-purple-950/30 p-3 border-b border-purple-500/20 flex items-center gap-2">
-                    <ShieldWarning className="text-purple-300" size={16} />
-                    <h3 className="text-xs font-bold text-purple-200 uppercase tracking-widest">Condições Ativas</h3>
-                    <span className="text-[9px] text-white/30 ml-auto">Definidas pelo Mestre</span>
-                  </div>
-                  <div className="p-3">
-                    <ConditionsDisplay active={tokenConditions} compact={false} />
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

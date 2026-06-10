@@ -35,7 +35,7 @@ function MarkerBadge({ marker }: { marker: ISheetMarker }) {
   return (
     <span
       className="px-1.5 py-0.5 rounded bg-purple-900/30 border border-purple-500/20 text-[9px] text-purple-200 truncate max-w-full"
-      title={marker.description || display}
+      title={display}
     >
       {display}
     </span>
