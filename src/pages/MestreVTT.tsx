@@ -20,13 +20,14 @@ import { SheetModal } from '../components/SheetModal';
 import SceneryViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
-import Bestiary from '../components/Bestiary';
+import CombatTracker from '../components/CombatTracker';
 import MasterShield from '../components/MasterShield';
 import { PlayerSummaryPanel } from '../components/PlayerSummaryPanel';
 import { RestOptionsModal } from '../components/RestOptionsModal';
 import { DamageRollPanel } from '../components/dice/DamageRollPanel';
 import { GroupTestPanel } from '../components/dice/GroupTestPanel';
-import { ConditionId, ISheetMarker } from '../types/sheetExtras'; 
+import { ConditionId, ISheetMarker } from '../types/sheetExtras';
+import { getConditionsForCharacter } from '../lib/tokenConditions'; 
 
 // --- CONFIGURAÇÕES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
@@ -75,7 +76,6 @@ interface Character {
     evasion?: number;
   };
   sheetMarkers?: ISheetMarker[];
-  conditions?: { active?: ConditionId[] };
   cards?: {
     hand: Card[];
     reserve: Card[];
@@ -850,7 +850,7 @@ export default function MestreVTT() {
   const [showSceneryManager, setShowSceneryManager] = useState(false);
   const [showTabletopManager, setShowTabletopManager] = useState(false);
   const [showGroupManager, setShowGroupManager] = useState(false);
-  const [showBestiary, setShowBestiary] = useState(false); 
+  const [showCombatTracker, setShowCombatTracker] = useState(false); 
   const [showMasterShield, setShowMasterShield] = useState(false); 
 
   const [showFearModal, setShowFearModal] = useState(false);
@@ -1050,7 +1050,15 @@ useEffect(() => {
        {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={true} />}
 
        {/* BESTIÁRIO - NOVO */}
-       {showBestiary && sessaoData && <Bestiary sessaoData={sessaoData} onClose={() => setShowBestiary(false)} />}
+       {showCombatTracker && sessaoData && (
+         <CombatTracker
+           sessaoData={sessaoData}
+           isMaster
+           characters={visibleCharacters}
+           onClose={() => setShowCombatTracker(false)}
+           onSelectCharacter={(c) => { setSelectedChar(c as Character); setIsSheetOpen(true); }}
+         />
+       )}
 
        {/* ESCUDO DO MESTRE - NOVO */}
        {showMasterShield && <MasterShield onClose={() => setShowMasterShield(false)} />}
@@ -1084,6 +1092,7 @@ useEffect(() => {
 
        <PlayerSummaryPanel
          characters={visibleCharacters}
+         sessaoData={sessaoData}
          onSelectCharacter={(c) => { setSelectedChar(c as Character); setIsSheetOpen(true); }}
        />
 
@@ -1091,7 +1100,8 @@ useEffect(() => {
            character={selectedChar} 
            isOpen={isSheetOpen} 
            onClose={() => { setIsSheetOpen(false); setSelectedChar(null); }} 
-           groupCharacters={visibleCharacters} 
+           groupCharacters={visibleCharacters}
+           tokenConditions={selectedChar ? getConditionsForCharacter(sessaoData?.active_map?.tokens, selectedChar.id) : []}
        />
        <CardsMonitorModal isOpen={showCardsMonitor} onClose={() => setShowCardsMonitor(false)} players={visibleCharacters} />
        <GroupManagerModal isOpen={showGroupManager} onClose={() => setShowGroupManager(false)} allCharacters={characters} sessionData={sessaoData} />
@@ -1117,15 +1127,15 @@ useEffect(() => {
                <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas"><MapTrifold size={24} /></button>
                <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Cenários/NPCs"><ImageIcon size={24} /></button>
                
-               {/* BOTÃO: BESTIÁRIO */}
+               {/* BOTÃO: RASTREADOR DE COMBATE */}
                <button 
-                   onClick={() => setShowBestiary(!showBestiary)} 
+                   onClick={() => setShowCombatTracker(!showCombatTracker)} 
                    className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
-                       ${showBestiary ? 'bg-gold border-gold text-black' : 'bg-black/60 hover:border-gold hover:text-gold'}
+                       ${showCombatTracker ? 'bg-gold border-gold text-black' : 'bg-black/60 hover:border-gold hover:text-gold'}
                    `}
-                   title="Bestiário"
+                   title="Rastreador de Combate"
                >
-                   <BookOpen size={24} weight={showBestiary ? "fill" : "regular"} />
+                   <BookOpen size={24} weight={showCombatTracker ? "fill" : "regular"} />
                </button>
 
                {/* BOTÃO: ESCUDO DO MESTRE (NOVO) */}

@@ -9,6 +9,10 @@ import {
   PawPrint, PencilSimple, Sword
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
+import { ConditionId } from '../types/sheetExtras';
+import { ConditionsPicker } from './conditions/ConditionsPicker';
+import { TokenConditionOverlay } from './conditions/TokenConditionOverlay';
+import { ConditionGlobalStyles } from './conditions/ConditionStyles';
 
 // --- INTERFACES COMPARTILHADAS ---
 interface Ability {
@@ -50,6 +54,7 @@ interface Token {
   imgOffY: number;
   imgScale: number;
   stats?: EnemyStats;
+  conditions?: { active?: ConditionId[] };
 }
 
 interface MapData {
@@ -578,7 +583,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   const handleTokenDoubleClick = (e: React.MouseEvent, token: Token) => {
       e.stopPropagation();
-      if (!isTokenOwner(token)) return;
+      if (!isTokenOwner(token) && !isMaster) return;
       setEditingToken({ id: token.id, screenX: e.clientX + 20, screenY: e.clientY - 50 });
   };
 
@@ -641,6 +646,12 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                 else if (token.type === 'player') displayImg = foundChar.imageUrl || token.img;
                             }
 
+                            const tokenConditions: ConditionId[] = (() => {
+                                const active = token.conditions?.active || [];
+                                if (token.type === 'enemy') return isMaster ? active : [];
+                                return active;
+                            })();
+
                             return (
                                 <div key={token.id} className={`absolute z-[10] group transition-opacity ${isEditing ? 'z-[30] ring-2 ring-gold' : ''} ${canMove ? 'cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-white/50' : 'cursor-default'}`}
                                     style={{ left: gridToScene(token.x, token.y).x, top: gridToScene(token.x, token.y).y, width: width, height: height, opacity: !token.visible ? 0.5 : 1 }}
@@ -650,8 +661,9 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                     onDragStart={(e) => e.preventDefault()} 
                                 >
                                     <div className={`w-full h-full overflow-hidden shadow-lg ${shapeClass} border-2 ${borderClass} bg-black relative`}>
-                                        <img src={displayImg} onError={(e) => handleImageError(e, token)} className="max-w-none w-full h-full object-contain pointer-events-none select-none" style={{ transform: `scale(${token.imgScale}) translate(${token.imgOffX}px, ${token.imgOffY}px)` }} draggable={false} />
-                                        {token.type === 'companion' && (<div className="absolute bottom-0 right-0 p-0.5 bg-cyan-900/80 rounded-tl"><PawPrint size={10} className="text-cyan-200" weight="fill" /></div>)}
+                                        <TokenConditionOverlay conditions={tokenConditions} />
+                                        <img src={displayImg} onError={(e) => handleImageError(e, token)} className="max-w-none w-full h-full object-contain pointer-events-none select-none relative z-[10]" style={{ transform: `scale(${token.imgScale}) translate(${token.imgOffX}px, ${token.imgOffY}px)` }} draggable={false} />
+                                        {token.type === 'companion' && (<div className="absolute bottom-0 right-0 p-0.5 bg-cyan-900/80 rounded-tl z-[20]"><PawPrint size={10} className="text-cyan-200" weight="fill" /></div>)}
                                     </div>
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-black/90 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none border border-white/20 z-[30]">{token.name}</div>
                                 </div>
@@ -675,8 +687,12 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         <button onClick={() => setLocalView(prev => ({ ...prev, zoom: prev.zoom - 0.1 }))} className="text-white hover:text-gold"><Minus /></button>
                     </div>
 
-                    {editingToken && (
-                        <div className="fixed z-[9999999] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-64" style={{ left: editingToken.screenX, top: editingToken.screenY }} onMouseDown={(e) => e.stopPropagation()}>
+                    <ConditionGlobalStyles />
+                    {editingToken && (() => {
+                        const editingTokenData = localTokens.find(t => t.id === editingToken.id);
+                        const editingConditions = editingTokenData?.conditions?.active || [];
+                        return (
+                        <div className="fixed z-[9999999] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-72 max-h-[80vh] overflow-y-auto custom-scrollbar" style={{ left: editingToken.screenX, top: editingToken.screenY }} onMouseDown={(e) => e.stopPropagation()}>
                             <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-1">
                                 <span className="text-gold font-bold text-xs uppercase">Editar Token</span>
                                 <X className="text-white cursor-pointer hover:text-red-500" onClick={() => setEditingToken(null)} />
@@ -700,9 +716,20 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                     {isMaster && (<button onClick={() => updateEditingToken({ visible: !localTokens.find(t=>t.id===editingToken.id)?.visible })} className={`flex-1 py-1 rounded text-xs border ${localTokens.find(t=>t.id===editingToken.id)?.visible ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}>{localTokens.find(t=>t.id===editingToken.id)?.visible ? 'Visível' : 'Oculto'}</button>)}
                                     <button onClick={deleteEditingToken} className="p-1 bg-red-900/50 border border-red-500 text-red-400 rounded hover:bg-red-600 hover:text-white"><Trash size={16} /></button>
                                 </div>
+                                {isMaster && (
+                                  <div className="pt-3 border-t border-white/10">
+                                    <span className="text-[10px] uppercase text-purple-300/80 font-bold block mb-2">Condições</span>
+                                    <ConditionsPicker
+                                      active={editingConditions}
+                                      onChange={(active) => updateEditingToken({ conditions: { active } })}
+                                      compact
+                                    />
+                                  </div>
+                                )}
                             </div>
                         </div>
-                    )}
+                        );
+                    })()}
                 </div>
             </DraggableWindow>
         )}

@@ -14,7 +14,8 @@ import {
   X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Plus, 
   ArrowsLeftRight, Coin, Skull, Sparkle,
-  Dna, Coins, Cube, ArrowUUpLeft, ChatTeardropText, PaperPlaneRight
+  Dna, Coins, Cube, ArrowUUpLeft, ChatTeardropText, PaperPlaneRight,
+  Users
 } from '@phosphor-icons/react';
 
 import CARTAS_JSON from '../data/cartas.json'; 
@@ -22,6 +23,9 @@ import { SheetModal } from '../components/SheetModal';
 import NPCViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
+import CombatTracker from '../components/CombatTracker';
+import { ConditionId } from '../types/sheetExtras';
+import { getConditionsForCharacter } from '../lib/tokenConditions';
 import { DamageRollPanel } from '../components/dice/DamageRollPanel';
 import { GroupTestPanel } from '../components/dice/GroupTestPanel';
 
@@ -72,6 +76,11 @@ interface Character {
   cards?: {
     hand: ActiveCard[];
     reserve: Card[];
+  };
+  stats?: {
+    hp?: { current: number; max: number };
+    stress?: { current: number; max: number };
+    hope?: { current: number; max: number };
   };
 }
 
@@ -982,6 +991,7 @@ export default function JogadorVTT() {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showDiceRoller, setShowDiceRoller] = useState(false);
+  const [showCombatTracker, setShowCombatTracker] = useState(false);
   const [sessaoData, setSessaoData] = useState<any>(null); 
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
@@ -1098,18 +1108,18 @@ export default function JogadorVTT() {
   const fearTokens = (sessaoData?.fear_data as { tokens?: number } | undefined)?.tokens ?? 0;
 
   const tabletopCharacters = useMemo(() => {
-    if (!character) return [];
-    return [{
-      id: character.id,
-      playerId: character.playerId,
-      name: character.name,
-      imageUrl: character.imageUrl,
-      class: character.class,
-      subclass: character.subclass,
-      companionName: character.companionName,
-      companion: character.companion,
-    }];
-  }, [character]);
+    const source = groupCharacters.length > 0 ? groupCharacters : (character ? [character] : []);
+    return source.map((c) => ({
+      id: c.id,
+      playerId: c.playerId,
+      name: c.name,
+      imageUrl: c.imageUrl,
+      class: c.class,
+      subclass: c.subclass,
+      companionName: c.companionName,
+      companion: c.companion,
+    }));
+  }, [character, groupCharacters]);
 
   if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando Grimório...</div>;
   if (!character) return null;
@@ -1231,12 +1241,28 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      {/* BOTÃO DE DADO (ÚNICO COM Z-INDEX SUPERIOR AO MAPA) */}
-      <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto">
+      {/* BOTÕES DE DADO E COMBATE */}
+      <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto flex flex-col gap-3 items-center">
+        <button
+          onClick={() => setShowCombatTracker(true)}
+          className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500/50 shadow-lg flex items-center justify-center text-green-300 hover:scale-110 transition-transform"
+          title="Aliados em Combate"
+        >
+          <Users className="w-5 h-5 md:w-6 md:h-6" weight="fill" />
+        </button>
         <button onClick={() => setShowDiceRoller(true)} className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
             <div className="group-hover:animate-spin"><Dna className="w-6 h-6 md:w-8 md:h-8" weight="bold" /></div>
         </button>
       </div>
+
+      {showCombatTracker && sessaoData && (
+        <CombatTracker
+          sessaoData={sessaoData}
+          isMaster={false}
+          characters={groupCharacters.length > 0 ? groupCharacters : [character]}
+          onClose={() => setShowCombatTracker(false)}
+        />
+      )}
 
       {character.class === "Druida" && (
         <div className="absolute bottom-40 right-4 md:bottom-56 md:right-8 z-[40] pointer-events-auto">
@@ -1260,7 +1286,8 @@ export default function JogadorVTT() {
         character={character} 
         isOpen={sheetOpen} 
         onClose={() => setSheetOpen(false)}
-        groupCharacters={groupCharacters} 
+        groupCharacters={groupCharacters}
+        tokenConditions={getConditionsForCharacter(sessaoData?.active_map?.tokens, character.id)}
       />
 
       {character.class === "Druida" && (

@@ -183,23 +183,22 @@ export const SHIELD_RULES: ShieldRule[] = [
     title: 'Condições',
     icon: <Lightning size={32} />,
     content: (
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-red-900/10 border border-red-500/20 p-2 rounded">
-          <strong className="text-red-300 block">Vulnerável</strong>
-          <span className="text-xs text-white/60">Ataques contra têm Vantagem.</span>
-        </div>
-        <div className="bg-blue-900/10 border border-blue-500/20 p-2 rounded">
-          <strong className="text-blue-300 block">Imobilizado</strong>
-          <span className="text-xs text-white/60">Não pode sair do lugar.</span>
-        </div>
-        <div className="bg-gray-900/10 border border-gray-500/20 p-2 rounded">
-          <strong className="text-gray-300 block">Escondido</strong>
-          <span className="text-xs text-white/60">Ataques contra têm Desvantagem.</span>
-        </div>
-        <div className="bg-yellow-900/10 border border-yellow-500/20 p-2 rounded">
-          <strong className="text-yellow-300 block">Dano Direto</strong>
-          <span className="text-xs text-white/60">Ignora armadura.</span>
-        </div>
+      <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+        <p className="text-xs text-white/50">O Mestre aplica condições nos tokens do mapa ou no Rastreador de Combate.</p>
+        {[
+          { label: 'Vulnerável', desc: 'Testes contra têm Vantagem.', color: 'text-red-300' },
+          { label: 'Escondido / Oculto / Invisível', desc: 'Testes contra têm Desvantagem (Oculto: se não se mover).', color: 'text-slate-300' },
+          { label: 'Imobilizado', desc: 'Não pode se mover; pode agir no lugar.', color: 'text-cyan-300' },
+          { label: 'Atordoado / Inconsciente', desc: 'Sem reações ou ações até recuperar.', color: 'text-yellow-300' },
+          { label: 'Protegido', desc: 'Resistência a todos os tipos de dano.', color: 'text-emerald-300' },
+          { label: 'Abalado', desc: 'Sucesso com Esperança cura Abalado em vez de ganhar Esperança.', color: 'text-amber-300' },
+          { label: 'Colosso', desc: 'Quebrado, Colapsado, Destruído — segmentos de chefes colossais.', color: 'text-orange-300' },
+        ].map((c) => (
+          <div key={c.label} className="bg-white/5 border border-white/10 p-2 rounded">
+            <strong className={`${c.color} block text-sm`}>{c.label}</strong>
+            <span className="text-xs text-white/60">{c.desc}</span>
+          </div>
+        ))}
       </div>
     )
   }

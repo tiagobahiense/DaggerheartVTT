@@ -18,7 +18,7 @@ import {
     ProficiencyWidget
 } from './sheet/SheetWidgets';
 import { SheetMarkersWidget } from './sheet/SheetMarkersWidget';
-import { ConditionsWidget } from './sheet/ConditionsWidget';
+import { ConditionsDisplay } from './conditions/ConditionsPicker';
 import { DamageAssistantModal } from './sheet/DamageAssistantModal';
 import { mergeSheetMarkers } from '../lib/sheetMarkers';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
@@ -138,10 +138,12 @@ interface SheetModalProps {
     character: any;
     isOpen: boolean;
     onClose: () => void;
-    groupCharacters?: any[]; // Lista de personagens do grupo para menção
+    groupCharacters?: any[];
+    /** Condições ativas no token do mapa (definidas pelo Mestre) */
+    tokenConditions?: ConditionId[];
   }
   
-  export const SheetModal = ({ character, isOpen, onClose, groupCharacters = [] }: SheetModalProps) => {
+  export const SheetModal = ({ character, isOpen, onClose, groupCharacters = [], tokenConditions = [] }: SheetModalProps) => {
   const [activeTab, setActiveTab] = useState('principal');
   const [selectedTraits, setSelectedTraits] = useState<Record<string, string[]>>({});
   const [paSpent, setPaSpent] = useState(0);
@@ -185,7 +187,6 @@ interface SheetModalProps {
         imageOffsetY: 50
     },
     sheetMarkers: [] as ISheetMarker[],
-    conditions: { active: [] as ConditionId[] },
   });
 
   // CORREÇÃO: Normaliza removendo acentos (ex: Guardião -> guardiao) para bater com o CLASS_DATABASE
@@ -244,7 +245,6 @@ interface SheetModalProps {
                 character.community || '',
                 character.level || 1
             ),
-            conditions: character.conditions || { active: [] },
         });
         setCharacterImage(character.imageUrl || '');
         setPaSpent(character.paSpent || 0);
@@ -343,12 +343,6 @@ interface SheetModalProps {
   const updateSheetMarkers = (markers: ISheetMarker[]) => {
       setSheetData((prev) => ({ ...prev, sheetMarkers: markers }));
       saveCharacterData({ sheetMarkers: markers });
-  };
-
-  const updateConditions = (active: ConditionId[]) => {
-      const conditions = { active };
-      setSheetData((prev) => ({ ...prev, conditions }));
-      saveCharacterData({ conditions });
   };
 
   const handleDamageApply = (hpToMark: number, paToSpend: number) => {
@@ -672,8 +666,8 @@ interface SheetModalProps {
                  </div>
               </div>
 
-              {/* MARCADORES & CONDIÇÕES */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
+              {/* MARCADORES */}
+              <div className="shrink-0">
                 <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden">
                   <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2">
                     <DiceSix className="text-gold" size={16} />
@@ -687,19 +681,21 @@ interface SheetModalProps {
                     />
                   </div>
                 </div>
-                <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden">
-                  <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2">
-                    <ShieldWarning className="text-red-400" size={16} />
-                    <h3 className="text-xs font-bold text-white uppercase tracking-widest">Condições</h3>
+              </div>
+
+              {/* CONDIÇÕES (somente leitura — Mestre aplica no mapa / rastreador) */}
+              {tokenConditions.length > 0 && (
+                <div className="shrink-0 bg-[#1a1520]/50 border border-purple-500/20 rounded-xl overflow-hidden">
+                  <div className="bg-purple-950/30 p-3 border-b border-purple-500/20 flex items-center gap-2">
+                    <ShieldWarning className="text-purple-300" size={16} />
+                    <h3 className="text-xs font-bold text-purple-200 uppercase tracking-widest">Condições Ativas</h3>
+                    <span className="text-[9px] text-white/30 ml-auto">Definidas pelo Mestre</span>
                   </div>
                   <div className="p-3">
-                    <ConditionsWidget
-                      active={sheetData.conditions.active}
-                      onChange={updateConditions}
-                    />
+                    <ConditionsDisplay active={tokenConditions} compact={false} />
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

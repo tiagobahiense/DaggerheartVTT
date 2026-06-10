@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CaretDown, CaretUp, Heart, Lightning, Coins, Users, X } from '@phosphor-icons/react';
-import { CONDITION_MAP } from '../data/conditions';
+import { ConditionsDisplay } from './conditions/ConditionsPicker';
+import { getConditionsForCharacter } from '../lib/tokenConditions';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
 
 interface SummaryCharacter {
@@ -15,11 +16,11 @@ interface SummaryCharacter {
     hope?: { current: number; max: number };
   };
   sheetMarkers?: ISheetMarker[];
-  conditions?: { active?: ConditionId[] };
 }
 
 interface PlayerSummaryPanelProps {
   characters: SummaryCharacter[];
+  sessaoData?: { active_map?: { tokens?: { id: string; charId?: string; type?: string; conditions?: { active?: ConditionId[] } }[] } };
   onSelectCharacter: (char: SummaryCharacter) => void;
 }
 
@@ -41,7 +42,7 @@ function MarkerBadge({ marker }: { marker: ISheetMarker }) {
   );
 }
 
-export function PlayerSummaryPanel({ characters, onSelectCharacter }: PlayerSummaryPanelProps) {
+export function PlayerSummaryPanel({ characters, sessaoData, onSelectCharacter }: PlayerSummaryPanelProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -80,7 +81,7 @@ export function PlayerSummaryPanel({ characters, onSelectCharacter }: PlayerSumm
               const hp = char.stats?.hp;
               const stress = char.stats?.stress;
               const hope = char.stats?.hope;
-              const activeConditions = char.conditions?.active || [];
+              const activeConditions = getConditionsForCharacter(sessaoData?.active_map?.tokens, char.id);
               const markers = char.sheetMarkers || [];
 
               return (
@@ -125,18 +126,8 @@ export function PlayerSummaryPanel({ characters, onSelectCharacter }: PlayerSumm
                   </div>
 
                   {activeConditions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-1">
-                      {activeConditions.map((id) => {
-                        const cond = CONDITION_MAP[id];
-                        return cond ? (
-                          <span
-                            key={id}
-                            className={`px-1 py-0.5 rounded text-[8px] font-bold uppercase border ${cond.borderColor} ${cond.color}`}
-                          >
-                            {cond.shortLabel}
-                          </span>
-                        ) : null;
-                      })}
+                    <div className="mb-1">
+                      <ConditionsDisplay active={activeConditions} />
                     </div>
                   )}
 

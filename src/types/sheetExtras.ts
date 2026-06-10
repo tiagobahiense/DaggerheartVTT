@@ -19,12 +19,30 @@ export interface ISheetMarker {
   description?: string;
 }
 
+/** Condições oficiais Daggerheart — aplicadas pelo Mestre nos tokens */
 export type ConditionId =
-  | 'vulnerable'
-  | 'immobilized'
+  // Principais
   | 'hidden'
-  | 'direct_damage'
-  | 'oculto';
+  | 'immobilized'
+  | 'vulnerable'
+  // Únicas e especiais
+  | 'shaken'
+  | 'asleep'
+  | 'restrained'
+  | 'stunned'
+  | 'dissociated'
+  | 'charmed'
+  | 'unconscious'
+  | 'incorporeal'
+  | 'invisible'
+  | 'oculto'
+  | 'protected'
+  // Colosso (segmentos)
+  | 'broken'
+  | 'collapsed'
+  | 'destroyed';
+
+export type ConditionCategory = 'principal' | 'special' | 'colossus';
 
 export interface ICharacterConditions {
   active: ConditionId[];
@@ -32,5 +50,4 @@ export interface ICharacterConditions {
 
 export interface ISheetExtras {
   sheetMarkers?: ISheetMarker[];
-  conditions?: ICharacterConditions;
 }
