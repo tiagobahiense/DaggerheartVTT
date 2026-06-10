@@ -22,7 +22,7 @@ declare module '@3d-dice/dice-box' {
   export interface DiceBoxConfig {
     id?: string;
     assetPath: string;
-    container?: string | HTMLElement;
+    container?: string | HTMLElement | null;
     theme?: string;
     themeColor?: string;
     scale?: number;
