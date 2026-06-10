@@ -1,4 +1,4 @@
-﻿import { DruidMorphModal } from '../components/DruidMorphModal'; 
+import { DruidMorphModal } from '../components/DruidMorphModal'; 
 import { PawPrint } from '@phosphor-icons/react'; 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -93,14 +93,14 @@ interface RollLog {
 }
 
 const CLASS_COLORS: Record<string, string> = {
-  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "GuardiÃ£o": "#64748b",
+  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
 };
 const ANCESTRY_COLORS: Record<string, string> = {
-  "AnÃ£o": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
+  "Anão": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
   "Fauno": "#84cc16", "Firbolg": "#065f46", "Fungril": "#a3e635", "Galapa": "#0d9488", "Gigante": "#475569",
   "Goblin": "#4ade80", "Humano": "#38bdf8", "Infernis": "#dc2626", "Katari": "#f59e0b", "Orc": "#3f6212",
-  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "SÃ­mio": "#a16207",
+  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "Símio": "#a16207",
 };
 
 // ==================================================================================
@@ -153,7 +153,7 @@ const DiceToast = () => {
                              <span className="text-purple-400 font-bold">{lastRoll.result.fearDie} (Medo)</span>
                         </div>
                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${lastRoll.result.outcome === 'CRITICAL' ? 'bg-gold text-black' : lastRoll.result.isSuccess ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'}`}>
-                            {lastRoll.result.outcome === 'CRITICAL' ? 'CrÃ­tico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
+                            {lastRoll.result.outcome === 'CRITICAL' ? 'Crítico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
                         </div>
                     </div>
                 ) : (
@@ -314,7 +314,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   };
 
   const handleCastCard = (card: ActiveCard) => {
-    if (card.isExhausted) return alert("Esta carta estÃ¡ exaurida.");
+    if (card.isExhausted) return alert("Esta carta está exaurida.");
     setSelectedCardState(null);
     setCastingCard(card);
     setTimeout(() => setCastingCard(null), 1500);
@@ -322,7 +322,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
   const initiateDraw = (card: Card, source: 'grimoire' | 'reserve', reserveIndex: number = -1) => {
     if (isSwapping) return;
-    if (hand.some(c => c.nome === card.nome)) return alert("VocÃª jÃ¡ tem essa carta.");
+    if (hand.some(c => c.nome === card.nome)) return alert("Você já tem essa carta.");
     markCardsDirty();
     if (hand.length < 5) {
       setHand(prev => [...prev, createActiveCard(card)]);
@@ -398,7 +398,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   };
 
   const filteredGrimoire = useMemo(() => sortGrimoireCards(searchCards(safeCards, searchTerm, {
-    categories: ["FeitiÃ§o", "GrimÃ³rio", "Talento"],
+    categories: ["Feitiço", "Grimório", "Talento"],
     domain: domainFilter,
     nivel: nivelFilter,
   })), [safeCards, searchTerm, domainFilter, nivelFilter]);
@@ -406,7 +406,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const grimoireSuggestions = useMemo(() => {
     if (filteredGrimoire.length > 0 || searchTerm.trim().length < 2) return [];
     return suggestCards(
-      safeCards.filter(c => ["FeitiÃ§o", "GrimÃ³rio", "Talento"].includes(c.categoria)),
+      safeCards.filter(c => ["Feitiço", "Grimório", "Talento"].includes(c.categoria)),
       searchTerm,
       4
     );
@@ -465,7 +465,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="w-[1px] h-20 bg-white/10 hidden md:block"></div>
         <div className="flex gap-1 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
           <TableCard card={subclassCards[0]} label="Fundamental" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
-          <TableCard card={subclassCards[1]} label="EspecializaÃ§Ã£o" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
+          <TableCard card={subclassCards[1]} label="Especialização" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
           <TableCard card={subclassCards[2]} label="Maestria" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
         </div>
       </div>
@@ -474,8 +474,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="fixed top-16 landscape:top-4 md:top-32 left-1/2 -translate-x-1/2 z-[60] bg-black/80 border border-gold text-gold px-6 py-4 rounded-xl shadow-2xl animate-bounce text-center backdrop-blur-md">
             <div className="flex flex-col items-center gap-2">
                 <ArrowsLeftRight size={32} />
-                <p className="font-bold text-lg">MÃƒO CHEIA!</p>
-                <p className="text-sm text-white/80">Selecione uma carta da sua mÃ£o para enviar Ã  Reserva<br/>e abrir espaÃ§o para a nova carta.</p>
+                <p className="font-bold text-lg">MÃO CHEIA!</p>
+                <p className="text-sm text-white/80">Selecione uma carta da sua mão para enviar à Reserva<br/>e abrir espaço para a nova carta.</p>
                 <button onClick={() => { setIsSwapping(false); setPendingCard(null); }} className="mt-2 text-xs uppercase underline text-red-400 hover:text-red-300">Cancelar</button>
             </div>
         </div>
@@ -484,7 +484,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-[40]">
         <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-16 h-16 md:w-28 md:h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
           <img src="/pote_deck.png" className="w-full h-full object-contain" />
-          <div className="absolute inset-0 flex items-center justify-center pt-2 md:pt-4"><span className="font-rpg text-gold font-bold text-shadow text-xs md:text-lg group-hover:text-white transition-colors">GrimÃ³rio</span></div>
+          <div className="absolute inset-0 flex items-center justify-center pt-2 md:pt-4"><span className="font-rpg text-gold font-bold text-shadow text-xs md:text-lg group-hover:text-white transition-colors">Grimório</span></div>
         </button>
       </div>
 
@@ -522,8 +522,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-[95%] md:w-[85%] lg:w-[80%] h-[90dvh] md:h-[85dvh] landscape:h-[95dvh] bg-[#0f0b15]/95 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
             <div className="p-3 md:p-6 border-b border-white/5 flex flex-row flex-wrap md:flex-nowrap justify-between items-center bg-white/5 gap-3 md:gap-4 shrink-0">
-              <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu GrimÃ³rio" : "Pilha de Reserva"}</h2>
-              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Nome, tipo ou domÃ­nio (ex: 5 feitiÃ§o)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
+              <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
+              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Nome, tipo ou domínio (ex: 5 feitiço)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
               <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); setDomainFilter(null); setNivelFilter(null); }} className="ml-auto md:ml-0"><X size={28} className="text-white/50 hover:text-red-400" /></button>
             </div>
             {showGrimoire && (
@@ -571,7 +571,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
             <div className="flex-1 overflow-y-auto p-3 md:p-8 grid grid-cols-3 landscape:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-6 custom-scrollbar">
               {showGrimoire && filteredGrimoire.map((card) => {
                 const meta = formatCardMeta(card);
-                const displayName = card.nome.replace(/^(FeitiÃ§o|GrimÃ³rio|Talento)\s*-\s*/i, '');
+                const displayName = card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '');
                 return (
                 <div key={card.caminho} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
                   <div
@@ -592,7 +592,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                       </span>
                     )}
                     <span className="absolute bottom-1 left-1 right-1 z-10 px-1 py-0.5 rounded bg-black/75 text-[8px] uppercase leading-none text-center truncate" style={{ color: card.cor_dominio ?? '#ffffff99' }}>
-                      {card.tipo_dominio ?? (card.categoria === 'GrimÃ³rio' ? 'GrimÃ³rio' : card.categoria)}
+                      {card.tipo_dominio ?? (card.categoria === 'Grimório' ? 'Grimório' : card.categoria)}
                     </span>
                     <img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -608,15 +608,15 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                   <p>Nenhuma carta encontrada.</p>
                   {grimoireSuggestions.length > 0 && (
                     <div className="mt-4">
-                      <p className="text-white/40 text-sm mb-3">VocÃª quis dizer:</p>
+                      <p className="text-white/40 text-sm mb-3">Você quis dizer:</p>
                       <div className="flex flex-wrap justify-center gap-2">
                         {grimoireSuggestions.map((card) => (
                           <button
                             key={card.caminho}
-                            onClick={() => setSearchTerm(card.nome.replace(/^(FeitiÃ§o|GrimÃ³rio|Talento)\s*-\s*/i, ''))}
+                            onClick={() => setSearchTerm(card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, ''))}
                             className="px-3 py-1 rounded-full border border-gold/30 text-gold text-xs hover:bg-gold/10 transition-colors"
                           >
-                            {card.nome.replace(/^(FeitiÃ§o|GrimÃ³rio|Talento)\s*-\s*/i, '')}
+                            {card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '')}
                           </button>
                         ))}
                       </div>
@@ -679,12 +679,12 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
                   <div className="grid grid-cols-2 gap-2 mt-2">
                       <button onClick={() => { const idx = hand.findIndex(c => (c as ActiveCard).uniqueId === (currentSelectedCard as ActiveCard).uniqueId); if (idx > -1) manualMoveToReserve(idx); }} className="flex items-center justify-center gap-2 px-2 py-3 bg-white/5 border border-white/10 text-gray-300 rounded hover:bg-white/10 hover:border-white/30 transition-all text-sm font-bold"><Stack size={20} /> Mover para Reserva</button>
-                      <button onClick={() => returnToGrimoire((currentSelectedCard as ActiveCard).uniqueId)} className="flex items-center justify-center gap-2 px-2 py-3 bg-red-900/10 border border-red-500/20 text-red-300 rounded hover:bg-red-900/30 hover:border-red-500/40 transition-all text-sm font-bold"><ArrowUUpLeft size={20} /> Devolver ao GrimÃ³rio</button>
+                      <button onClick={() => returnToGrimoire((currentSelectedCard as ActiveCard).uniqueId)} className="flex items-center justify-center gap-2 px-2 py-3 bg-red-900/10 border border-red-500/20 text-red-300 rounded hover:bg-red-900/30 hover:border-red-500/40 transition-all text-sm font-bold"><ArrowUUpLeft size={20} /> Devolver ao Grimório</button>
                   </div>
                 </div>
               )}
 
-              {selectedCardState?.source === 'table' && <div className="p-6 bg-white/5 rounded border border-white/10 text-sm text-gray-300"><p className="flex items-center gap-2 mb-2 text-gold"><LockKey /> <strong>Carta Permanente</strong></p><p>Esta carta define seu personagem e sÃ³ pode ser alterada pelo Mestre.</p></div>}
+              {selectedCardState?.source === 'table' && <div className="p-6 bg-white/5 rounded border border-white/10 text-sm text-gray-300"><p className="flex items-center gap-2 mb-2 text-gold"><LockKey /> <strong>Carta Permanente</strong></p><p>Esta carta define seu personagem e só pode ser alterada pelo Mestre.</p></div>}
               
               <button onClick={() => setSelectedCardState(null)} className="mt-4 flex items-center justify-center gap-2 text-white/40 hover:text-white transition-colors"><ArrowsOutSimple size={20} /> Fechar</button>
             </div>
@@ -811,7 +811,7 @@ export default function JogadorVTT() {
           if (safeNewRequests.length === 0) setIsNotifOpen(false);
 
       } catch (error) {
-          console.error("Erro ao responder vÃ­nculo:", error);
+          console.error("Erro ao responder vínculo:", error);
           alert("Erro ao enviar resposta.");
       }
   };
@@ -834,7 +834,7 @@ export default function JogadorVTT() {
     }));
   }, [character, groupCharacters]);
 
-  if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando GrimÃ³rio...</div>;
+  if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando Grimório...</div>;
   if (!character) return null;
 
   const color1 = CLASS_COLORS[character.class] || '#4b5563';
@@ -871,7 +871,7 @@ export default function JogadorVTT() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
 
-      {/* NOVO BOTÃƒO DE FICHA EM FORMATO DE BOLINHA */}
+      {/* NOVO BOTÃO DE FICHA EM FORMATO DE BOLINHA */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-[40] animate-fade-in pointer-events-auto">
         <button 
           onClick={() => setSheetOpen(true)} 
@@ -902,7 +902,7 @@ export default function JogadorVTT() {
               <div className="mt-3 w-80 max-h-[70vh] overflow-y-auto custom-scrollbar bg-[#1a120b]/95 border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-4 animate-scale-up origin-top-right backdrop-blur-md">
                   <div className="flex justify-between items-center border-b border-white/10 pb-2">
                       <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                          <ChatTeardropText size={16} className="text-gold"/> Perguntas de VÃ­nculo
+                          <ChatTeardropText size={16} className="text-gold"/> Perguntas de Vínculo
                       </h3>
                       <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/30 hover:text-white"/></button>
                   </div>
@@ -954,7 +954,7 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      {/* BOTÃ•ES DE DADO E COMBATE */}
+      {/* BOTÕES DE DADO E COMBATE */}
       <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto flex flex-col gap-3 items-center">
         <button
           onClick={() => setShowCombatTracker(true)}
@@ -1037,7 +1037,7 @@ export default function JogadorVTT() {
                 </h1>
 
                  <span className="relative z-10 text-green-400 text-sm md:text-lg uppercase tracking-widest mt-2 font-bold bg-black/40 px-4 py-1 rounded border border-green-500/30">
-                    {transformAlert.baseForm} â€¢ {transformAlert.tierLabel || "Forma Selvagem"}
+                    {transformAlert.baseForm} • {transformAlert.tierLabel || "Forma Selvagem"}
                  </span>
             </div>
         </div>

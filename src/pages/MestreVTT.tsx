@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   collection, query, onSnapshot, orderBy, 
   addDoc, serverTimestamp, limit, writeBatch, doc, updateDoc, getDocs 
@@ -16,7 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
 
-// --- IMPORTAÃ‡ÃƒO DOS SEUS COMPONENTES ---
+// --- IMPORTAÇÃO DOS SEUS COMPONENTES ---
 import SceneryViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
@@ -28,16 +28,16 @@ import { DiceSystemModal } from '../components/dice/DiceSystemModal';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
 import { getConditionsForCharacter } from '../lib/tokenConditions'; 
 
-// --- CONFIGURAÃ‡Ã•ES E CORES ---
+// --- CONFIGURAÇÕES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
-  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "GuardiÃ£o": "#64748b",
+  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
 };
 const ANCESTRY_COLORS: Record<string, string> = {
-  "AnÃ£o": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
+  "Anão": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
   "Fauno": "#84cc16", "Firbolg": "#065f46", "Fungril": "#a3e635", "Galapa": "#0d9488", "Gigante": "#475569",
   "Goblin": "#4ade80", "Humano": "#38bdf8", "Infernis": "#dc2626", "Katari": "#f59e0b", "Orc": "#3f6212",
-  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "SÃ­mio": "#a16207",
+  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "Símio": "#a16207",
 };
 
 // --- INTERFACES ---
@@ -95,7 +95,7 @@ interface PlayerGroup {
     memberIds: string[];
 }
 
-// --- FUNÃ‡ÃƒO AUXILIAR: ATUALIZAR PATAMAR DRUIDA ---
+// --- FUNÇÃO AUXILIAR: ATUALIZAR PATAMAR DRUIDA ---
 const updateDruidTier = async (charId: string, currentTier: number, change: number) => {
     const newTier = Math.max(1, Math.min(4, (currentTier || 1) + change));
     const charRef = doc(db, "characters", charId);
@@ -107,7 +107,7 @@ const updateDruidTier = async (charId: string, currentTier: number, change: numb
 };
 
 // ============================================================================
-// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES (INDIVIDUAL - ATÃ‰ 6)
+// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES (INDIVIDUAL - AT0 6)
 // ============================================================================
 const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
   return (
@@ -119,7 +119,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
 
         return (
             <div key={char.id} className="flex items-center gap-2 w-full">
-                {/* BotÃ£o Principal do Jogador */}
+                {/* Botão Principal do Jogador */}
                 <button 
                     onClick={() => onSelectPlayer(char)}
                     className={`group relative flex-1 flex items-center gap-3 pr-4 pl-2 py-2 rounded-full border shadow-xl transition-all hover:scale-[1.02] text-left min-w-0
@@ -140,7 +140,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                         <h2 className="font-rpg text-sm font-bold leading-none text-white truncate w-full group-hover:text-gold transition-colors">{char.name}</h2>
                         <div className="flex flex-wrap items-center gap-1 text-[10px] text-white/90 mt-1 w-full leading-tight">
                             <span className="font-bold uppercase tracking-wide text-gold/80">{char.ancestry}</span>
-                            <span className="text-white/30">â€¢</span>
+                            <span className="text-white/30">•</span>
                             <span className="font-bold uppercase tracking-wide">{char.class}</span>
                             <span className="italic opacity-70">({char.subclass})</span>
                         </div>
@@ -150,7 +150,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                     </div>
                 </button>
 
-                {/* CONTROLE DE PATAMAR DRUIDA (AO LADO DO BOTÃƒO) */}
+                {/* CONTROLE DE PATAMAR DRUIDA (AO LADO DO BOTÃO) */}
                 {char.class === "Druida" && (
                     <div className="flex flex-col items-center justify-center gap-0 bg-black/80 rounded-lg border border-green-500/30 px-1 py-0.5 shadow-lg shrink-0 h-full animate-fade-in">
                         <button 
@@ -162,7 +162,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                         
                         <div className="flex items-center gap-1 px-1 py-0.5">
                             <PawPrint size={10} className="text-green-400" weight="fill" />
-                            <span className="text-[10px] font-bold text-white leading-none">{char.unlockedTier || 1}Âº</span>
+                            <span className="text-[10px] font-bold text-white leading-none">{char.unlockedTier || 1}º</span>
                         </div>
 
                         <button 
@@ -345,7 +345,7 @@ const GroupManagerModal = ({
               {/* Header */}
               <div className="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center shrink-0">
                   <h2 className="text-xl font-rpg text-gold flex items-center gap-2">
-                      <UsersThree size={24} weight="fill"/> Gerenciador de Mesas (InstÃ¢ncias)
+                      <UsersThree size={24} weight="fill"/> Gerenciador de Mesas (Instâncias)
                   </h2>
                   <button onClick={onClose}><X size={24} className="text-white/50 hover:text-red-400"/></button>
               </div>
@@ -403,7 +403,7 @@ const GroupManagerModal = ({
                       </div>
                   </div>
 
-                  {/* Main: SeleÃ§Ã£o de Personagens */}
+                  {/* Main: Seleção de Personagens */}
                   <div className="flex-1 flex flex-col bg-[#1a120b]">
                       {currentGroup ? (
                           <>
@@ -464,26 +464,26 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
     <div className="fixed inset-0 z-[3000] bg-black/95 flex flex-col animate-fade-in" onClick={e => e.stopPropagation()}>
        {/* Header */}
        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a120b]">
-          <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de GrimÃ³rios</h2>
+          <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de Grimórios</h2>
           <button onClick={onClose}><X size={32} className="text-white/50 hover:text-red-400" /></button>
        </div>
 
-       {/* ConteÃºdo scrollÃ¡vel */}
+       {/* Conteúdo scrollável */}
        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 flex gap-6 custom-scrollbar">
           {players.map(player => (
              <div key={player.id} className="min-w-[350px] w-[350px] bg-white/5 border border-white/10 rounded-xl flex flex-col h-full overflow-hidden">
-                {/* CabeÃ§alho do Jogador */}
+                {/* Cabeçalho do Jogador */}
                 <div className="p-3 bg-black/40 border-b border-white/5 flex items-center gap-3">
                    <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden"><img src={player.imageUrl || ''} className="w-full h-full object-cover"/></div>
                    <span className="font-bold text-white truncate">{player.name}</span>
                 </div>
 
-                {/* Ãrea de Cartas ScrollÃ¡vel Verticalmente */}
+                {/* Área de Cartas Scrollável Verticalmente */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
                     
-                    {/* MÃƒO */}
+                    {/* MÃO */}
                     <div>
-                        <h4 className="text-[10px] uppercase text-gold/70 tracking-widest mb-2 flex items-center gap-1"><HandPalm /> MÃ£o Ativa</h4>
+                        <h4 className="text-[10px] uppercase text-gold/70 tracking-widest mb-2 flex items-center gap-1"><HandPalm /> Mão Ativa</h4>
                         <div className="grid grid-cols-2 gap-2">
                             {player.cards?.hand?.map((card, idx) => (
                                 <div key={idx} onClick={() => setZoomedCard(card)} className={`relative aspect-[2/3] rounded border cursor-help hover:scale-105 transition-transform ${card.isExhausted ? 'border-red-500/50 grayscale opacity-70' : 'border-white/20'}`}>
@@ -492,7 +492,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
                                     {card.isExhausted && <div className="absolute inset-0 flex items-center justify-center"><Skull className="text-white/80" /></div>}
                                 </div>
                             ))}
-                            {(!player.cards?.hand || player.cards.hand.length === 0) && <p className="text-xs text-white/20 col-span-2 text-center py-4">MÃ£o vazia</p>}
+                            {(!player.cards?.hand || player.cards.hand.length === 0) && <p className="text-xs text-white/20 col-span-2 text-center py-4">Mão vazia</p>}
                         </div>
                     </div>
 
@@ -531,7 +531,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
 };
 
 // ============================================================================
-// 4. COMPONENTE AUXILIAR: NOTIFICAÃ‡ÃƒO DE DADOS (TOAST)
+// 4. COMPONENTE AUXILIAR: NOTIFICAÇÃO DE DADOS (TOAST)
 // ============================================================================
 const DiceToast = () => {
     const [lastRoll, setLastRoll] = useState<RollLog | null>(null);
@@ -579,7 +579,7 @@ const DiceToast = () => {
                              <span className="text-purple-400 font-bold">{lastRoll.result.fearDie} (Medo)</span>
                         </div>
                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${lastRoll.result.outcome === 'CRITICAL' ? 'bg-gold text-black' : lastRoll.result.isSuccess ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'}`}>
-                            {lastRoll.result.outcome === 'CRITICAL' ? 'CrÃ­tico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
+                            {lastRoll.result.outcome === 'CRITICAL' ? 'Crítico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
                         </div>
                     </div>
                 ) : (
@@ -629,7 +629,7 @@ export default function MestreVTT() {
   .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
   @keyframes ds-fade-in { 0% { opacity: 0; transform: scale(1.2); } 15% { opacity: 1; transform: scale(1); } 85% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.9); } }
 
-  /* ANIMAÃ‡Ã•ES DOS DADOS RECUPERADAS */
+  /* ANIMAÇÕES DOS DADOS RECUPERADAS */
   @keyframes tumble-3d {
       0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
       25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
@@ -648,7 +648,7 @@ export default function MestreVTT() {
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
 
-  // 1. Inicializa SessÃ£o e Listeners Globais
+  // 1. Inicializa Sessão e Listeners Globais
   useEffect(() => {
     const unsubscribe = subscribeSession(
       (data) => {
@@ -689,7 +689,7 @@ useEffect(() => {
     return () => unsubscribe();
   }, []); 
 
-  // 2.1 Sincroniza Personagem Selecionado (Roda apenas quando necessÃ¡rio)
+  // 2.1 Sincroniza Personagem Selecionado (Roda apenas quando necessário)
   useEffect(() => {
       if (selectedChar) {
           const updated = characters.find(c => c.id === selectedChar.id);
@@ -811,7 +811,7 @@ useEffect(() => {
        {/* CONTADOR DE TURNOS */}
        {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={true} />}
 
-       {/* BESTIÃRIO - NOVO */}
+       {/* BESTIÁRIO - NOVO */}
        {showCombatTracker && sessaoData && (
          <CombatTracker
            sessaoData={sessaoData}
@@ -842,7 +842,7 @@ useEffect(() => {
                 <p className="text-sm md:text-xl text-white/90 font-light tracking-[0.3em] uppercase my-3 relative z-10 bg-black/60 px-6 py-1 rounded-full border border-white/10 backdrop-blur-md">Se transformou em</p>
                 <h1 className="text-5xl md:text-8xl font-black uppercase relative z-10 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] animate-zoom-in font-rpg leading-none pb-2">{transformAlert.formName}</h1>
                  <span className="relative z-10 text-green-400 text-sm md:text-lg uppercase tracking-widest mt-2 font-bold bg-black/40 px-4 py-1 rounded border border-green-500/30">
-                    {transformAlert.baseForm} â€¢ {transformAlert.tierLabel || "Forma Selvagem"}
+                    {transformAlert.baseForm} • {transformAlert.tierLabel || "Forma Selvagem"}
                  </span>
             </div>
         </div>
@@ -893,9 +893,9 @@ useEffect(() => {
            <div className="flex gap-3 mb-2">
                <button onClick={() => setShowGroupManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-400 hover:text-green-300 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Grupos"><UsersThree size={24} /></button>
                <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas"><MapTrifold size={24} /></button>
-               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar CenÃ¡rios/NPCs"><ImageIcon size={24} /></button>
+               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Cenários/NPCs"><ImageIcon size={24} /></button>
                
-               {/* BOTÃƒO: RASTREADOR DE COMBATE */}
+               {/* BOTÃO: RASTREADOR DE COMBATE */}
                <button 
                    onClick={() => setShowCombatTracker(!showCombatTracker)} 
                    className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
@@ -906,7 +906,7 @@ useEffect(() => {
                    <BookOpen size={24} weight={showCombatTracker ? "fill" : "regular"} />
                </button>
 
-               {/* BOTÃƒO: ESCUDO DO MESTRE (NOVO) */}
+               {/* BOTÃO: ESCUDO DO MESTRE (NOVO) */}
                <button 
                    onClick={() => setShowMasterShield(!showMasterShield)} 
                    className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
@@ -917,7 +917,7 @@ useEffect(() => {
                    <ShieldCheck size={24} weight={showMasterShield ? "fill" : "regular"} />
                </button>
 
-               {/* BOTÃƒO: CONTADOR DE TURNO */}
+               {/* BOTÃO: CONTADOR DE TURNO */}
                <button 
                    onClick={async () => {
                        if (sessaoData?.id) {
@@ -939,7 +939,7 @@ useEffect(() => {
            
            <button onClick={() => setShowCardsMonitor(true)} className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-900 to-black border border-blue-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform">
               <div className="bg-blue-500/20 p-2 rounded-full text-blue-300"><Eye size={32} /></div>
-              <div className="text-left"><span className="block font-bold text-white text-lg">VisÃ£o do Mestre</span><span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span></div>
+              <div className="text-left"><span className="block font-bold text-white text-lg">Visão do Mestre</span><span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span></div>
            </button>
 
            <div className="flex items-end gap-4 relative">
