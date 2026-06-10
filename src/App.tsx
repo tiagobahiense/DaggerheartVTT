@@ -13,6 +13,7 @@ import JogadorVTT from './pages/JogadorVTT';
 
 // Importação do CSS Global
 import './index.css';
+import { DiceRollOverlay } from './components/dice/DiceRollOverlay';
 
 // --- COMPONENTE DE ROTA PROTEGIDA ---
 // Verifica se o usuário está logado antes de deixar ele entrar na página
@@ -55,6 +56,7 @@ function App() {
     // O BrowserRouter deve envolver toda a aplicação
     <BrowserRouter>
       <div className="h-screen w-screen bg-dungeon-dark overflow-hidden font-body text-parchment">
+        <DiceRollOverlay />
         <Routes>
           {/* --- ROTAS PÚBLICAS --- */}
           <Route path="/" element={<LandingPage />} />

@@ -1,4 +1,4 @@
-import { DruidMorphModal } from '../components/DruidMorphModal'; 
+﻿import { DruidMorphModal } from '../components/DruidMorphModal'; 
 import { PawPrint } from '@phosphor-icons/react'; 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ import {
   X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Plus, 
   ArrowsLeftRight, Coin, Skull, Sparkle,
-  Dna, Coins, Cube, ArrowUUpLeft, ChatTeardropText, PaperPlaneRight,
+  Dna, ArrowUUpLeft, ChatTeardropText, PaperPlaneRight,
   Users
 } from '@phosphor-icons/react';
 
@@ -26,8 +26,7 @@ import TurnCounter from '../components/TurnCounter';
 import CombatTracker from '../components/CombatTracker';
 import { ConditionId } from '../types/sheetExtras';
 import { getConditionsForCharacter } from '../lib/tokenConditions';
-import { DamageRollPanel } from '../components/dice/DamageRollPanel';
-import { GroupTestPanel } from '../components/dice/GroupTestPanel';
+import { DiceSystemModal } from '../components/dice/DiceSystemModal';
 
 // ==================================================================================
 // 1. TIPOS GERAIS
@@ -84,25 +83,6 @@ interface Character {
   };
 }
 
-interface DualityResult {
-  type: 'DUALITY';
-  hopeDie: number;
-  fearDie: number;
-  modifier: number;
-  total: number;
-  outcome: 'CRITICAL' | 'HOPE' | 'FEAR';
-  isSuccess: boolean;
-}
-
-interface StandardResult {
-  type: 'STANDARD';
-  rolls: number[];
-  dieType: number;
-  modifier: number;
-  total: number;
-}
-
-type RollResult = DualityResult | StandardResult;
 
 interface RollLog {
   id: string;
@@ -113,14 +93,14 @@ interface RollLog {
 }
 
 const CLASS_COLORS: Record<string, string> = {
-  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
+  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "GuardiÃ£o": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
 };
 const ANCESTRY_COLORS: Record<string, string> = {
-  "Anão": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
+  "AnÃ£o": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
   "Fauno": "#84cc16", "Firbolg": "#065f46", "Fungril": "#a3e635", "Galapa": "#0d9488", "Gigante": "#475569",
   "Goblin": "#4ade80", "Humano": "#38bdf8", "Infernis": "#dc2626", "Katari": "#f59e0b", "Orc": "#3f6212",
-  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "Símio": "#a16207",
+  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "SÃ­mio": "#a16207",
 };
 
 // ==================================================================================
@@ -173,7 +153,7 @@ const DiceToast = () => {
                              <span className="text-purple-400 font-bold">{lastRoll.result.fearDie} (Medo)</span>
                         </div>
                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${lastRoll.result.outcome === 'CRITICAL' ? 'bg-gold text-black' : lastRoll.result.isSuccess ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'}`}>
-                            {lastRoll.result.outcome === 'CRITICAL' ? 'Crítico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
+                            {lastRoll.result.outcome === 'CRITICAL' ? 'CrÃ­tico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
                         </div>
                     </div>
                 ) : (
@@ -203,273 +183,6 @@ const TableCard = ({ card, label, locked = true, onSelect }: { card: Card | null
     );
 };
 
-// ==================================================================================
-// SISTEMA DE DADOS
-// ==================================================================================
-function InternalDiceSystem({ characterName, character, onClose }: { characterName: string, character?: any, onClose: () => void }) {
-  const [tab, setTab] = useState<'DUALITY' | 'STANDARD' | 'DAMAGE' | 'GROUP'>('DUALITY');
-  const [isRolling, setIsRolling] = useState(false);
-  const [result, setResult] = useState<RollResult | null>(null);
-
-  const [modifier, setModifier] = useState(0);
-  const [difficulty, setDifficulty] = useState<number>(12);
-  const [advantage, setAdvantage] = useState<'none' | 'advantage' | 'disadvantage'>('none');
-
-  const [selectedDie, setSelectedDie] = useState(20); 
-  const [diceCount, setDiceCount] = useState(1);
-  const [standardMod, setStandardMod] = useState(0);
-
-  const pushRollToFirebase = async (rollResult: any, type: string) => {
-      try {
-        await addDoc(collection(db, 'rolls'), {
-            playerName: characterName, 
-            type,
-            result: rollResult,
-            timestamp: serverTimestamp()
-        });
-      } catch (e) {
-          console.error("Erro ao enviar rolagem:", e);
-      }
-  };
-
-  const rollDuality = () => {
-    setIsRolling(true);
-    setResult(null);
-
-    setTimeout(() => {
-      const hope = Math.floor(Math.random() * 12) + 1;
-      const fear = Math.floor(Math.random() * 12) + 1;
-      
-      let advRoll = 0;
-      if (advantage !== 'none') advRoll = Math.floor(Math.random() * 6) + 1;
-      const finalAdvMod = advantage === 'advantage' ? advRoll : advantage === 'disadvantage' ? -advRoll : 0;
-
-      const total = hope + fear + modifier + finalAdvMod;
-
-      let outcome: 'CRITICAL' | 'HOPE' | 'FEAR' = 'FEAR';
-      if (hope === fear) outcome = 'CRITICAL';
-      else if (hope > fear) outcome = 'HOPE';
-      else outcome = 'FEAR';
-
-      const finalResult = {
-        type: 'DUALITY' as const,
-        hopeDie: hope,
-        fearDie: fear,
-        modifier: modifier + finalAdvMod,
-        total,
-        outcome,
-        isSuccess: total >= difficulty
-      };
-
-      setResult(finalResult);
-      pushRollToFirebase(finalResult, 'DUALITY'); 
-      setIsRolling(false);
-    }, 1000);
-  };
-
-  const rollStandard = () => {
-    setIsRolling(true);
-    setResult(null);
-
-    setTimeout(() => {
-        const rolls = Array.from({ length: diceCount }, () => Math.floor(Math.random() * selectedDie) + 1);
-        const sum = rolls.reduce((a, b) => a + b, 0);
-        
-        const finalResult = {
-            type: 'STANDARD' as const,
-            rolls,
-            dieType: selectedDie,
-            modifier: standardMod,
-            total: sum + standardMod
-        };
-
-        setResult(finalResult);
-        pushRollToFirebase(finalResult, 'STANDARD');
-        setIsRolling(false);
-    }, 1000);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg md:max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden max-h-[90dvh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
-        
-        <div className="flex justify-between items-start mb-6">
-            <div className="flex gap-1 flex-wrap">
-                {(['DUALITY', 'STANDARD', 'DAMAGE', 'GROUP'] as const).map((t) => (
-                <button 
-                    key={t}
-                    onClick={() => { setTab(t); setResult(null); }}
-                    className={`text-xs font-rpg font-bold px-2 py-1 rounded transition-colors ${tab === t ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}
-                >
-                    {t === 'DUALITY' ? 'Dualidade' : t === 'STANDARD' ? 'Padrão' : t === 'DAMAGE' ? 'Dano' : 'Grupo'}
-                </button>
-                ))}
-            </div>
-            <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
-        </div>
-
-        {tab === 'DUALITY' && !isRolling && !result && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between gap-4">
-              <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
-                <div className="flex items-center gap-3 justify-center">
-                  <button onClick={() => setModifier(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
-                  <span className="text-xl font-bold text-white w-8 text-center">{modifier >= 0 ? `+${modifier}` : modifier}</span>
-                  <button onClick={() => setModifier(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
-                </div>
-              </div>
-              <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                <label className="text-xs uppercase text-white/50 mb-1 block">Dificuldade</label>
-                <input type="number" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} className="w-full bg-transparent text-xl font-bold text-white text-center outline-none border-b border-white/20 focus:border-gold" />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button onClick={() => setAdvantage(v => v === 'advantage' ? 'none' : 'advantage')} className={`flex-1 py-2 rounded border transition-all text-xs font-bold uppercase ${advantage === 'advantage' ? 'bg-green-900/50 border-green-500 text-green-100' : 'bg-black/40 border-white/10 text-white/40'}`}>Vantagem (+d6)</button>
-              <button onClick={() => setAdvantage(v => v === 'disadvantage' ? 'none' : 'disadvantage')} className={`flex-1 py-2 rounded border transition-all text-xs font-bold uppercase ${advantage === 'disadvantage' ? 'bg-red-900/50 border-red-500 text-red-100' : 'bg-black/40 border-white/10 text-white/40'}`}>Desvantagem (-d6)</button>
-            </div>
-
-            <button onClick={rollDuality} className="w-full py-4 bg-gradient-to-r from-gold/80 to-yellow-600/80 hover:from-gold hover:to-yellow-500 text-black font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3">
-              <Dna size={24} weight="fill" /> ROLAR DUALIDADE
-            </button>
-          </div>
-        )}
-
-        {tab === 'DAMAGE' && (
-          <DamageRollPanel
-            defaultProficiency={character?.proficiency || 1}
-            defaultDamageStr={character?.weapons?.main?.damageType || 'd6'}
-            onRoll={(r) => pushRollToFirebase(r, 'DAMAGE')}
-          />
-        )}
-
-        {tab === 'GROUP' && (
-          <GroupTestPanel onRoll={(r) => pushRollToFirebase(r, r.type)} />
-        )}
-
-        {tab === 'STANDARD' && !isRolling && !result && (
-            <div className="space-y-6 animate-fade-in">
-                <div className="grid grid-cols-4 gap-2">
-                    {[4, 6, 8, 10, 12, 20, 100].map(d => (
-                        <button 
-                            key={d} 
-                            onClick={() => setSelectedDie(d)}
-                            className={`py-2 rounded border text-sm font-bold ${selectedDie === d ? 'bg-purple-900 border-purple-400 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
-                        >
-                            d{d}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex gap-4">
-                      <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                        <label className="text-xs uppercase text-white/50 mb-1 block">Quantidade</label>
-                        <div className="flex items-center gap-3 justify-center">
-                            <button onClick={() => setDiceCount(c => Math.max(1, c - 1))} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
-                            <span className="text-xl font-bold text-white w-8 text-center">{diceCount}</span>
-                            <button onClick={() => setDiceCount(c => c + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
-                        </div>
-                      </div>
-                      <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                        <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
-                        <div className="flex items-center gap-3 justify-center">
-                            <button onClick={() => setStandardMod(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
-                            <span className="text-xl font-bold text-white w-8 text-center">{standardMod >= 0 ? `+${standardMod}` : standardMod}</span>
-                            <button onClick={() => setStandardMod(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
-                        </div>
-                      </div>
-                </div>
-
-                <button onClick={rollStandard} className="w-full py-4 bg-gradient-to-r from-purple-800 to-indigo-900 hover:from-purple-700 hover:to-indigo-800 text-white font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3">
-                  <Cube size={24} weight="fill" /> ROLAR DADOS
-                </button>
-            </div>
-        )}
-
-        {isRolling && (
-          <div className="h-64 flex flex-col items-center justify-center gap-8 perspective-1000">
-            <div className="flex gap-12">
-                <div className="w-20 h-20 bg-gradient-to-br from-gold to-yellow-800 rounded-xl border-2 border-white/30 animate-tumble-3d shadow-2xl flex items-center justify-center">
-                    <Dna size={40} className="text-black/50 animate-spin-slow" />
-                </div>
-                {tab === 'DUALITY' && (
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-900 to-black rounded-xl border-2 border-purple-500 animate-tumble-3d-reverse shadow-2xl flex items-center justify-center">
-                        <Skull size={40} className="text-white/30 animate-spin-slow" />
-                    </div>
-                )}
-            </div>
-            <p className="text-gold font-rpg tracking-widest text-lg animate-pulse">O DESTINO GIRA...</p>
-          </div>
-        )}
-
-        {result?.type === 'DUALITY' && !isRolling && (
-          <div className="text-center animate-fade-in-up">
-            <div className="flex justify-center items-center gap-6 mb-6">
-              <div className="flex flex-col items-center gap-2">
-                <div className="relative w-24 h-24 bg-gradient-to-br from-gold to-yellow-700 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-white/20 transform hover:scale-110 transition-transform">
-                   <span className="text-5xl font-bold text-white drop-shadow-md">{result.hopeDie}</span>
-                   <span className="absolute -top-3 bg-black/80 text-[10px] text-gold px-2 py-0.5 rounded border border-gold/30 uppercase tracking-widest">Esperança</span>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-white/20">+</div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="relative w-24 h-24 bg-gradient-to-br from-purple-600 to-black rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(147,51,234,0.3)] border border-white/20 transform hover:scale-110 transition-transform">
-                   <span className="text-5xl font-bold text-purple-100 drop-shadow-md">{result.fearDie}</span>
-                   <span className="absolute -top-3 bg-black/80 text-[10px] text-purple-400 px-2 py-0.5 rounded border border-purple-500/30 uppercase tracking-widest">Medo</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-                <div className="text-white/50 text-sm mb-1">{result.hopeDie} (Esp) + {result.fearDie} (Medo) + {result.modifier} (Mod) = </div>
-                <div className={`text-6xl font-rpg font-bold drop-shadow-lg ${result.isSuccess ? 'text-green-400' : 'text-red-400'}`}>{result.total}</div>
-                <div className="text-xs uppercase tracking-[0.2em] text-white/40 mt-1">vs Dificuldade {difficulty}</div>
-            </div>
-
-            <div className={`p-4 rounded-lg border-2 mb-6 ${result.outcome === 'CRITICAL' ? 'bg-gold/10 border-gold text-gold' : result.outcome === 'HOPE' ? 'bg-blue-900/20 border-blue-400 text-blue-200' : 'bg-purple-900/20 border-purple-500 text-purple-200'}`}>
-                <h3 className="text-xl font-bold uppercase flex items-center justify-center gap-2">
-                    {result.outcome === 'CRITICAL' && <Sparkle size={24} weight="fill" />}
-                    {result.outcome === 'HOPE' && <Coins size={24} weight="fill" />}
-                    {result.outcome === 'FEAR' && <Skull size={24} weight="fill" />}
-                    {result.isSuccess ? "Sucesso" : "Falha"} com {result.outcome === 'CRITICAL' ? " CRÍTICO!" : result.outcome === 'HOPE' ? " ESPERANÇA" : " MEDO"}
-                </h3>
-                <p className="text-sm opacity-80 mt-1">
-                    {result.outcome === 'CRITICAL' && "Ganhe 1 Esperança E Limpe 1 Estresse."}
-                    {result.outcome === 'HOPE' && "Ganhe 1 Esperança. Você consegue."}
-                    {result.outcome === 'FEAR' && "O Mestre ganha 1 Medo. Prepare-se."}
-                </p>
-            </div>
-            <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
-          </div>
-        )}
-
-        {result?.type === 'STANDARD' && !isRolling && (
-            <div className="text-center animate-fade-in-up">
-                <div className="flex flex-wrap justify-center gap-4 mb-6">
-                    {result.rolls.map((val, i) => (
-                        <div key={i} className="relative w-16 h-16 bg-white/5 border border-white/20 rounded-lg flex items-center justify-center shadow-lg">
-                            <span className="text-2xl font-bold text-white">{val}</span>
-                            <span className="absolute -bottom-2 text-[8px] bg-black px-1 rounded text-white/50">d{result.dieType}</span>
-                        </div>
-                    ))}
-                </div>
-                
-                <div className="mb-6">
-                    <div className="text-white/50 text-sm mb-1">
-                        [{result.rolls.join(' + ')}] {result.modifier >= 0 ? `+ ${result.modifier}` : result.modifier} (Mod) =
-                    </div>
-                    <div className="text-6xl font-rpg font-bold text-white drop-shadow-lg">{result.total}</div>
-                </div>
-
-                <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
-            </div>
-        )}
-
-      </div>
-    </div>
-  );
-}
 
 // ==================================================================================
 // SISTEMA DE CARTAS (InternalCardSystem)
@@ -601,7 +314,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   };
 
   const handleCastCard = (card: ActiveCard) => {
-    if (card.isExhausted) return alert("Esta carta está exaurida.");
+    if (card.isExhausted) return alert("Esta carta estÃ¡ exaurida.");
     setSelectedCardState(null);
     setCastingCard(card);
     setTimeout(() => setCastingCard(null), 1500);
@@ -609,7 +322,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
   const initiateDraw = (card: Card, source: 'grimoire' | 'reserve', reserveIndex: number = -1) => {
     if (isSwapping) return;
-    if (hand.some(c => c.nome === card.nome)) return alert("Você já tem essa carta.");
+    if (hand.some(c => c.nome === card.nome)) return alert("VocÃª jÃ¡ tem essa carta.");
     markCardsDirty();
     if (hand.length < 5) {
       setHand(prev => [...prev, createActiveCard(card)]);
@@ -685,7 +398,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   };
 
   const filteredGrimoire = useMemo(() => sortGrimoireCards(searchCards(safeCards, searchTerm, {
-    categories: ["Feitiço", "Grimório", "Talento"],
+    categories: ["FeitiÃ§o", "GrimÃ³rio", "Talento"],
     domain: domainFilter,
     nivel: nivelFilter,
   })), [safeCards, searchTerm, domainFilter, nivelFilter]);
@@ -693,7 +406,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
   const grimoireSuggestions = useMemo(() => {
     if (filteredGrimoire.length > 0 || searchTerm.trim().length < 2) return [];
     return suggestCards(
-      safeCards.filter(c => ["Feitiço", "Grimório", "Talento"].includes(c.categoria)),
+      safeCards.filter(c => ["FeitiÃ§o", "GrimÃ³rio", "Talento"].includes(c.categoria)),
       searchTerm,
       4
     );
@@ -752,7 +465,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="w-[1px] h-20 bg-white/10 hidden md:block"></div>
         <div className="flex gap-1 pointer-events-auto bg-black/20 p-2 rounded-lg backdrop-blur-sm border border-white/5">
           <TableCard card={subclassCards[0]} label="Fundamental" onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
-          <TableCard card={subclassCards[1]} label="Especialização" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
+          <TableCard card={subclassCards[1]} label="EspecializaÃ§Ã£o" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
           <TableCard card={subclassCards[2]} label="Maestria" locked={false} onSelect={(c) => setSelectedCardState({ id: null, staticCard: c, source: 'table' })} />
         </div>
       </div>
@@ -761,8 +474,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="fixed top-16 landscape:top-4 md:top-32 left-1/2 -translate-x-1/2 z-[60] bg-black/80 border border-gold text-gold px-6 py-4 rounded-xl shadow-2xl animate-bounce text-center backdrop-blur-md">
             <div className="flex flex-col items-center gap-2">
                 <ArrowsLeftRight size={32} />
-                <p className="font-bold text-lg">MÃO CHEIA!</p>
-                <p className="text-sm text-white/80">Selecione uma carta da sua mão para enviar à Reserva<br/>e abrir espaço para a nova carta.</p>
+                <p className="font-bold text-lg">MÃƒO CHEIA!</p>
+                <p className="text-sm text-white/80">Selecione uma carta da sua mÃ£o para enviar Ã  Reserva<br/>e abrir espaÃ§o para a nova carta.</p>
                 <button onClick={() => { setIsSwapping(false); setPendingCard(null); }} className="mt-2 text-xs uppercase underline text-red-400 hover:text-red-300">Cancelar</button>
             </div>
         </div>
@@ -771,7 +484,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
       <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-[40]">
         <button onClick={() => !isSwapping && setShowGrimoire(true)} className={`group relative w-16 h-16 md:w-28 md:h-28 transition-transform active:scale-95 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] ${isSwapping ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'}`}>
           <img src="/pote_deck.png" className="w-full h-full object-contain" />
-          <div className="absolute inset-0 flex items-center justify-center pt-2 md:pt-4"><span className="font-rpg text-gold font-bold text-shadow text-xs md:text-lg group-hover:text-white transition-colors">Grimório</span></div>
+          <div className="absolute inset-0 flex items-center justify-center pt-2 md:pt-4"><span className="font-rpg text-gold font-bold text-shadow text-xs md:text-lg group-hover:text-white transition-colors">GrimÃ³rio</span></div>
         </button>
       </div>
 
@@ -809,8 +522,8 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-[95%] md:w-[85%] lg:w-[80%] h-[90dvh] md:h-[85dvh] landscape:h-[95dvh] bg-[#0f0b15]/95 border border-white/10 rounded-xl flex flex-col overflow-hidden shadow-2xl">
             <div className="p-3 md:p-6 border-b border-white/5 flex flex-row flex-wrap md:flex-nowrap justify-between items-center bg-white/5 gap-3 md:gap-4 shrink-0">
-              <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu Grimório" : "Pilha de Reserva"}</h2>
-              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Nome, tipo ou domínio (ex: 5 feitiço)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
+              <h2 className="text-lg md:text-3xl text-gold font-rpg whitespace-nowrap">{showGrimoire ? "Seu GrimÃ³rio" : "Pilha de Reserva"}</h2>
+              {showGrimoire && (<div className="relative w-full md:w-96 order-last md:order-none mt-2 md:mt-0"><MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" /><input type="text" placeholder="Nome, tipo ou domÃ­nio (ex: 5 feitiÃ§o)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-black/50 border border-white/20 rounded-full py-2 pl-10 pr-4 text-white focus:border-gold outline-none text-sm md:text-base" autoFocus /></div>)}
               <button onClick={() => { setShowGrimoire(false); setShowReserve(false); setSearchTerm(''); setDomainFilter(null); setNivelFilter(null); }} className="ml-auto md:ml-0"><X size={28} className="text-white/50 hover:text-red-400" /></button>
             </div>
             {showGrimoire && (
@@ -841,7 +554,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                     onClick={() => setNivelFilter(null)}
                     className={`shrink-0 w-8 h-8 rounded-full text-xs font-bold border transition-colors ${nivelFilter === null ? 'bg-gold/20 border-gold text-gold' : 'border-white/20 text-white/50 hover:border-white/40'}`}
                   >
-                    ∅
+                    âˆ…
                   </button>
                   {NIVEL_OPTIONS.map((nivel) => (
                     <button
@@ -858,7 +571,7 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
             <div className="flex-1 overflow-y-auto p-3 md:p-8 grid grid-cols-3 landscape:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-6 custom-scrollbar">
               {showGrimoire && filteredGrimoire.map((card) => {
                 const meta = formatCardMeta(card);
-                const displayName = card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '');
+                const displayName = card.nome.replace(/^(FeitiÃ§o|GrimÃ³rio|Talento)\s*-\s*/i, '');
                 return (
                 <div key={card.caminho} onClick={() => initiateDraw(card, 'grimoire')} className="cursor-pointer group flex flex-col items-center hover:z-50 hover:scale-110 transition-transform duration-200">
                   <div
@@ -875,11 +588,11 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                     )}
                     {card.custo_troca != null && (
                       <span className="absolute top-1 right-1 z-10 px-1.5 py-0.5 rounded bg-black/80 border border-white/20 text-white/80 text-[9px] font-bold leading-none">
-                        ⇄{card.custo_troca}
+                        â‡„{card.custo_troca}
                       </span>
                     )}
                     <span className="absolute bottom-1 left-1 right-1 z-10 px-1 py-0.5 rounded bg-black/75 text-[8px] uppercase leading-none text-center truncate" style={{ color: card.cor_dominio ?? '#ffffff99' }}>
-                      {card.tipo_dominio ?? (card.categoria === 'Grimório' ? 'Grimório' : card.categoria)}
+                      {card.tipo_dominio ?? (card.categoria === 'GrimÃ³rio' ? 'GrimÃ³rio' : card.categoria)}
                     </span>
                     <img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -895,15 +608,15 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                   <p>Nenhuma carta encontrada.</p>
                   {grimoireSuggestions.length > 0 && (
                     <div className="mt-4">
-                      <p className="text-white/40 text-sm mb-3">Você quis dizer:</p>
+                      <p className="text-white/40 text-sm mb-3">VocÃª quis dizer:</p>
                       <div className="flex flex-wrap justify-center gap-2">
                         {grimoireSuggestions.map((card) => (
                           <button
                             key={card.caminho}
-                            onClick={() => setSearchTerm(card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, ''))}
+                            onClick={() => setSearchTerm(card.nome.replace(/^(FeitiÃ§o|GrimÃ³rio|Talento)\s*-\s*/i, ''))}
                             className="px-3 py-1 rounded-full border border-gold/30 text-gold text-xs hover:bg-gold/10 transition-colors"
                           >
-                            {card.nome.replace(/^(Feitiço|Grimório|Talento)\s*-\s*/i, '')}
+                            {card.nome.replace(/^(FeitiÃ§o|GrimÃ³rio|Talento)\s*-\s*/i, '')}
                           </button>
                         ))}
                       </div>
@@ -966,12 +679,12 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
 
                   <div className="grid grid-cols-2 gap-2 mt-2">
                       <button onClick={() => { const idx = hand.findIndex(c => (c as ActiveCard).uniqueId === (currentSelectedCard as ActiveCard).uniqueId); if (idx > -1) manualMoveToReserve(idx); }} className="flex items-center justify-center gap-2 px-2 py-3 bg-white/5 border border-white/10 text-gray-300 rounded hover:bg-white/10 hover:border-white/30 transition-all text-sm font-bold"><Stack size={20} /> Mover para Reserva</button>
-                      <button onClick={() => returnToGrimoire((currentSelectedCard as ActiveCard).uniqueId)} className="flex items-center justify-center gap-2 px-2 py-3 bg-red-900/10 border border-red-500/20 text-red-300 rounded hover:bg-red-900/30 hover:border-red-500/40 transition-all text-sm font-bold"><ArrowUUpLeft size={20} /> Devolver ao Grimório</button>
+                      <button onClick={() => returnToGrimoire((currentSelectedCard as ActiveCard).uniqueId)} className="flex items-center justify-center gap-2 px-2 py-3 bg-red-900/10 border border-red-500/20 text-red-300 rounded hover:bg-red-900/30 hover:border-red-500/40 transition-all text-sm font-bold"><ArrowUUpLeft size={20} /> Devolver ao GrimÃ³rio</button>
                   </div>
                 </div>
               )}
 
-              {selectedCardState?.source === 'table' && <div className="p-6 bg-white/5 rounded border border-white/10 text-sm text-gray-300"><p className="flex items-center gap-2 mb-2 text-gold"><LockKey /> <strong>Carta Permanente</strong></p><p>Esta carta define seu personagem e só pode ser alterada pelo Mestre.</p></div>}
+              {selectedCardState?.source === 'table' && <div className="p-6 bg-white/5 rounded border border-white/10 text-sm text-gray-300"><p className="flex items-center gap-2 mb-2 text-gold"><LockKey /> <strong>Carta Permanente</strong></p><p>Esta carta define seu personagem e sÃ³ pode ser alterada pelo Mestre.</p></div>}
               
               <button onClick={() => setSelectedCardState(null)} className="mt-4 flex items-center justify-center gap-2 text-white/40 hover:text-white transition-colors"><ArrowsOutSimple size={20} /> Fechar</button>
             </div>
@@ -1098,7 +811,7 @@ export default function JogadorVTT() {
           if (safeNewRequests.length === 0) setIsNotifOpen(false);
 
       } catch (error) {
-          console.error("Erro ao responder vínculo:", error);
+          console.error("Erro ao responder vÃ­nculo:", error);
           alert("Erro ao enviar resposta.");
       }
   };
@@ -1121,7 +834,7 @@ export default function JogadorVTT() {
     }));
   }, [character, groupCharacters]);
 
-  if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando Grimório...</div>;
+  if (loading) return <div className="h-screen bg-black text-gold flex items-center justify-center font-rpg animate-pulse">Carregando GrimÃ³rio...</div>;
   if (!character) return null;
 
   const color1 = CLASS_COLORS[character.class] || '#4b5563';
@@ -1158,7 +871,7 @@ export default function JogadorVTT() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[20]"></div>
 
-      {/* NOVO BOTÃO DE FICHA EM FORMATO DE BOLINHA */}
+      {/* NOVO BOTÃƒO DE FICHA EM FORMATO DE BOLINHA */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-[40] animate-fade-in pointer-events-auto">
         <button 
           onClick={() => setSheetOpen(true)} 
@@ -1189,7 +902,7 @@ export default function JogadorVTT() {
               <div className="mt-3 w-80 max-h-[70vh] overflow-y-auto custom-scrollbar bg-[#1a120b]/95 border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-4 animate-scale-up origin-top-right backdrop-blur-md">
                   <div className="flex justify-between items-center border-b border-white/10 pb-2">
                       <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                          <ChatTeardropText size={16} className="text-gold"/> Perguntas de Vínculo
+                          <ChatTeardropText size={16} className="text-gold"/> Perguntas de VÃ­nculo
                       </h3>
                       <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/30 hover:text-white"/></button>
                   </div>
@@ -1241,7 +954,7 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      {/* BOTÕES DE DADO E COMBATE */}
+      {/* BOTÃ•ES DE DADO E COMBATE */}
       <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto flex flex-col gap-3 items-center">
         <button
           onClick={() => setShowCombatTracker(true)}
@@ -1280,7 +993,13 @@ export default function JogadorVTT() {
 
       <DiceToast />
 
-      {showDiceRoller && <InternalDiceSystem characterName={character.name} character={character} onClose={() => setShowDiceRoller(false)} />}
+      {showDiceRoller && (
+        <DiceSystemModal
+          playerName={character.name}
+          character={character}
+          onClose={() => setShowDiceRoller(false)}
+        />
+      )}
 
       <SheetModal 
         character={character} 
@@ -1318,7 +1037,7 @@ export default function JogadorVTT() {
                 </h1>
 
                  <span className="relative z-10 text-green-400 text-sm md:text-lg uppercase tracking-widest mt-2 font-bold bg-black/40 px-4 py-1 rounded border border-green-500/30">
-                    {transformAlert.baseForm} • {transformAlert.tierLabel || "Forma Selvagem"}
+                    {transformAlert.baseForm} â€¢ {transformAlert.tierLabel || "Forma Selvagem"}
                  </span>
             </div>
         </div>

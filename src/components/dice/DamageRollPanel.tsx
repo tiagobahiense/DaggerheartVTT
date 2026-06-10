@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sword } from '@phosphor-icons/react';
-import { parseDieSides, parseWeaponModifier, rollDamage } from '../../lib/damageHelpers';
+import { parseDieSides, parseWeaponModifier } from '../../lib/damageHelpers';
+import { rollDamageDice } from '../../lib/diceRollHelpers';
 
 interface DamageRollPanelProps {
   defaultProficiency?: number;
@@ -25,20 +26,32 @@ export function DamageRollPanel({
   const [dieSides, setDieSides] = useState(parseDieSides(defaultDamageStr));
   const [weaponMod, setWeaponMod] = useState(parseWeaponModifier(defaultDamageStr));
   const [isCritical, setIsCritical] = useState(false);
-  const [result, setResult] = useState<ReturnType<typeof rollDamage> | null>(null);
+  const [isRolling, setIsRolling] = useState(false);
+  const [result, setResult] = useState<{ rolls: number[]; total: number } | null>(null);
 
-  const handleRoll = () => {
-    const rolled = rollDamage(proficiency, dieSides, weaponMod, isCritical);
-    setResult(rolled);
-    onRoll({
-      type: 'DAMAGE',
-      rolls: rolled.rolls,
-      dieSides,
-      proficiency,
-      weaponMod,
-      isCritical,
-      total: rolled.total,
-    });
+  const handleRoll = async () => {
+    setIsRolling(true);
+
+    try {
+      const rolls = await rollDamageDice(proficiency, dieSides, isCritical);
+      const total = rolls.reduce((sum, value) => sum + value, 0) + weaponMod;
+      const rolled = { rolls, total };
+
+      setResult(rolled);
+      onRoll({
+        type: 'DAMAGE',
+        rolls: rolled.rolls,
+        dieSides,
+        proficiency,
+        weaponMod,
+        isCritical,
+        total: rolled.total,
+      });
+    } catch (error) {
+      console.error('Erro na rolagem de dano:', error);
+    } finally {
+      setIsRolling(false);
+    }
   };
 
   return (
@@ -87,9 +100,10 @@ export function DamageRollPanel({
 
       <button
         onClick={handleRoll}
-        className="w-full py-4 bg-gradient-to-r from-red-900 to-orange-900 hover:from-red-800 hover:to-orange-800 text-white font-bold font-rpg text-xl rounded shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+        disabled={isRolling}
+        className="w-full py-4 bg-gradient-to-r from-red-900 to-orange-900 hover:from-red-800 hover:to-orange-800 disabled:opacity-60 text-white font-bold font-rpg text-xl rounded shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
       >
-        <Sword size={24} weight="fill" /> ROLAR DANO
+        <Sword size={24} weight="fill" /> {isRolling ? 'ROLANDO...' : 'ROLAR DANO'}
       </button>
 
       {result && (

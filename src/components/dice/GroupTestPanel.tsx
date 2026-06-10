@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UsersThree, HandWaving } from '@phosphor-icons/react';
+import { rollDualityPair } from '../../lib/diceRollHelpers';
 
 interface GroupTestPanelProps {
   onRoll: (result: {
@@ -16,18 +17,13 @@ interface GroupTestPanelProps {
   }) => void;
 }
 
-function rollDualityPair() {
-  const hope = Math.floor(Math.random() * 12) + 1;
-  const fear = Math.floor(Math.random() * 12) + 1;
-  return { hope, fear };
-}
-
 export function GroupTestPanel({ onRoll }: GroupTestPanelProps) {
   const [mode, setMode] = useState<'reaction' | 'group'>('reaction');
   const [modifier, setModifier] = useState(0);
   const [difficulty, setDifficulty] = useState(12);
   const [allySuccesses, setAllySuccesses] = useState(0);
   const [allyFailures, setAllyFailures] = useState(0);
+  const [isRolling, setIsRolling] = useState(false);
   const [lastResult, setLastResult] = useState<{
     hope: number;
     fear: number;
@@ -37,25 +33,33 @@ export function GroupTestPanel({ onRoll }: GroupTestPanelProps) {
 
   const allyBonus = allySuccesses - allyFailures;
 
-  const handleRoll = () => {
-    const { hope, fear } = rollDualityPair();
-    const total = hope + fear + modifier + (mode === 'group' ? allyBonus : 0);
-    const isSuccess = total >= difficulty;
+  const handleRoll = async () => {
+    setIsRolling(true);
 
-    setLastResult({ hope, fear, total, isSuccess });
+    try {
+      const { hope, fear } = await rollDualityPair();
+      const total = hope + fear + modifier + (mode === 'group' ? allyBonus : 0);
+      const isSuccess = total >= difficulty;
 
-    onRoll({
-      type: mode === 'group' ? 'GROUP' : 'REACTION',
-      mode,
-      hopeDie: hope,
-      fearDie: fear,
-      modifier,
-      total,
-      difficulty,
-      isSuccess,
-      allyBonus: mode === 'group' ? allyBonus : undefined,
-      suggestedLeaderMod: mode === 'group' ? allyBonus : undefined,
-    });
+      setLastResult({ hope, fear, total, isSuccess });
+
+      onRoll({
+        type: mode === 'group' ? 'GROUP' : 'REACTION',
+        mode,
+        hopeDie: hope,
+        fearDie: fear,
+        modifier,
+        total,
+        difficulty,
+        isSuccess,
+        allyBonus: mode === 'group' ? allyBonus : undefined,
+        suggestedLeaderMod: mode === 'group' ? allyBonus : undefined,
+      });
+    } catch (error) {
+      console.error('Erro na rolagem de grupo:', error);
+    } finally {
+      setIsRolling(false);
+    }
   };
 
   return (
@@ -130,15 +134,16 @@ export function GroupTestPanel({ onRoll }: GroupTestPanelProps) {
 
       <button
         onClick={handleRoll}
-        className="w-full py-4 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white font-bold font-rpg text-lg rounded shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+        disabled={isRolling}
+        className="w-full py-4 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 disabled:opacity-60 text-white font-bold font-rpg text-lg rounded shadow-lg transition-all hover:scale-[1.02] active:scale-95"
       >
-        ROLAR {mode === 'reaction' ? 'REAÇÃO' : 'TESTE DO LÍDER'}
+        {isRolling ? 'ROLANDO...' : `ROLAR ${mode === 'reaction' ? 'REAÇÃO' : 'TESTE DO LÍDER'}`}
       </button>
 
       {lastResult && (
         <div className={`text-center p-4 rounded-lg border ${lastResult.isSuccess ? 'bg-green-900/20 border-green-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
           <p className="text-white/50 text-sm">
-            {lastResult.hope} + {lastResult.fear} + {modifier}
+            {lastResult.hope} (Esp) + {lastResult.fear} (Medo) + {modifier}
             {mode === 'group' && (allyBonus >= 0 ? ` + ${allyBonus}` : ` ${allyBonus}`)} = {lastResult.total}
           </p>
           <p className={`text-2xl font-bold ${lastResult.isSuccess ? 'text-green-400' : 'text-red-400'}`}>

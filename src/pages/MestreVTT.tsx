@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   collection, query, onSnapshot, orderBy, 
   addDoc, serverTimestamp, limit, writeBatch, doc, updateDoc, getDocs 
@@ -9,14 +9,14 @@ import { createFearEventId } from '../lib/fearEvents';
 import { FearTokenGrid, FearUseOverlay, triggerFearAlertLocally } from '../components/FearDisplay';
 import { 
   Users, Eye, Skull, Campfire, MoonStars, 
-  Dna, X, Cube, Coins, Sparkle, HandPalm, 
+  Dna, X, HandPalm, 
   MapTrifold, UserCircle, Stack, Scroll, Image as ImageIcon,
   Fire, UsersThree, CaretDown, Check, Trash, Plus, PawPrint, Clock,
   BookOpen, ShieldCheck 
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
 
-// --- IMPORTAÇÃO DOS SEUS COMPONENTES ---
+// --- IMPORTAÃ‡ÃƒO DOS SEUS COMPONENTES ---
 import SceneryViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
@@ -24,21 +24,20 @@ import CombatTracker from '../components/CombatTracker';
 import MasterShield from '../components/MasterShield';
 import { PlayerSummaryPanel } from '../components/PlayerSummaryPanel';
 import { RestOptionsModal } from '../components/RestOptionsModal';
-import { DamageRollPanel } from '../components/dice/DamageRollPanel';
-import { GroupTestPanel } from '../components/dice/GroupTestPanel';
+import { DiceSystemModal } from '../components/dice/DiceSystemModal';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
 import { getConditionsForCharacter } from '../lib/tokenConditions'; 
 
-// --- CONFIGURAÇÕES E CORES ---
+// --- CONFIGURAÃ‡Ã•ES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
-  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "Guardião": "#64748b",
+  "Bardo": "#f43f5e", "Druida": "#22c55e", "Feiticeiro": "#a855f7", "GuardiÃ£o": "#64748b",
   "Guerreiro": "#ea580c", "Ladino": "#171717", "Mago": "#3b82f6", "Patrulheiro": "#15803d", "Serafim": "#fbbf24",
 };
 const ANCESTRY_COLORS: Record<string, string> = {
-  "Anão": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
+  "AnÃ£o": "#78350f", "Clank": "#94a3b8", "Drakona": "#b91c1c", "Elfo": "#fcd34d", "Fada": "#f472b6",
   "Fauno": "#84cc16", "Firbolg": "#065f46", "Fungril": "#a3e635", "Galapa": "#0d9488", "Gigante": "#475569",
   "Goblin": "#4ade80", "Humano": "#38bdf8", "Infernis": "#dc2626", "Katari": "#f59e0b", "Orc": "#3f6212",
-  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "Símio": "#a16207",
+  "Pequenino": "#fb923c", "Quacho": "#0ea5e9", "SÃ­mio": "#a16207",
 };
 
 // --- INTERFACES ---
@@ -96,7 +95,7 @@ interface PlayerGroup {
     memberIds: string[];
 }
 
-// --- FUNÇÃO AUXILIAR: ATUALIZAR PATAMAR DRUIDA ---
+// --- FUNÃ‡ÃƒO AUXILIAR: ATUALIZAR PATAMAR DRUIDA ---
 const updateDruidTier = async (charId: string, currentTier: number, change: number) => {
     const newTier = Math.max(1, Math.min(4, (currentTier || 1) + change));
     const charRef = doc(db, "characters", charId);
@@ -108,7 +107,7 @@ const updateDruidTier = async (charId: string, currentTier: number, change: numb
 };
 
 // ============================================================================
-// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES (INDIVIDUAL - ATÉ 6)
+// 1. COMPONENTE AUXILIAR: LISTA DE JOGADORES (INDIVIDUAL - ATÃ‰ 6)
 // ============================================================================
 const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
   return (
@@ -120,7 +119,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
 
         return (
             <div key={char.id} className="flex items-center gap-2 w-full">
-                {/* Botão Principal do Jogador */}
+                {/* BotÃ£o Principal do Jogador */}
                 <button 
                     onClick={() => onSelectPlayer(char)}
                     className={`group relative flex-1 flex items-center gap-3 pr-4 pl-2 py-2 rounded-full border shadow-xl transition-all hover:scale-[1.02] text-left min-w-0
@@ -141,7 +140,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                         <h2 className="font-rpg text-sm font-bold leading-none text-white truncate w-full group-hover:text-gold transition-colors">{char.name}</h2>
                         <div className="flex flex-wrap items-center gap-1 text-[10px] text-white/90 mt-1 w-full leading-tight">
                             <span className="font-bold uppercase tracking-wide text-gold/80">{char.ancestry}</span>
-                            <span className="text-white/30">•</span>
+                            <span className="text-white/30">â€¢</span>
                             <span className="font-bold uppercase tracking-wide">{char.class}</span>
                             <span className="italic opacity-70">({char.subclass})</span>
                         </div>
@@ -151,7 +150,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                     </div>
                 </button>
 
-                {/* CONTROLE DE PATAMAR DRUIDA (AO LADO DO BOTÃO) */}
+                {/* CONTROLE DE PATAMAR DRUIDA (AO LADO DO BOTÃƒO) */}
                 {char.class === "Druida" && (
                     <div className="flex flex-col items-center justify-center gap-0 bg-black/80 rounded-lg border border-green-500/30 px-1 py-0.5 shadow-lg shrink-0 h-full animate-fade-in">
                         <button 
@@ -163,7 +162,7 @@ const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelec
                         
                         <div className="flex items-center gap-1 px-1 py-0.5">
                             <PawPrint size={10} className="text-green-400" weight="fill" />
-                            <span className="text-[10px] font-bold text-white leading-none">{char.unlockedTier || 1}º</span>
+                            <span className="text-[10px] font-bold text-white leading-none">{char.unlockedTier || 1}Âº</span>
                         </div>
 
                         <button 
@@ -346,7 +345,7 @@ const GroupManagerModal = ({
               {/* Header */}
               <div className="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center shrink-0">
                   <h2 className="text-xl font-rpg text-gold flex items-center gap-2">
-                      <UsersThree size={24} weight="fill"/> Gerenciador de Mesas (Instâncias)
+                      <UsersThree size={24} weight="fill"/> Gerenciador de Mesas (InstÃ¢ncias)
                   </h2>
                   <button onClick={onClose}><X size={24} className="text-white/50 hover:text-red-400"/></button>
               </div>
@@ -404,7 +403,7 @@ const GroupManagerModal = ({
                       </div>
                   </div>
 
-                  {/* Main: Seleção de Personagens */}
+                  {/* Main: SeleÃ§Ã£o de Personagens */}
                   <div className="flex-1 flex flex-col bg-[#1a120b]">
                       {currentGroup ? (
                           <>
@@ -454,243 +453,6 @@ const GroupManagerModal = ({
 
 
 // ============================================================================
-// 2. COMPONENTE AUXILIAR: SISTEMA DE DADOS DO MESTRE
-// ============================================================================
-function MasterDiceSystem({ onClose }: { onClose: () => void }) {
-  const [tab, setTab] = useState<'DUALITY' | 'STANDARD' | 'DAMAGE' | 'GROUP'>('DUALITY');
-  const [isRolling, setIsRolling] = useState(false);
-  const [result, setResult] = useState<any | null>(null);
-
-  // Estados Dualidade
-  const [modifier, setModifier] = useState(0);
-  const [difficulty, setDifficulty] = useState<number>(12);
-  const [advantage, setAdvantage] = useState<'none' | 'advantage' | 'disadvantage'>('none');
-
-  // Estados Standard
-  const [selectedDie, setSelectedDie] = useState(20);
-  const [diceCount, setDiceCount] = useState(1);
-  const [standardMod, setStandardMod] = useState(0);
-
-  const pushRollToFirebase = async (rollResult: any, type: string) => {
-      try {
-        await addDoc(collection(db, 'rolls'), {
-            playerName: "Mestre", 
-            type,
-            result: rollResult,
-            timestamp: serverTimestamp()
-        });
-      } catch (e) {
-          console.error("Erro ao enviar rolagem:", e);
-      }
-  };
-
-  const rollDuality = () => {
-    setIsRolling(true);
-    setResult(null);
-
-    setTimeout(() => {
-      const hope = Math.floor(Math.random() * 12) + 1;
-      const fear = Math.floor(Math.random() * 12) + 1;
-      
-      let advRoll = 0;
-      if (advantage !== 'none') advRoll = Math.floor(Math.random() * 6) + 1;
-      const finalAdvMod = advantage === 'advantage' ? advRoll : advantage === 'disadvantage' ? -advRoll : 0;
-
-      const total = hope + fear + modifier + finalAdvMod;
-
-      let outcome: 'CRITICAL' | 'HOPE' | 'FEAR' = 'FEAR';
-      if (hope === fear) outcome = 'CRITICAL';
-      else if (hope > fear) outcome = 'HOPE';
-      else outcome = 'FEAR';
-
-      const finalResult = {
-        type: 'DUALITY',
-        hopeDie: hope,
-        fearDie: fear,
-        modifier: modifier + finalAdvMod,
-        total,
-        outcome,
-        isSuccess: total >= difficulty
-      };
-
-      setResult(finalResult);
-      pushRollToFirebase(finalResult, 'DUALITY');
-      setIsRolling(false);
-    }, 1000);
-  };
-
-  const rollStandard = () => {
-    setIsRolling(true);
-    setResult(null);
-
-    setTimeout(() => {
-        const rolls = Array.from({ length: diceCount }, () => Math.floor(Math.random() * selectedDie) + 1);
-        const sum = rolls.reduce((a, b) => a + b, 0);
-        
-        const finalResult = {
-            type: 'STANDARD',
-            rolls,
-            dieType: selectedDie,
-            modifier: standardMod,
-            total: sum + standardMod
-        };
-
-        setResult(finalResult);
-        pushRollToFirebase(finalResult, 'STANDARD');
-        setIsRolling(false);
-    }, 1000);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
-        
-        <div className="flex justify-between items-start mb-6">
-            <div className="flex gap-1 flex-wrap">
-                {(['DUALITY', 'STANDARD', 'DAMAGE', 'GROUP'] as const).map((t) => (
-                <button key={t} onClick={() => { setTab(t); setResult(null); }} className={`text-xs font-rpg font-bold px-2 py-1 rounded transition-colors ${tab === t ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}>
-                    {t === 'DUALITY' ? 'Dualidade' : t === 'STANDARD' ? 'Padrão' : t === 'DAMAGE' ? 'Dano' : 'Grupo'}
-                </button>
-                ))}
-            </div>
-            <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
-        </div>
-
-        {tab === 'DUALITY' && !isRolling && !result && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between gap-4">
-              <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
-                <div className="flex items-center gap-3 justify-center">
-                  <button onClick={() => setModifier(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
-                  <span className="text-xl font-bold text-white w-8 text-center">{modifier >= 0 ? `+${modifier}` : modifier}</span>
-                  <button onClick={() => setModifier(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
-                </div>
-              </div>
-              <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                <label className="text-xs uppercase text-white/50 mb-1 block">Dificuldade</label>
-                <input type="number" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} className="w-full bg-transparent text-xl font-bold text-white text-center outline-none border-b border-white/20 focus:border-gold" />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setAdvantage(v => v === 'advantage' ? 'none' : 'advantage')} className={`flex-1 py-2 rounded border transition-all text-xs font-bold uppercase ${advantage === 'advantage' ? 'bg-green-900/50 border-green-500 text-green-100' : 'bg-black/40 border-white/10 text-white/40'}`}>Vantagem (+d6)</button>
-              <button onClick={() => setAdvantage(v => v === 'disadvantage' ? 'none' : 'disadvantage')} className={`flex-1 py-2 rounded border transition-all text-xs font-bold uppercase ${advantage === 'disadvantage' ? 'bg-red-900/50 border-red-500 text-red-100' : 'bg-black/40 border-white/10 text-white/40'}`}>Desvantagem (-d6)</button>
-            </div>
-            <button onClick={rollDuality} className="w-full py-4 bg-gradient-to-r from-gold/80 to-yellow-600/80 hover:from-gold hover:to-yellow-500 text-black font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"><Dna size={24} weight="fill" /> ROLAR DUALIDADE</button>
-          </div>
-        )}
-
-        {tab === 'DAMAGE' && (
-          <DamageRollPanel onRoll={(r) => pushRollToFirebase(r, 'DAMAGE')} />
-        )}
-
-        {tab === 'GROUP' && (
-          <GroupTestPanel onRoll={(r) => pushRollToFirebase(r, r.type)} />
-        )}
-
-        {tab === 'STANDARD' && !isRolling && !result && (
-            <div className="space-y-6 animate-fade-in">
-                <div className="grid grid-cols-4 gap-2">
-                    {[4, 6, 8, 10, 12, 20, 100].map(d => (
-                        <button key={d} onClick={() => setSelectedDie(d)} className={`py-2 rounded border text-sm font-bold ${selectedDie === d ? 'bg-purple-900 border-purple-400 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}>d{d}</button>
-                    ))}
-                </div>
-                <div className="flex gap-4">
-                      <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                        <label className="text-xs uppercase text-white/50 mb-1 block">Quantidade</label>
-                        <div className="flex items-center gap-3 justify-center">
-                            <button onClick={() => setDiceCount(c => Math.max(1, c - 1))} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
-                            <span className="text-xl font-bold text-white w-8 text-center">{diceCount}</span>
-                            <button onClick={() => setDiceCount(c => c + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
-                        </div>
-                      </div>
-                      <div className="flex-1 bg-white/5 p-3 rounded border border-white/10">
-                        <label className="text-xs uppercase text-white/50 mb-1 block">Modificador</label>
-                        <div className="flex items-center gap-3 justify-center">
-                            <button onClick={() => setStandardMod(m => m - 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">-</button>
-                            <span className="text-xl font-bold text-white w-8 text-center">{standardMod >= 0 ? `+${standardMod}` : standardMod}</span>
-                            <button onClick={() => setStandardMod(m => m + 1)} className="w-8 h-8 bg-black hover:bg-white/10 rounded border border-white/20 text-white">+</button>
-                        </div>
-                      </div>
-                </div>
-                <button onClick={rollStandard} className="w-full py-4 bg-gradient-to-r from-purple-800 to-indigo-900 hover:from-purple-700 hover:to-indigo-800 text-white font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"><Cube size={24} weight="fill" /> ROLAR DADOS</button>
-            </div>
-        )}
-
-        {isRolling && (
-          <div className="h-64 flex flex-col items-center justify-center gap-8 perspective-1000">
-            <div className="flex gap-12">
-                <div className="w-20 h-20 bg-gradient-to-br from-gold to-yellow-800 rounded-xl border-2 border-white/30 animate-tumble-3d shadow-2xl flex items-center justify-center"><Dna size={40} className="text-black/50 animate-spin-slow" /></div>
-                {tab === 'DUALITY' && (<div className="w-20 h-20 bg-gradient-to-br from-purple-900 to-black rounded-xl border-2 border-purple-500 animate-tumble-3d-reverse shadow-2xl flex items-center justify-center"><Skull size={40} className="text-white/30 animate-spin-slow" /></div>)}
-            </div>
-            <p className="text-gold font-rpg tracking-widest text-lg animate-pulse">O DESTINO GIRA...</p>
-          </div>
-        )}
-
-        {result?.type === 'DUALITY' && !isRolling && (
-          <div className="text-center animate-fade-in-up">
-            <div className="flex justify-center items-center gap-6 mb-6">
-              <div className="flex flex-col items-center gap-2">
-                <div className="relative w-24 h-24 bg-gradient-to-br from-gold to-yellow-700 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-white/20 transform hover:scale-110 transition-transform">
-                   <span className="text-5xl font-bold text-white drop-shadow-md">{result.hopeDie}</span>
-                   <span className="absolute -top-3 bg-black/80 text-[10px] text-gold px-2 py-0.5 rounded border border-gold/30 uppercase tracking-widest">Esperança</span>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-white/20">+</div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="relative w-24 h-24 bg-gradient-to-br from-purple-600 to-black rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(147,51,234,0.3)] border border-white/20 transform hover:scale-110 transition-transform">
-                   <span className="text-5xl font-bold text-purple-100 drop-shadow-md">{result.fearDie}</span>
-                   <span className="absolute -top-3 bg-black/80 text-[10px] text-purple-400 px-2 py-0.5 rounded border border-purple-500/30 uppercase tracking-widest">Medo</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-                <div className="text-white/50 text-sm mb-1">{result.hopeDie} (Esp) + {result.fearDie} (Medo) + {result.modifier} (Mod) = </div>
-                <div className={`text-6xl font-rpg font-bold drop-shadow-lg ${result.isSuccess ? 'text-green-400' : 'text-red-400'}`}>{result.total}</div>
-                <div className="text-xs uppercase tracking-[0.2em] text-white/40 mt-1">vs Dificuldade {difficulty}</div>
-            </div>
-
-            <div className={`p-4 rounded-lg border-2 mb-6 ${result.outcome === 'CRITICAL' ? 'bg-gold/10 border-gold text-gold' : result.outcome === 'HOPE' ? 'bg-blue-900/20 border-blue-400 text-blue-200' : 'bg-purple-900/20 border-purple-500 text-purple-200'}`}>
-                <h3 className="text-xl font-bold uppercase flex items-center justify-center gap-2">
-                    {result.outcome === 'CRITICAL' && <Sparkle size={24} weight="fill" />}
-                    {result.outcome === 'HOPE' && <Coins size={24} weight="fill" />}
-                    {result.outcome === 'FEAR' && <Skull size={24} weight="fill" />}
-                    {result.isSuccess ? "Sucesso" : "Falha"} com {result.outcome === 'CRITICAL' ? " CRÍTICO!" : result.outcome === 'HOPE' ? " ESPERANÇA" : " MEDO"}
-                </h3>
-                <p className="text-sm opacity-80 mt-1">
-                    {result.outcome === 'CRITICAL' && "Ganhe 1 Esperança E Limpe 1 Estresse."}
-                    {result.outcome === 'HOPE' && "Ganhe 1 Esperança. Você consegue."}
-                    {result.outcome === 'FEAR' && "O Mestre ganha 1 Medo. Prepare-se."}
-                </p>
-            </div>
-            <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
-          </div>
-        )}
-
-        {result?.type === 'STANDARD' && !isRolling && (
-            <div className="text-center animate-fade-in-up">
-                <div className="flex flex-wrap justify-center gap-4 mb-6">
-                    {result.rolls.map((val: any, i: any) => (
-                        <div key={i} className="relative w-16 h-16 bg-white/5 border border-white/20 rounded-lg flex items-center justify-center shadow-lg">
-                            <span className="text-2xl font-bold text-white">{val}</span>
-                            <span className="absolute -bottom-2 text-[8px] bg-black px-1 rounded text-white/50">d{result.dieType}</span>
-                        </div>
-                    ))}
-                </div>
-                <div className="mb-6">
-                    <div className="text-white/50 text-sm mb-1">[{result.rolls.join(' + ')}] {result.modifier >= 0 ? `+ ${result.modifier}` : result.modifier} (Mod) =</div>
-                    <div className="text-6xl font-rpg font-bold text-white drop-shadow-lg">{result.total}</div>
-                </div>
-                <button onClick={() => setResult(null)} className="text-white/40 hover:text-white underline text-sm">Rolar Novamente</button>
-            </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
 // 3. COMPONENTE AUXILIAR: MONITOR DE CARTAS
 // ============================================================================
 const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onClose: () => void, players: Character[] }) => {
@@ -702,26 +464,26 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
     <div className="fixed inset-0 z-[3000] bg-black/95 flex flex-col animate-fade-in" onClick={e => e.stopPropagation()}>
        {/* Header */}
        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a120b]">
-          <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de Grimórios</h2>
+          <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de GrimÃ³rios</h2>
           <button onClick={onClose}><X size={32} className="text-white/50 hover:text-red-400" /></button>
        </div>
 
-       {/* Conteúdo scrollável */}
+       {/* ConteÃºdo scrollÃ¡vel */}
        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 flex gap-6 custom-scrollbar">
           {players.map(player => (
              <div key={player.id} className="min-w-[350px] w-[350px] bg-white/5 border border-white/10 rounded-xl flex flex-col h-full overflow-hidden">
-                {/* Cabeçalho do Jogador */}
+                {/* CabeÃ§alho do Jogador */}
                 <div className="p-3 bg-black/40 border-b border-white/5 flex items-center gap-3">
                    <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden"><img src={player.imageUrl || ''} className="w-full h-full object-cover"/></div>
                    <span className="font-bold text-white truncate">{player.name}</span>
                 </div>
 
-                {/* Área de Cartas Scrollável Verticalmente */}
+                {/* Ãrea de Cartas ScrollÃ¡vel Verticalmente */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
                     
-                    {/* MÃO */}
+                    {/* MÃƒO */}
                     <div>
-                        <h4 className="text-[10px] uppercase text-gold/70 tracking-widest mb-2 flex items-center gap-1"><HandPalm /> Mão Ativa</h4>
+                        <h4 className="text-[10px] uppercase text-gold/70 tracking-widest mb-2 flex items-center gap-1"><HandPalm /> MÃ£o Ativa</h4>
                         <div className="grid grid-cols-2 gap-2">
                             {player.cards?.hand?.map((card, idx) => (
                                 <div key={idx} onClick={() => setZoomedCard(card)} className={`relative aspect-[2/3] rounded border cursor-help hover:scale-105 transition-transform ${card.isExhausted ? 'border-red-500/50 grayscale opacity-70' : 'border-white/20'}`}>
@@ -730,7 +492,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
                                     {card.isExhausted && <div className="absolute inset-0 flex items-center justify-center"><Skull className="text-white/80" /></div>}
                                 </div>
                             ))}
-                            {(!player.cards?.hand || player.cards.hand.length === 0) && <p className="text-xs text-white/20 col-span-2 text-center py-4">Mão vazia</p>}
+                            {(!player.cards?.hand || player.cards.hand.length === 0) && <p className="text-xs text-white/20 col-span-2 text-center py-4">MÃ£o vazia</p>}
                         </div>
                     </div>
 
@@ -769,7 +531,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
 };
 
 // ============================================================================
-// 4. COMPONENTE AUXILIAR: NOTIFICAÇÃO DE DADOS (TOAST)
+// 4. COMPONENTE AUXILIAR: NOTIFICAÃ‡ÃƒO DE DADOS (TOAST)
 // ============================================================================
 const DiceToast = () => {
     const [lastRoll, setLastRoll] = useState<RollLog | null>(null);
@@ -817,7 +579,7 @@ const DiceToast = () => {
                              <span className="text-purple-400 font-bold">{lastRoll.result.fearDie} (Medo)</span>
                         </div>
                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${lastRoll.result.outcome === 'CRITICAL' ? 'bg-gold text-black' : lastRoll.result.isSuccess ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'}`}>
-                            {lastRoll.result.outcome === 'CRITICAL' ? 'Crítico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
+                            {lastRoll.result.outcome === 'CRITICAL' ? 'CrÃ­tico!' : lastRoll.result.isSuccess ? 'Sucesso' : 'Falha'}
                         </div>
                     </div>
                 ) : (
@@ -867,7 +629,7 @@ export default function MestreVTT() {
   .animate-ds-text { animation: ds-fade-in 5s ease-out forwards; }
   @keyframes ds-fade-in { 0% { opacity: 0; transform: scale(1.2); } 15% { opacity: 1; transform: scale(1); } 85% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.9); } }
 
-  /* ANIMAÇÕES DOS DADOS RECUPERADAS */
+  /* ANIMAÃ‡Ã•ES DOS DADOS RECUPERADAS */
   @keyframes tumble-3d {
       0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
       25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
@@ -886,7 +648,7 @@ export default function MestreVTT() {
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
 
-  // 1. Inicializa Sessão e Listeners Globais
+  // 1. Inicializa SessÃ£o e Listeners Globais
   useEffect(() => {
     const unsubscribe = subscribeSession(
       (data) => {
@@ -927,7 +689,7 @@ useEffect(() => {
     return () => unsubscribe();
   }, []); 
 
-  // 2.1 Sincroniza Personagem Selecionado (Roda apenas quando necessário)
+  // 2.1 Sincroniza Personagem Selecionado (Roda apenas quando necessÃ¡rio)
   useEffect(() => {
       if (selectedChar) {
           const updated = characters.find(c => c.id === selectedChar.id);
@@ -1049,7 +811,7 @@ useEffect(() => {
        {/* CONTADOR DE TURNOS */}
        {sessaoData && <TurnCounter sessaoData={sessaoData} isMaster={true} />}
 
-       {/* BESTIÁRIO - NOVO */}
+       {/* BESTIÃRIO - NOVO */}
        {showCombatTracker && sessaoData && (
          <CombatTracker
            sessaoData={sessaoData}
@@ -1080,7 +842,7 @@ useEffect(() => {
                 <p className="text-sm md:text-xl text-white/90 font-light tracking-[0.3em] uppercase my-3 relative z-10 bg-black/60 px-6 py-1 rounded-full border border-white/10 backdrop-blur-md">Se transformou em</p>
                 <h1 className="text-5xl md:text-8xl font-black uppercase relative z-10 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] animate-zoom-in font-rpg leading-none pb-2">{transformAlert.formName}</h1>
                  <span className="relative z-10 text-green-400 text-sm md:text-lg uppercase tracking-widest mt-2 font-bold bg-black/40 px-4 py-1 rounded border border-green-500/30">
-                    {transformAlert.baseForm} • {transformAlert.tierLabel || "Forma Selvagem"}
+                    {transformAlert.baseForm} â€¢ {transformAlert.tierLabel || "Forma Selvagem"}
                  </span>
             </div>
         </div>
@@ -1105,7 +867,13 @@ useEffect(() => {
        />
        <CardsMonitorModal isOpen={showCardsMonitor} onClose={() => setShowCardsMonitor(false)} players={visibleCharacters} />
        <GroupManagerModal isOpen={showGroupManager} onClose={() => setShowGroupManager(false)} allCharacters={characters} sessionData={sessaoData} />
-       {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}
+       {showDiceSystem && (
+         <DiceSystemModal
+           playerName="Mestre"
+           onClose={() => setShowDiceSystem(false)}
+           overlayClassName="z-[3000]"
+         />
+       )}
 
        {restModalType && (
          <RestOptionsModal
@@ -1125,9 +893,9 @@ useEffect(() => {
            <div className="flex gap-3 mb-2">
                <button onClick={() => setShowGroupManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-400 hover:text-green-300 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Grupos"><UsersThree size={24} /></button>
                <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas"><MapTrifold size={24} /></button>
-               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Cenários/NPCs"><ImageIcon size={24} /></button>
+               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar CenÃ¡rios/NPCs"><ImageIcon size={24} /></button>
                
-               {/* BOTÃO: RASTREADOR DE COMBATE */}
+               {/* BOTÃƒO: RASTREADOR DE COMBATE */}
                <button 
                    onClick={() => setShowCombatTracker(!showCombatTracker)} 
                    className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
@@ -1138,7 +906,7 @@ useEffect(() => {
                    <BookOpen size={24} weight={showCombatTracker ? "fill" : "regular"} />
                </button>
 
-               {/* BOTÃO: ESCUDO DO MESTRE (NOVO) */}
+               {/* BOTÃƒO: ESCUDO DO MESTRE (NOVO) */}
                <button 
                    onClick={() => setShowMasterShield(!showMasterShield)} 
                    className={`w-12 h-12 rounded-full border border-white/20 text-white flex items-center justify-center transition-colors shadow-lg
@@ -1149,7 +917,7 @@ useEffect(() => {
                    <ShieldCheck size={24} weight={showMasterShield ? "fill" : "regular"} />
                </button>
 
-               {/* BOTÃO: CONTADOR DE TURNO */}
+               {/* BOTÃƒO: CONTADOR DE TURNO */}
                <button 
                    onClick={async () => {
                        if (sessaoData?.id) {
@@ -1171,7 +939,7 @@ useEffect(() => {
            
            <button onClick={() => setShowCardsMonitor(true)} className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-900 to-black border border-blue-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform">
               <div className="bg-blue-500/20 p-2 rounded-full text-blue-300"><Eye size={32} /></div>
-              <div className="text-left"><span className="block font-bold text-white text-lg">Visão do Mestre</span><span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span></div>
+              <div className="text-left"><span className="block font-bold text-white text-lg">VisÃ£o do Mestre</span><span className="text-xs text-white/50 uppercase tracking-widest">Monitorar Cartas</span></div>
            </button>
 
            <div className="flex items-end gap-4 relative">
