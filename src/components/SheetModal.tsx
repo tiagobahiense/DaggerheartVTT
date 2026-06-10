@@ -5,7 +5,7 @@ import {
   TrendUp, PersonSimpleRun, BookOpen, 
   CaretUp, User, PencilSimple, Target,
   Plus, Trash, Fingerprint, PawPrint,
-  Info
+  Info, DiceSix, ShieldWarning
 } from '@phosphor-icons/react';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -17,6 +17,11 @@ import {
     CombatRow, ArmorRow, ImageUrlModal, InventoryRow,
     ProficiencyWidget
 } from './sheet/SheetWidgets';
+import { SheetMarkersWidget } from './sheet/SheetMarkersWidget';
+import { ConditionsWidget } from './sheet/ConditionsWidget';
+import { DamageAssistantModal } from './sheet/DamageAssistantModal';
+import { mergeSheetMarkers } from '../lib/sheetMarkers';
+import { ConditionId, ISheetMarker } from '../types/sheetExtras';
 
 // --- COMPONENTE LOCAL PARA ITEM DE EXPERIÊNCIA ---
 const ExperienceItem = ({ item, onChange, onDelete }: any) => {
@@ -147,6 +152,7 @@ interface SheetModalProps {
   
   // Estado para o modal de informações (texto 'i')
   const [infoModalContent, setInfoModalContent] = useState<string | null>(null);
+  const [showDamageAssistant, setShowDamageAssistant] = useState(false);
 
   // Estado local para edição
   const [sheetData, setSheetData] = useState({
@@ -177,7 +183,9 @@ interface SheetModalProps {
         trainingCounts: {} as Record<string, number>,
         imageOffsetX: 50,
         imageOffsetY: 50
-    }
+    },
+    sheetMarkers: [] as ISheetMarker[],
+    conditions: { active: [] as ConditionId[] },
   });
 
   // CORREÇÃO: Normaliza removendo acentos (ex: Guardião -> guardiao) para bater com o CLASS_DATABASE
@@ -229,7 +237,14 @@ interface SheetModalProps {
                 trainingCounts: {},
                 imageOffsetX: 50,
                 imageOffsetY: 50
-            }
+            },
+            sheetMarkers: mergeSheetMarkers(
+                character.sheetMarkers,
+                character.class,
+                character.community || '',
+                character.level || 1
+            ),
+            conditions: character.conditions || { active: [] },
         });
         setCharacterImage(character.imageUrl || '');
         setPaSpent(character.paSpent || 0);
@@ -325,6 +340,30 @@ interface SheetModalProps {
       updateSheet('evolution', newEvolution);
   };
 
+  const updateSheetMarkers = (markers: ISheetMarker[]) => {
+      setSheetData((prev) => ({ ...prev, sheetMarkers: markers }));
+      saveCharacterData({ sheetMarkers: markers });
+  };
+
+  const updateConditions = (active: ConditionId[]) => {
+      const conditions = { active };
+      setSheetData((prev) => ({ ...prev, conditions }));
+      saveCharacterData({ conditions });
+  };
+
+  const handleDamageApply = (hpToMark: number, paToSpend: number) => {
+      const newHpCurrent = Math.min(
+          sheetData.stats.hp.max,
+          sheetData.stats.hp.current + hpToMark
+      );
+      updateStat('hp', 'current', newHpCurrent);
+      if (paToSpend > 0) {
+          const newPa = Math.min(maxPA, paSpent + paToSpend);
+          setPaSpent(newPa);
+          saveCharacterData({ paSpent: newPa });
+      }
+  };
+
   const handleUpdatePA = (index: number, isSpent: boolean) => {
       const newVal = isSpent ? index : index + 1;
       setPaSpent(newVal);
@@ -407,6 +446,18 @@ interface SheetModalProps {
         onClose={() => setIsImageModalOpen(false)} 
         onConfirm={handleImageUpdate} 
         currentUrl={editingImageTarget === 'character' ? characterImage : sheetData.companion.image} 
+      />
+
+      <DamageAssistantModal
+        isOpen={showDamageAssistant}
+        onClose={() => setShowDamageAssistant(false)}
+        thresholds={{
+          major: (userBaseMajor || 0) + character.level,
+          severe: (userBaseSevere || 0) + character.level,
+        }}
+        currentPA={paSpent}
+        maxPA={maxPA}
+        onApply={handleDamageApply}
       />
 
       {/* INFO MODAL OVERLAY */}
@@ -600,17 +651,54 @@ interface SheetModalProps {
                     />
                     <span className="text-[10px] uppercase text-white/40 tracking-[0.2em] mt-1 font-bold">Evasão</span>
                  </div>
-                 <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg min-h-[80px]">
+                 <div className="flex-1 bg-[#1a1520] border border-white/10 rounded-xl flex flex-col items-center justify-center p-2 shadow-lg min-h-[80px] relative">
                     <div className="flex items-center gap-2 mb-2 opacity-50"><Skull size={14} /><span className="text-[10px] uppercase tracking-widest font-bold">Limiares de Dano</span></div>
                     <div className="flex justify-center gap-4 md:gap-6 w-full px-2 md:px-4">
                         <ThresholdBox label="Menor" range={thresholdRangeText.minor} />
                         <ThresholdBox label="Maior" range={thresholdRangeText.major} highlight />
                         <ThresholdBox label="Grave" range={thresholdRangeText.severe} />
                     </div>
+                    {userBaseMajor > 0 && (
+                      <button
+                        onClick={() => setShowDamageAssistant(true)}
+                        className="absolute top-1 right-1 text-[9px] text-red-400/70 hover:text-red-300 uppercase tracking-wide px-2 py-0.5 border border-red-500/20 rounded hover:border-red-500/50 transition-colors"
+                      >
+                        Receber dano
+                      </button>
+                    )}
                  </div>
                  <div className="w-full md:w-1/4 bg-[#1a1520] border border-white/10 rounded-xl p-2 shadow-lg flex items-center justify-center min-h-[80px]">
                     <ArmorWidget maxPA={maxPA} currentPA={paSpent} name="Armadura" onUpdatePA={handleUpdatePA} />
                  </div>
+              </div>
+
+              {/* MARCADORES & CONDIÇÕES */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
+                <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden">
+                  <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2">
+                    <DiceSix className="text-gold" size={16} />
+                    <h3 className="text-xs font-bold text-white uppercase tracking-widest">Marcadores</h3>
+                    <span className="text-[9px] text-white/30 ml-auto">Visível ao Mestre</span>
+                  </div>
+                  <div className="p-3">
+                    <SheetMarkersWidget
+                      markers={sheetData.sheetMarkers}
+                      onChange={updateSheetMarkers}
+                    />
+                  </div>
+                </div>
+                <div className="bg-[#1a1520]/50 border border-white/10 rounded-xl overflow-hidden">
+                  <div className="bg-[#1a1520] p-3 border-b border-white/10 flex items-center gap-2">
+                    <ShieldWarning className="text-red-400" size={16} />
+                    <h3 className="text-xs font-bold text-white uppercase tracking-widest">Condições</h3>
+                  </div>
+                  <div className="p-3">
+                    <ConditionsWidget
+                      active={sheetData.conditions.active}
+                      onChange={updateConditions}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

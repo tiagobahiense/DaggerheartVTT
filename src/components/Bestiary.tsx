@@ -6,6 +6,8 @@ import {
   Eye, EyeSlash, XCircle 
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
+import { ConditionsWidget } from './sheet/ConditionsWidget';
+import { ConditionId } from '../types/sheetExtras';
 
 // --- INTERFACES ---
 interface Ability {
@@ -38,6 +40,7 @@ interface Token {
   img: string;
   type: 'player' | 'enemy' | 'companion';
   stats?: EnemyStats;
+  conditions?: { active?: ConditionId[] };
 }
 
 const DEFAULT_STATS: EnemyStats = {
@@ -76,6 +79,23 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
 
     await updateDoc(doc(db, 'sessoes', sessaoData.id), {
         "active_map.tokens": allTokens
+    });
+  };
+
+  const updateTokenConditions = async (tokenId: string, active: ConditionId[]) => {
+    if (!sessaoData?.id || !sessaoData.active_map) return;
+
+    const allTokens = [...sessaoData.active_map.tokens];
+    const tokenIndex = allTokens.findIndex((t: any) => t.id === tokenId);
+    if (tokenIndex === -1) return;
+
+    allTokens[tokenIndex] = {
+      ...allTokens[tokenIndex],
+      conditions: { active },
+    };
+
+    await updateDoc(doc(db, 'sessoes', sessaoData.id), {
+      'active_map.tokens': allTokens,
     });
   };
 
@@ -247,6 +267,15 @@ export default function Bestiary({ sessaoData, onClose }: { sessaoData: any, onC
                                             ))}
                                             {(!stats.abilities || stats.abilities.length === 0) && <p className="text-white/20 text-xs italic">Sem habilidades especiais.</p>}
                                         </div>
+                                    </div>
+
+                                    <div className="border-t border-white/5 pt-2">
+                                        <div className="text-[10px] uppercase text-gold/50 font-bold mb-1">Condições</div>
+                                        <ConditionsWidget
+                                          active={enemy.conditions?.active || []}
+                                          onChange={(active) => updateTokenConditions(enemy.id, active)}
+                                          compact
+                                        />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2 text-[10px] text-white/50 border-t border-white/5 pt-2">

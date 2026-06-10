@@ -22,6 +22,8 @@ import { SheetModal } from '../components/SheetModal';
 import NPCViewer from '../components/NPCViewer'; 
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
+import { DamageRollPanel } from '../components/dice/DamageRollPanel';
+import { GroupTestPanel } from '../components/dice/GroupTestPanel';
 
 // ==================================================================================
 // 1. TIPOS GERAIS
@@ -195,8 +197,8 @@ const TableCard = ({ card, label, locked = true, onSelect }: { card: Card | null
 // ==================================================================================
 // SISTEMA DE DADOS
 // ==================================================================================
-function InternalDiceSystem({ characterName, onClose }: { characterName: string, onClose: () => void }) {
-  const [tab, setTab] = useState<'DUALITY' | 'STANDARD'>('DUALITY');
+function InternalDiceSystem({ characterName, character, onClose }: { characterName: string, character?: any, onClose: () => void }) {
+  const [tab, setTab] = useState<'DUALITY' | 'STANDARD' | 'DAMAGE' | 'GROUP'>('DUALITY');
   const [isRolling, setIsRolling] = useState(false);
   const [result, setResult] = useState<RollResult | null>(null);
 
@@ -208,7 +210,7 @@ function InternalDiceSystem({ characterName, onClose }: { characterName: string,
   const [diceCount, setDiceCount] = useState(1);
   const [standardMod, setStandardMod] = useState(0);
 
-  const pushRollToFirebase = async (rollResult: any, type: 'DUALITY' | 'STANDARD') => {
+  const pushRollToFirebase = async (rollResult: any, type: string) => {
       try {
         await addDoc(collection(db, 'rolls'), {
             playerName: characterName, 
@@ -283,19 +285,16 @@ function InternalDiceSystem({ characterName, onClose }: { characterName: string,
       <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg md:max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden max-h-[90dvh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
         
         <div className="flex justify-between items-start mb-6">
-            <div className="flex gap-4">
+            <div className="flex gap-1 flex-wrap">
+                {(['DUALITY', 'STANDARD', 'DAMAGE', 'GROUP'] as const).map((t) => (
                 <button 
-                    onClick={() => { setTab('DUALITY'); setResult(null); }}
-                    className={`text-lg font-rpg font-bold px-3 py-1 rounded transition-colors ${tab === 'DUALITY' ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}
+                    key={t}
+                    onClick={() => { setTab(t); setResult(null); }}
+                    className={`text-xs font-rpg font-bold px-2 py-1 rounded transition-colors ${tab === t ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}
                 >
-                    Dualidade
+                    {t === 'DUALITY' ? 'Dualidade' : t === 'STANDARD' ? 'Padrão' : t === 'DAMAGE' ? 'Dano' : 'Grupo'}
                 </button>
-                <button 
-                    onClick={() => { setTab('STANDARD'); setResult(null); }}
-                    className={`text-lg font-rpg font-bold px-3 py-1 rounded transition-colors ${tab === 'STANDARD' ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}
-                >
-                    Dados Padrão
-                </button>
+                ))}
             </div>
             <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
         </div>
@@ -326,6 +325,18 @@ function InternalDiceSystem({ characterName, onClose }: { characterName: string,
               <Dna size={24} weight="fill" /> ROLAR DUALIDADE
             </button>
           </div>
+        )}
+
+        {tab === 'DAMAGE' && (
+          <DamageRollPanel
+            defaultProficiency={character?.proficiency || 1}
+            defaultDamageStr={character?.weapons?.main?.damageType || 'd6'}
+            onRoll={(r) => pushRollToFirebase(r, 'DAMAGE')}
+          />
+        )}
+
+        {tab === 'GROUP' && (
+          <GroupTestPanel onRoll={(r) => pushRollToFirebase(r, r.type)} />
         )}
 
         {tab === 'STANDARD' && !isRolling && !result && (
@@ -1243,7 +1254,7 @@ export default function JogadorVTT() {
 
       <DiceToast />
 
-      {showDiceRoller && <InternalDiceSystem characterName={character.name} onClose={() => setShowDiceRoller(false)} />}
+      {showDiceRoller && <InternalDiceSystem characterName={character.name} character={character} onClose={() => setShowDiceRoller(false)} />}
 
       <SheetModal 
         character={character} 

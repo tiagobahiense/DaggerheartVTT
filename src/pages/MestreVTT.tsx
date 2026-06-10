@@ -21,7 +21,12 @@ import SceneryViewer from '../components/NPCViewer';
 import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
 import Bestiary from '../components/Bestiary';
-import MasterShield from '../components/MasterShield'; 
+import MasterShield from '../components/MasterShield';
+import { PlayerSummaryPanel } from '../components/PlayerSummaryPanel';
+import { RestOptionsModal } from '../components/RestOptionsModal';
+import { DamageRollPanel } from '../components/dice/DamageRollPanel';
+import { GroupTestPanel } from '../components/dice/GroupTestPanel';
+import { ConditionId, ISheetMarker } from '../types/sheetExtras'; 
 
 // --- CONFIGURAÇÕES E CORES ---
 const CLASS_COLORS: Record<string, string> = {
@@ -63,6 +68,14 @@ interface Character {
   
   isOnline?: boolean;
   unlockedTier?: number; // Propriedade do Druida
+  stats?: {
+    hp?: { current: number; max: number };
+    stress?: { current: number; max: number };
+    hope?: { current: number; max: number };
+    evasion?: number;
+  };
+  sheetMarkers?: ISheetMarker[];
+  conditions?: { active?: ConditionId[] };
   cards?: {
     hand: Card[];
     reserve: Card[];
@@ -444,7 +457,7 @@ const GroupManagerModal = ({
 // 2. COMPONENTE AUXILIAR: SISTEMA DE DADOS DO MESTRE
 // ============================================================================
 function MasterDiceSystem({ onClose }: { onClose: () => void }) {
-  const [tab, setTab] = useState<'DUALITY' | 'STANDARD'>('DUALITY');
+  const [tab, setTab] = useState<'DUALITY' | 'STANDARD' | 'DAMAGE' | 'GROUP'>('DUALITY');
   const [isRolling, setIsRolling] = useState(false);
   const [result, setResult] = useState<any | null>(null);
 
@@ -458,7 +471,7 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
   const [diceCount, setDiceCount] = useState(1);
   const [standardMod, setStandardMod] = useState(0);
 
-  const pushRollToFirebase = async (rollResult: any, type: 'DUALITY' | 'STANDARD') => {
+  const pushRollToFirebase = async (rollResult: any, type: string) => {
       try {
         await addDoc(collection(db, 'rolls'), {
             playerName: "Mestre", 
@@ -533,9 +546,12 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
       <div className="bg-[#1a1520] border border-gold/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
         
         <div className="flex justify-between items-start mb-6">
-            <div className="flex gap-4">
-                <button onClick={() => { setTab('DUALITY'); setResult(null); }} className={`text-lg font-rpg font-bold px-3 py-1 rounded transition-colors ${tab === 'DUALITY' ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}>Dualidade</button>
-                <button onClick={() => { setTab('STANDARD'); setResult(null); }} className={`text-lg font-rpg font-bold px-3 py-1 rounded transition-colors ${tab === 'STANDARD' ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}>Dados Padrão</button>
+            <div className="flex gap-1 flex-wrap">
+                {(['DUALITY', 'STANDARD', 'DAMAGE', 'GROUP'] as const).map((t) => (
+                <button key={t} onClick={() => { setTab(t); setResult(null); }} className={`text-xs font-rpg font-bold px-2 py-1 rounded transition-colors ${tab === t ? 'text-gold bg-white/10' : 'text-white/30 hover:text-white'}`}>
+                    {t === 'DUALITY' ? 'Dualidade' : t === 'STANDARD' ? 'Padrão' : t === 'DAMAGE' ? 'Dano' : 'Grupo'}
+                </button>
+                ))}
             </div>
             <button onClick={onClose} className="text-white/30 hover:text-red-400"><X size={24} /></button>
         </div>
@@ -562,6 +578,14 @@ function MasterDiceSystem({ onClose }: { onClose: () => void }) {
             </div>
             <button onClick={rollDuality} className="w-full py-4 bg-gradient-to-r from-gold/80 to-yellow-600/80 hover:from-gold hover:to-yellow-500 text-black font-bold font-rpg text-xl rounded shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"><Dna size={24} weight="fill" /> ROLAR DUALIDADE</button>
           </div>
+        )}
+
+        {tab === 'DAMAGE' && (
+          <DamageRollPanel onRoll={(r) => pushRollToFirebase(r, 'DAMAGE')} />
+        )}
+
+        {tab === 'GROUP' && (
+          <GroupTestPanel onRoll={(r) => pushRollToFirebase(r, r.type)} />
         )}
 
         {tab === 'STANDARD' && !isRolling && !result && (
@@ -834,6 +858,7 @@ export default function MestreVTT() {
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
   const [transformAlert, setTransformAlert] = useState<any>(null);
+  const [restModalType, setRestModalType] = useState<'short' | 'long' | null>(null);
 
   const styles = `
   @keyframes spell-cast { 0% { transform: translateY(40vh) scale(0.5); opacity: 1; } 100% { transform: translateY(-50vh) scale(1.5); opacity: 0; } }
@@ -913,21 +938,63 @@ useEffect(() => {
       }
   }, [characters, selectedChar]);
 
-  const handleRestAll = async (type: 'short' | 'long') => {
-      if (!window.confirm("Aplicar descanso?")) return;
+  const handleRestAll = async (
+      type: 'short' | 'long',
+      options: {
+          recoverCards: boolean;
+          recoverPF: number | 'all' | 'none';
+          recoverPV: number;
+          resetStrangePatterns: boolean;
+      }
+  ) => {
       const batch = writeBatch(db);
       characters.forEach(char => {
-          if (char.cards?.hand) {
+          const updates: Record<string, unknown> = {};
+
+          if (options.recoverCards && char.cards?.hand) {
               const newHand = char.cards.hand.map(card => {
                   if (!card.isExhausted) return card;
                   if (type === 'long') return { ...card, isExhausted: false, exhaustionType: null };
                   if (type === 'short' && card.exhaustionType === 'short') return { ...card, isExhausted: false, exhaustionType: null };
                   return card;
               });
-              batch.update(doc(db, 'characters', char.id), { "cards.hand": newHand });
+              updates['cards.hand'] = newHand;
+          }
+
+          if (char.stats) {
+              const newStats = { ...char.stats };
+
+              if (options.recoverPF !== 'none' && newStats.stress) {
+                  if (options.recoverPF === 'all') {
+                      newStats.stress = { ...newStats.stress, current: 0 };
+                  } else if (typeof options.recoverPF === 'number' && options.recoverPF > 0) {
+                      newStats.stress = {
+                          ...newStats.stress,
+                          current: Math.max(0, (newStats.stress.current || 0) - options.recoverPF),
+                      };
+                  }
+              }
+
+              if (options.recoverPV > 0 && newStats.hp) {
+                  newStats.hp = {
+                      ...newStats.hp,
+                      current: Math.max(0, (newStats.hp.current || 0) - options.recoverPV),
+                  };
+              }
+
+              updates.stats = newStats;
+          }
+
+          if (options.resetStrangePatterns && char.sheetMarkers?.length) {
+              updates.sheetMarkers = char.sheetMarkers;
+          }
+
+          if (Object.keys(updates).length > 0) {
+              batch.update(doc(db, 'characters', char.id), updates);
           }
       });
       await batch.commit();
+      setRestModalType(null);
   };
 
   const toggleFearToken = async (index: number) => {
@@ -1015,6 +1082,11 @@ useEffect(() => {
        
        {useCollapsedView ? <CollapsedPlayerList players={visibleCharacters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} /> : <PlayerList players={visibleCharacters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} />}
 
+       <PlayerSummaryPanel
+         characters={visibleCharacters}
+         onSelectCharacter={(c) => { setSelectedChar(c as Character); setIsSheetOpen(true); }}
+       />
+
        <SheetModal 
            character={selectedChar} 
            isOpen={isSheetOpen} 
@@ -1025,10 +1097,19 @@ useEffect(() => {
        <GroupManagerModal isOpen={showGroupManager} onClose={() => setShowGroupManager(false)} allCharacters={characters} sessionData={sessaoData} />
        {showDiceSystem && <MasterDiceSystem onClose={() => setShowDiceSystem(false)} />}
 
+       {restModalType && (
+         <RestOptionsModal
+           isOpen={!!restModalType}
+           type={restModalType}
+           onClose={() => setRestModalType(null)}
+           onConfirm={(options) => handleRestAll(restModalType, options)}
+         />
+       )}
+
        <div className="absolute bottom-6 right-6 z-[1000] flex flex-col items-end gap-4 animate-slide-up pointer-events-auto">
            <div className="flex gap-2 mb-2 bg-black/40 p-2 rounded-xl backdrop-blur-sm border border-white/10">
-               <button onClick={() => handleRestAll('short')} className="flex items-center gap-2 px-4 py-2 bg-orange-900/40 border border-orange-500/30 rounded text-orange-200 text-xs hover:bg-orange-800 transition-colors uppercase font-bold tracking-wide"><Campfire size={18} /> Curto</button>
-               <button onClick={() => handleRestAll('long')} className="flex items-center gap-2 px-4 py-2 bg-indigo-900/40 border border-indigo-500/30 rounded text-indigo-200 text-xs hover:bg-indigo-800 transition-colors uppercase font-bold tracking-wide"><MoonStars size={18} /> Longo</button>
+               <button onClick={() => setRestModalType('short')} className="flex items-center gap-2 px-4 py-2 bg-orange-900/40 border border-orange-500/30 rounded text-orange-200 text-xs hover:bg-orange-800 transition-colors uppercase font-bold tracking-wide"><Campfire size={18} /> Curto</button>
+               <button onClick={() => setRestModalType('long')} className="flex items-center gap-2 px-4 py-2 bg-indigo-900/40 border border-indigo-500/30 rounded text-indigo-200 text-xs hover:bg-indigo-800 transition-colors uppercase font-bold tracking-wide"><MoonStars size={18} /> Longo</button>
            </div>
 
            <div className="flex gap-3 mb-2">
