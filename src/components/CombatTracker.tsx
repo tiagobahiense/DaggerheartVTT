@@ -75,6 +75,112 @@ const DEFAULT_STATS: EnemyStats = {
   abilities: [],
 };
 
+function EnemySheetView({
+  enemy,
+  onClose,
+}: {
+  enemy: MapToken;
+  onClose: () => void;
+}) {
+  const stats = { ...DEFAULT_STATS, ...enemy.stats };
+
+  return (
+    <div
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#1a120b] border border-gold/40 rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto custom-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-white/10 bg-[#1a120b]">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={enemy.img} alt="" className="w-14 h-14 rounded border border-white/20 object-cover shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-gold font-rpg font-bold text-lg truncate">{enemy.name}</h3>
+              <p className="text-[10px] text-white/50 uppercase">{stats.type} • Dif. {stats.difficulty}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-white/50 hover:text-white p-1 shrink-0">
+            <XCircle size={22} />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4 text-sm">
+          <p className="text-[10px] uppercase text-white/40 tracking-widest">Somente leitura — edite pelo Banco de Inimigos</p>
+
+          {stats.description && (
+            <div>
+              <div className="text-[10px] uppercase text-gold/50 font-bold mb-1">Descrição</div>
+              <p className="text-white/80 text-xs">{stats.description}</p>
+            </div>
+          )}
+          {stats.motivations && (
+            <div>
+              <div className="text-[10px] uppercase text-gold/50 font-bold mb-1">Motivações</div>
+              <p className="text-white/70 text-xs italic">{stats.motivations}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-2 bg-white/5 p-2 rounded">
+            <div className="text-center">
+              <div className="text-[9px] uppercase text-gold">Dif.</div>
+              <div className="text-white font-bold">{stats.difficulty}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[9px] uppercase text-red-400">PV</div>
+              <div className="text-red-200 font-bold">{stats.currentPV}/{stats.maxPV}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[9px] uppercase text-blue-400">PF</div>
+              <div className="text-blue-200 font-bold">{stats.currentPF}/{stats.maxPF}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[9px] uppercase text-white/50">Lim.</div>
+              <div className="text-white font-bold text-xs">{stats.thresholdMajor}/{stats.thresholdMinor}</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-white/5 p-2 rounded border border-white/5">
+            <Sword size={18} className="text-white shrink-0" />
+            <div>
+              <div className="text-gold font-bold uppercase text-[10px]">Ataque</div>
+              <div className="text-white text-xs font-bold">{stats.atqBonus} | {stats.weaponName}</div>
+              <div className="text-[10px] text-white/70">{stats.damageFormula} ({stats.damageType})</div>
+            </div>
+          </div>
+
+          {enemy.conditions?.active && enemy.conditions.active.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase text-gold/50 font-bold mb-1">Condições ativas</div>
+              <ConditionsDisplay active={enemy.conditions.active} compact={false} />
+            </div>
+          )}
+
+          {stats.abilities?.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase text-gold/50 font-bold mb-1">Habilidades</div>
+              <div className="space-y-2">
+                {stats.abilities.map((ab, idx) => (
+                  <div key={idx} className="bg-black/60 p-2 rounded border border-white/5">
+                    <div className="flex justify-between gap-2">
+                      <span className="text-white font-bold text-xs">{ab.name}</span>
+                      <span className="text-[9px] text-white/40 uppercase shrink-0">{ab.tag}</span>
+                    </div>
+                    {ab.description && (
+                      <p className="text-[10px] text-white/60 italic mt-1">{ab.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ResourceBar({
   label,
   current,
@@ -119,6 +225,7 @@ export default function CombatTracker({
   const [enemies, setEnemies] = useState<MapToken[]>([]);
   const [expandedEnemyId, setExpandedEnemyId] = useState<string | null>(null);
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
+  const [viewingEnemy, setViewingEnemy] = useState<MapToken | null>(null);
 
   useEffect(() => {
     if (sessaoData?.active_map?.tokens) {
@@ -169,6 +276,7 @@ export default function CombatTracker({
   const icon = isMaster ? <Sword size={24} /> : <Users size={24} />;
 
   return (
+    <>
     <DraggableWindow
       title={title}
       headerIcon={icon}
@@ -176,6 +284,7 @@ export default function CombatTracker({
       initialWidth="500px"
       initialHeight="70vh"
       minimizedPosition="bottom-left"
+      zIndex={995}
     >
       <div className="flex flex-col h-full bg-[#1a120b] overflow-hidden pointer-events-auto">
         <ConditionGlobalStyles />
@@ -333,16 +442,26 @@ export default function CombatTracker({
                       >
                         <div className="p-3">
                           <div className="flex gap-3 items-start">
-                            <div
-                              className="relative w-14 h-14 rounded border border-white/20 overflow-hidden shrink-0 bg-black cursor-pointer"
-                              onClick={() => setExpandedEnemyId(isExpanded ? null : enemy.id)}
-                            >
-                              <img src={enemy.img} className={`w-full h-full object-cover ${isDefeated ? 'grayscale brightness-50' : ''}`} alt="" />
-                              {isDefeated && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                                  <Skull size={24} className="text-white/50" weight="fill" />
-                                </div>
-                              )}
+                            <div className="flex items-start gap-1 shrink-0">
+                              <div
+                                className="relative w-14 h-14 rounded border border-white/20 overflow-hidden bg-black cursor-pointer"
+                                onClick={() => setExpandedEnemyId(isExpanded ? null : enemy.id)}
+                              >
+                                <img src={enemy.img} className={`w-full h-full object-cover ${isDefeated ? 'grayscale brightness-50' : ''}`} alt="" />
+                                {isDefeated && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                                    <Skull size={24} className="text-white/50" weight="fill" />
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setViewingEnemy(enemy)}
+                                className="w-7 h-7 rounded border border-white/20 bg-black/60 text-white/60 hover:text-gold hover:border-gold flex items-center justify-center transition-colors"
+                                title="Ver ficha (somente leitura)"
+                              >
+                                <Eye size={14} weight="bold" />
+                              </button>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-start mb-1">
@@ -443,5 +562,9 @@ export default function CombatTracker({
         </div>
       </div>
     </DraggableWindow>
+    {viewingEnemy && (
+      <EnemySheetView enemy={viewingEnemy} onClose={() => setViewingEnemy(null)} />
+    )}
+    </>
   );
 }

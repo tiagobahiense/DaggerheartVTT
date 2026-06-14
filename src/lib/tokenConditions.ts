@@ -27,16 +27,20 @@ export function getConditionsForCharacter(
   return findCharacterToken(tokens, charId)?.conditions?.active || [];
 }
 
-export function getPrimaryAuraClass(conditions: ConditionId[]): string {
+export function getPrimaryConditionId(conditions: ConditionId[]): ConditionId | null {
   const priority: ConditionId[] = [
     'oculto', 'hidden', 'invisible', 'incorporeal',
     'vulnerable', 'protected', 'stunned', 'unconscious', 'asleep',
-    'immobilized', 'charmed', 'dissociated',
+    'immobilized', 'charmed', 'dissociated', 'restrained', 'shaken',
   ];
   for (const id of priority) {
-    if (conditions.includes(id)) {
-      return CONDITION_MAP[id]?.auraClass || '';
-    }
+    if (conditions.includes(id)) return id;
   }
-  return conditions.length > 0 ? 'condition-aura-generic' : '';
+  return conditions[0] ?? null;
+}
+
+export function getPrimaryAuraClass(conditions: ConditionId[]): string {
+  const id = getPrimaryConditionId(conditions);
+  if (!id) return '';
+  return CONDITION_MAP[id]?.auraClass || 'condition-aura-generic';
 }

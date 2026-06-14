@@ -1,5 +1,6 @@
 import { auth } from '../lib/firebase';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../lib/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { 
@@ -138,6 +139,17 @@ const DEFAULT_STATS: EnemyStats = {
     abilities: []
 };
 
+const TOKEN_EDITOR_WIDTH = 288;
+const TOKEN_EDITOR_HEIGHT = 420;
+
+function clampTokenEditorPos(x: number, y: number) {
+  const pad = 8;
+  return {
+    x: Math.max(pad, Math.min(x, window.innerWidth - TOKEN_EDITOR_WIDTH - pad)),
+    y: Math.max(pad, Math.min(y, window.innerHeight - TOKEN_EDITOR_HEIGHT - pad)),
+  };
+}
+
 export default function Tabletop({ sessaoData, isMaster, charactersData, showManager, onCloseManager }: TabletopProps) {
   const charMap = useMemo(() => {
       const map: Record<string, TabletopCharacter> = {};
@@ -180,6 +192,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
   const dragOffset = useRef({ x: 0, y: 0 });
   const localTokensRef = useRef<Token[]>([]);
   const draggingTokenIdRef = useRef<string | null>(null);
+  const tokenEditorDragRef = useRef({ active: false, offsetX: 0, offsetY: 0 });
 
   useEffect(() => {
     localTokensRef.current = localTokens;
@@ -619,8 +632,42 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
   const handleTokenDoubleClick = (e: React.MouseEvent, token: Token) => {
       e.stopPropagation();
       if (!isTokenOwner(token) && !isMaster) return;
-      setEditingToken({ id: token.id, screenX: e.clientX + 20, screenY: e.clientY - 50 });
+      const pos = clampTokenEditorPos(e.clientX + 20, e.clientY - 50);
+      setEditingToken({ id: token.id, screenX: pos.x, screenY: pos.y });
   };
+
+  const startTokenEditorDrag = (e: React.MouseEvent) => {
+      if (!editingToken) return;
+      e.preventDefault();
+      tokenEditorDragRef.current = {
+          active: true,
+          offsetX: e.clientX - editingToken.screenX,
+          offsetY: e.clientY - editingToken.screenY,
+      };
+  };
+
+  useEffect(() => {
+      if (!editingToken) return;
+
+      const onMove = (e: MouseEvent) => {
+          if (!tokenEditorDragRef.current.active) return;
+          const pos = clampTokenEditorPos(
+              e.clientX - tokenEditorDragRef.current.offsetX,
+              e.clientY - tokenEditorDragRef.current.offsetY
+          );
+          setEditingToken((current) => current ? { ...current, screenX: pos.x, screenY: pos.y } : null);
+      };
+      const onUp = () => {
+          tokenEditorDragRef.current.active = false;
+      };
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      return () => {
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+      };
+  }, [editingToken?.id]);
 
   const updateEditingToken = (updates: Partial<Token>) => {
       if (!editingToken) return;
@@ -724,14 +771,25 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                     </div>
 
                     <ConditionGlobalStyles />
-                    {editingToken && (() => {
+                </div>
+            </DraggableWindow>
+        )}
+
+        {editingToken && createPortal((() => {
                         const editingTokenData = localTokens.find(t => t.id === editingToken.id);
                         const editingConditions = editingTokenData?.conditions?.active || [];
                         return (
-                        <div className="fixed z-[9999999] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-72 max-h-[80vh] overflow-y-auto custom-scrollbar" style={{ left: editingToken.screenX, top: editingToken.screenY }} onMouseDown={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-2 border-b border-white/10 pb-1">
+                        <div
+                            className="fixed z-[10000002] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-72 max-h-[80vh] overflow-y-auto custom-scrollbar"
+                            style={{ left: editingToken.screenX, top: editingToken.screenY, width: TOKEN_EDITOR_WIDTH }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <div
+                                className="flex justify-between items-center mb-2 border-b border-white/10 pb-1 cursor-move select-none"
+                                onMouseDown={startTokenEditorDrag}
+                            >
                                 <span className="text-gold font-bold text-xs uppercase">Editar Token</span>
-                                <X className="text-white cursor-pointer hover:text-red-500" onClick={() => setEditingToken(null)} />
+                                <X className="text-white cursor-pointer hover:text-red-500" onClick={() => setEditingToken(null)} onMouseDown={(e) => e.stopPropagation()} />
                             </div>
                             <div className="grid grid-cols-3 gap-2 mb-3">
                                 <div className="col-span-3 flex justify-center"><button onClick={() => updateEditingToken({ imgOffY: (localTokens.find(t=>t.id===editingToken.id)?.imgOffY||0) - 5 })} className="p-1 bg-white/10 hover:bg-gold rounded"><ArrowUp /></button></div>
@@ -765,10 +823,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                             </div>
                         </div>
                         );
-                    })()}
-                </div>
-            </DraggableWindow>
-        )}
+                    })(), document.body)}
 
         {isMaster && showManager && (
              <div className="fixed inset-0 z-[10000000] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
