@@ -9,12 +9,14 @@ interface DraggableWindowProps {
   initialHeight?: string;
   headerIcon?: React.ReactNode;
   minimizedPosition?: 'bottom-left' | 'bottom-right' | 'top-right' | 'top-left';
+  zIndex?: number;
 }
 
 export default function DraggableWindow({ 
     title, children, onClose, 
     initialWidth = "95vw", initialHeight = "85vh", 
-    headerIcon, minimizedPosition = 'top-right' 
+    headerIcon, minimizedPosition = 'top-right',
+    zIndex = 45,
 }: DraggableWindowProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -94,9 +96,9 @@ export default function DraggableWindow({
 
   if (isMinimized) {
       return (
-          // Reduzido para z-[45] para ficar abaixo do botão de dado
           <div 
-            className={`fixed ${minPosClass} z-[45] bg-[#1a120b] border border-gold/50 rounded-lg shadow-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition-colors animate-scale-up`}
+            className={`fixed ${minPosClass} bg-[#1a120b] border border-gold/50 rounded-lg shadow-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition-colors animate-scale-up`}
+            style={{ zIndex }}
             onClick={() => setIsMinimized(false)}
           >
               <div className="text-gold">{headerIcon}</div>
@@ -107,11 +109,12 @@ export default function DraggableWindow({
   }
 
   return (
-      // Reduzido para z-[45]
       <div 
         ref={windowRef}
-        className="fixed z-[45] bg-[#1a120b] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in max-w-[100vw] max-h-[100dvh]"
-        style={isMaximized ? { inset: 0, width: '100%', height: '100%' } : { left: Math.max(0, position.x), top: Math.max(0, position.y), width: size.w, height: size.h }}
+        className="fixed bg-[#1a120b] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in max-w-[100vw] max-h-[100dvh]"
+        style={isMaximized
+          ? { zIndex, inset: 0, width: '100%', height: '100%' }
+          : { zIndex, left: Math.max(0, position.x), top: Math.max(0, position.y), width: size.w, height: size.h }}
       >
         <div 
             className="bg-black/80 p-3 border-b border-white/10 flex justify-between items-center cursor-move select-none touch-none"

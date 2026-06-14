@@ -646,6 +646,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                 headerIcon={<MapTrifold size={20} />}
                 initialWidth="95vw" initialHeight="85vh"
                 minimizedPosition="top-right"
+                zIndex={990}
             >
                 <div 
                     ref={containerRef}
@@ -845,10 +846,18 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                         <img src={map.url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
                                         <div className="absolute bottom-0 w-full bg-black/80 p-2">
                                             <p className="text-white font-bold text-sm truncate">{map.name}</p>
+                                            <p className="text-[10px] text-white/40 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                                                Grid: {map.gridSizePx ?? '—'}px
+                                            </p>
                                         </div>
-                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity backdrop-blur-sm">
-                                            <button onClick={() => loadMapFromBank(map)} className="bg-gold px-3 py-1 rounded text-black text-xs font-bold flex items-center gap-1"><Upload /> CARREGAR</button>
-                                            <button onClick={async () => { if(confirm("Deletar?")) await updateDoc(doc(db, 'sessoes', sessaoData.id), { saved_maps: arrayRemove(map) }); }} className="bg-red-600 p-2 rounded text-white"><Trash /></button>
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity backdrop-blur-sm">
+                                            <span className="text-gold text-xs font-bold uppercase tracking-widest bg-black/60 px-3 py-1 rounded border border-gold/30">
+                                                Grid: {map.gridSizePx ?? '—'}px
+                                            </span>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => loadMapFromBank(map)} className="bg-gold px-3 py-1 rounded text-black text-xs font-bold flex items-center gap-1"><Upload /> CARREGAR</button>
+                                                <button onClick={async () => { if(confirm("Deletar?")) await updateDoc(doc(db, 'sessoes', sessaoData.id), { saved_maps: arrayRemove(map) }); }} className="bg-red-600 p-2 rounded text-white"><Trash /></button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
