@@ -8,8 +8,10 @@ import { subscribeSession } from '../lib/session';
 import { PlayerFearStash, FearUseOverlay, useFearAlertListener } from '../components/FearDisplay';
 import {
   searchCards, suggestCards, sortGrimoireCards, formatCardMeta,
-  DOMAIN_OPTIONS, NIVEL_OPTIONS,
+  DOMAIN_OPTIONS, NIVEL_OPTIONS, stripCardPrefixes,
 } from '../lib/cardSearch';
+import { resolveDomainColor, type CardCastEvent } from '../lib/cardCastEvents';
+import { CardCastOverlay, useCardCastAlertListener } from '../components/CardCastOverlay';
 import { 
   X, HandGrabbing, Stack, ArrowsOutSimple, 
   MagnifyingGlass, LockKey, Plus, 
@@ -187,7 +189,15 @@ const TableCard = ({ card, label, locked = true, onSelect }: { card: Card | null
 // ==================================================================================
 // SISTEMA DE CARTAS (InternalCardSystem)
 // ==================================================================================
-function InternalCardSystem({ character, allCards }: { character: Character, allCards: Card[] }) {
+function InternalCardSystem({
+  character,
+  allCards,
+  sessionId,
+}: {
+  character: Character;
+  allCards: Card[];
+  sessionId?: string | null;
+}) {
   const safeCards: Card[] = useMemo(() => Array.isArray(allCards) ? allCards : [], [allCards]);
 
   const [hand, setHand] = useState<ActiveCard[]>([]);
@@ -313,11 +323,40 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
     return stored;
   };
 
-  const handleCastCard = (card: ActiveCard) => {
+  const handleCastCard = async (card: ActiveCard) => {
     if (card.isExhausted) return alert("Esta carta está exaurida.");
     setSelectedCardState(null);
     setCastingCard(card);
     setTimeout(() => setCastingCard(null), 1500);
+
+    if (!sessionId) return;
+
+    const catalogCard = safeCards.find(
+      (c) => c.caminho === card.caminho || c.nome === card.nome
+    );
+    const tipoDominio = card.tipo_dominio ?? catalogCard?.tipo_dominio ?? null;
+    const corDominio = resolveDomainColor(
+      tipoDominio,
+      card.cor_dominio ?? catalogCard?.cor_dominio
+    );
+
+    try {
+      await updateDoc(doc(db, 'sessoes', sessionId), {
+        latestCardCast: {
+          id: Date.now(),
+          charId: character.id,
+          charName: character.name,
+          cardName: stripCardPrefixes(card.nome),
+          cardPath: card.caminho,
+          cardCategory: card.categoria,
+          tipoDominio,
+          corDominio,
+          nivelDominio: card.nivel_dominio ?? card.dominio ?? catalogCard?.nivel_dominio ?? catalogCard?.dominio ?? null,
+        },
+      });
+    } catch (error) {
+      console.error('Erro ao enviar alerta de carta:', error);
+    }
   };
 
   const initiateDraw = (card: Card, source: 'grimoire' | 'reserve', reserveIndex: number = -1) => {
@@ -694,6 +733,7 @@ export default function JogadorVTT() {
 
   const [showDruidModal, setShowDruidModal] = useState(false);
   const [transformAlert, setTransformAlert] = useState<any>(null);
+  const [cardCastAlert, setCardCastAlert] = useState<CardCastEvent | null>(null);
 
   const [groupCharacters, setGroupCharacters] = useState<Character[]>([]); 
   const [isNotifOpen, setIsNotifOpen] = useState(false); 
@@ -801,6 +841,9 @@ export default function JogadorVTT() {
   };
 
   useFearAlertListener(sessaoData?.fear_data, setFearAlertVisible);
+  useCardCastAlertListener(sessaoData?.latestCardCast, setCardCastAlert, {
+    skipCharId: character?.id,
+  });
 
   const fearTokens = (sessaoData?.fear_data as { tokens?: number } | undefined)?.tokens ?? 0;
 
@@ -977,7 +1020,11 @@ export default function JogadorVTT() {
         </div>
       )}
 
-      <InternalCardSystem character={character} allCards={CARTAS_JSON as Card[]} />
+      <InternalCardSystem
+        character={character}
+        allCards={CARTAS_JSON as Card[]}
+        sessionId={sessaoData?.id}
+      />
 
       <DiceToast />
 
@@ -1032,6 +1079,7 @@ export default function JogadorVTT() {
       )}
 
       <FearUseOverlay visible={fearAlertVisible} />
+      <CardCastOverlay event={cardCastAlert} />
 
     </div>
   );

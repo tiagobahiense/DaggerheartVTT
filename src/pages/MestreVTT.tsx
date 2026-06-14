@@ -7,6 +7,8 @@ import { db } from '../lib/firebase';
 import { subscribeSession, DEFAULT_SESSION_FIELDS } from '../lib/session';
 import { createFearEventId } from '../lib/fearEvents';
 import { FearTokenGrid, FearUseOverlay, triggerFearAlertLocally } from '../components/FearDisplay';
+import { CardCastOverlay, useCardCastAlertListener } from '../components/CardCastOverlay';
+import type { CardCastEvent } from '../lib/cardCastEvents';
 import { 
   Users, Eye, Skull, Campfire, MoonStars, 
   Dna, X, HandPalm, 
@@ -619,6 +621,7 @@ export default function MestreVTT() {
   const [fearAlertVisible, setFearAlertVisible] = useState(false);
 
   const [transformAlert, setTransformAlert] = useState<any>(null);
+  const [cardCastAlert, setCardCastAlert] = useState<CardCastEvent | null>(null);
   const [restModalType, setRestModalType] = useState<'short' | 'long' | null>(null);
 
   const styles = `
@@ -677,6 +680,8 @@ export default function MestreVTT() {
     );
     return () => unsubscribe();
   }, []);
+
+  useCardCastAlertListener(sessaoData?.latestCardCast, setCardCastAlert);
 
 // 2. Busca Personagens (Listener Fixo - Roda apenas uma vez)
 useEffect(() => {
@@ -831,6 +836,7 @@ useEffect(() => {
        </div>
 
        <FearUseOverlay visible={fearAlertVisible} />
+       <CardCastOverlay event={cardCastAlert} />
 
        {/* ALERTA DE DRUIDA NO MESTRE */}
        {transformAlert && (
