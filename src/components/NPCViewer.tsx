@@ -242,19 +242,19 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                 title="Cenários & NPCs" 
                 headerIcon={<Image />} 
                 onClose={onCloseManager}
-                initialWidth="820px" 
-                initialHeight="640px"
+                initialWidth="min(820px, 95vw)" 
+                initialHeight="min(720px, 90dvh)"
                 minimizedPosition="top-right"
                 zIndex={3000}
             >
-                <div className="flex flex-col h-full bg-[#1a120b]">
-                    <div className="flex bg-black/40 p-2 gap-2 border-b border-white/10">
+                <div className="flex flex-col h-full min-h-0 w-full bg-[#1a120b] overflow-hidden">
+                    <div className="flex shrink-0 bg-black/40 p-2 gap-2 border-b border-white/10">
                         <button onClick={() => setTab('SCENERY')} className={`flex-1 py-2 font-bold font-rpg rounded transition-colors ${tab==='SCENERY' ? 'bg-gold text-black' : 'bg-white/5 text-white/40 hover:text-white'}`}>CENÁRIOS</button>
                         <button onClick={() => setTab('NPC')} className={`flex-1 py-2 font-bold font-rpg rounded transition-colors ${tab==='NPC' ? 'bg-gold text-black' : 'bg-white/5 text-white/40 hover:text-white'}`}>NPCs</button>
                     </div>
 
                     {(activeScenery || activeNPC) && (
-                      <div className="mx-4 mt-4 p-3 rounded-lg border border-gold/30 bg-gold/5">
+                      <div className="shrink-0 mx-4 mt-3 p-3 rounded-lg border border-gold/30 bg-gold/5">
                         <div className="text-[10px] uppercase tracking-widest text-gold font-bold mb-2">No ar agora</div>
                         <div className="flex flex-wrap gap-2">
                           {activeScenery && (
@@ -276,20 +276,21 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                       </div>
                     )}
 
-                    <div className="flex-1 p-4 overflow-hidden flex flex-col min-h-0">
-                        <div className="bg-white/5 p-4 rounded mb-4 border border-white/10 shrink-0">
+                    <div className="flex-1 min-h-0 flex flex-col p-4 pt-3 gap-3 overflow-hidden">
+                        <div className="bg-white/5 p-3 rounded border border-white/10 shrink-0">
                             <div className="text-[10px] uppercase text-white/40 mb-2">Cadastrar {tab === 'SCENERY' ? 'cenário' : 'NPC'}</div>
-                            <div className="flex gap-2 mb-2">
-                                <input value={inputUrl} onChange={e => setInputUrl(e.target.value)} placeholder="URL da imagem..." className="flex-[2] bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
-                                <input value={inputName} onChange={e => setInputName(e.target.value)} placeholder="Nome..." className="flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
+                            <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                                <input value={inputUrl} onChange={e => setInputUrl(e.target.value)} placeholder="URL da imagem..." className="sm:flex-[2] bg-black/50 border border-white/20 p-2 rounded text-white text-sm min-w-0" />
+                                <input value={inputName} onChange={e => setInputName(e.target.value)} placeholder="Nome..." className="sm:flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm min-w-0" />
                             </div>
-                            <div className="flex gap-2">
-                                <input value={inputDesc} onChange={e => setInputDesc(e.target.value)} placeholder="Descrição (opcional)..." className="flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
-                                <button onClick={handleSaveItem} className="px-4 bg-green-700 hover:bg-green-600 text-white font-bold rounded text-xs uppercase flex items-center gap-2 shrink-0"><FloppyDisk size={18} /> Salvar</button>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input value={inputDesc} onChange={e => setInputDesc(e.target.value)} placeholder="Descrição (opcional)..." className="flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm min-w-0" />
+                                <button onClick={handleSaveItem} className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white font-bold rounded text-xs uppercase flex items-center justify-center gap-2 shrink-0"><FloppyDisk size={18} /> Salvar</button>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 gap-3 custom-scrollbar content-start min-h-0">
+                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scrollbar pb-1">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                              {currentList.length === 0 && (
                                <div className="col-span-full text-center text-white/30 py-8 text-sm">
                                  Nenhum {tab === 'SCENERY' ? 'cenário' : 'NPC'} salvo. Cadastre acima ou projete pela URL.
@@ -298,34 +299,37 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                              {currentList.map((item) => {
                                const live = isLive(tab, item);
                                return (
-                                <div key={item.id} className={`relative bg-black rounded border overflow-hidden shadow-lg flex flex-col ${live ? 'border-gold ring-1 ring-gold/30' : 'border-white/10 hover:border-gold/50'} transition-all`}>
-                                    <div className="relative aspect-video">
-                                      <img src={item.url} className="w-full h-full object-cover" alt="" />
+                                <div
+                                  key={item.id}
+                                  className={`flex flex-col rounded-lg border overflow-hidden shadow-lg bg-black ${live ? 'border-gold ring-1 ring-gold/30' : 'border-white/10 hover:border-gold/50'} transition-colors`}
+                                >
+                                    <div className="relative h-28 sm:h-32 w-full shrink-0 bg-[#0a0a0a]">
+                                      <img src={item.url} className="absolute inset-0 w-full h-full object-cover object-top" alt="" />
                                       {live && (
-                                        <span className="absolute top-1 left-1 text-[8px] font-bold uppercase tracking-wider bg-gold text-black px-1.5 py-0.5 rounded">No ar</span>
+                                        <span className="absolute top-1 left-1 text-[8px] font-bold uppercase tracking-wider bg-gold text-black px-1.5 py-0.5 rounded z-10">No ar</span>
                                       )}
                                     </div>
-                                    <div className="p-2 bg-black/80 border-t border-white/10">
-                                        <p className="text-white font-bold text-xs truncate text-center mb-2">{item.name}</p>
+                                    <div className="shrink-0 p-2 bg-[#111] border-t border-white/10 flex flex-col gap-2">
+                                        <p className="text-white font-bold text-xs truncate text-center leading-tight" title={item.name}>{item.name}</p>
                                         <div className="flex gap-1">
                                           {live ? (
                                             <button
                                               onClick={() => handleStopProjection(tab)}
-                                              className="flex-1 py-1.5 rounded text-[10px] font-bold uppercase bg-red-900/60 text-red-200 border border-red-500/30 hover:bg-red-700 hover:text-white"
+                                              className="flex-1 min-h-[32px] py-1.5 rounded text-[10px] font-bold uppercase bg-red-900/60 text-red-200 border border-red-500/30 hover:bg-red-700 hover:text-white"
                                             >
                                               Tirar do ar
                                             </button>
                                           ) : (
                                             <button
                                               onClick={() => handleProject(item)}
-                                              className="flex-1 py-1.5 rounded text-[10px] font-bold uppercase bg-gold text-black hover:bg-yellow-400 flex items-center justify-center gap-1"
+                                              className="flex-1 min-h-[32px] py-1.5 rounded text-[10px] font-bold uppercase bg-gold text-black hover:bg-yellow-400 flex items-center justify-center gap-1"
                                             >
                                               <Eye size={14} /> Projetar
                                             </button>
                                           )}
                                           <button
                                             onClick={() => handleDeleteItem(item.id, tab)}
-                                            className="p-1.5 rounded bg-white/5 text-white/50 hover:text-red-400 hover:bg-red-900/30 border border-white/10"
+                                            className="shrink-0 w-8 min-h-[32px] flex items-center justify-center rounded bg-white/5 text-white/50 hover:text-red-400 hover:bg-red-900/30 border border-white/10"
                                             title="Excluir do banco"
                                           >
                                             <Trash size={16} />
@@ -334,6 +338,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                                     </div>
                                 </div>
                             );})}
+                            </div>
                         </div>
                     </div>
                 </div>

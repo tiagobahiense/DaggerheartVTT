@@ -142,7 +142,7 @@ export default function DraggableWindow({
             </div>
         </div>
 
-        <div className="flex-1 overflow-hidden relative bg-[#050505] flex items-center justify-center">
+        <div className="flex-1 overflow-hidden relative bg-[#050505] flex flex-col min-h-0 w-full h-full">
             {children}
         </div>
 
