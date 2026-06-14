@@ -832,10 +832,10 @@
     "nome": "Feitiço - Disfarce em Massa",
     "categoria": "Feitiço",
     "numero": 199,
-    "dominio": 5,
+    "dominio": 6,
     "tipo_dominio": "Meia-noite",
     "cor_dominio": "#374151",
-    "nivel_dominio": 5,
+    "nivel_dominio": 6,
     "custo_troca": 2
   },
   {
@@ -931,10 +931,10 @@
     "nome": "Feitiço - Espírito da meia-noite",
     "categoria": "Feitiço",
     "numero": 190,
-    "dominio": 1,
+    "dominio": 2,
     "tipo_dominio": "Meia-noite",
     "cor_dominio": "#374151",
-    "nivel_dominio": 1,
+    "nivel_dominio": 2,
     "custo_troca": 1
   },
   {
@@ -986,10 +986,10 @@
     "nome": "Feitiço - Fortaleza Selvagem",
     "categoria": "Feitiço",
     "numero": 218,
-    "dominio": 3,
+    "dominio": 5,
     "tipo_dominio": "Sabedoria",
     "cor_dominio": "#16A34A",
-    "nivel_dominio": 3,
+    "nivel_dominio": 5,
     "custo_troca": 1
   },
   {
@@ -1063,10 +1063,10 @@
     "nome": "Feitiço - Incendiar",
     "categoria": "Feitiço",
     "numero": 85,
-    "dominio": 1,
+    "dominio": 2,
     "tipo_dominio": "Arcano",
     "cor_dominio": "#7C3AED",
-    "nivel_dominio": 1,
+    "nivel_dominio": 2,
     "custo_troca": 1
   },
   {
@@ -1074,10 +1074,10 @@
     "nome": "Feitiço - Invisibilidade",
     "categoria": "Feitiço",
     "numero": 172,
-    "dominio": 8,
+    "dominio": 3,
     "tipo_dominio": "Graça",
     "cor_dominio": "#DB2777",
-    "nivel_dominio": 8,
+    "nivel_dominio": 3,
     "custo_troca": 3
   },
   {
@@ -1305,10 +1305,10 @@
     "nome": "Feitiço - Refúgio Seguro",
     "categoria": "Feitiço",
     "numero": 161,
-    "dominio": 10,
+    "dominio": 8,
     "tipo_dominio": "Códice",
     "cor_dominio": "#2563EB",
-    "nivel_dominio": 10,
+    "nivel_dominio": 8,
     "custo_troca": 1
   },
   {
@@ -1448,10 +1448,10 @@
     "nome": "Feitiço - Tempestade",
     "categoria": "Feitiço",
     "numero": 228,
-    "dominio": 9,
+    "dominio": 10,
     "tipo_dominio": "Sabedoria",
     "cor_dominio": "#16A34A",
-    "nivel_dominio": 9,
+    "nivel_dominio": 10,
     "custo_troca": 1
   },
   {
@@ -1492,10 +1492,10 @@
     "nome": "Feitiço - Translocação",
     "categoria": "Feitiço",
     "numero": 89,
-    "dominio": 1,
+    "dominio": 4,
     "tipo_dominio": "Arcano",
     "cor_dominio": "#7C3AED",
-    "nivel_dominio": 1,
+    "nivel_dominio": 4,
     "custo_troca": 1
   },
   {
@@ -1547,10 +1547,10 @@
     "nome": "Feitiço - Véu da Noite",
     "categoria": "Feitiço",
     "numero": 193,
-    "dominio": 1,
+    "dominio": 3,
     "tipo_dominio": "Meia-noite",
     "cor_dominio": "#374151",
-    "nivel_dominio": 1,
+    "nivel_dominio": 3,
     "custo_troca": 1
   },
   {
@@ -1558,10 +1558,10 @@
     "nome": "Feitiço - Zona de Proteção",
     "categoria": "Feitiço",
     "numero": 241,
-    "dominio": 2,
+    "dominio": 6,
     "tipo_dominio": "Esplendor",
     "cor_dominio": "#CA8A04",
-    "nivel_dominio": 2,
+    "nivel_dominio": 6,
     "custo_troca": 1
   },
   {
@@ -1722,10 +1722,10 @@
     "nome": "Talento - Abalo Sísmico",
     "categoria": "Talento",
     "numero": 266,
-    "dominio": 6,
+    "dominio": 8,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 6,
+    "nivel_dominio": 8,
     "custo_troca": 2
   },
   {
@@ -1766,10 +1766,10 @@
     "nome": "Talento - Aproximação Estratégica",
     "categoria": "Talento",
     "numero": 128,
-    "dominio": 1,
+    "dominio": 2,
     "tipo_dominio": "Falange",
     "cor_dominio": "#9CA3AF",
-    "nivel_dominio": 1,
+    "nivel_dominio": 2,
     "custo_troca": 1
   },
   {
@@ -1832,10 +1832,10 @@
     "nome": "Talento - Bastião",
     "categoria": "Talento",
     "numero": 258,
-    "dominio": 1,
+    "dominio": 4,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 1,
+    "nivel_dominio": 4,
     "custo_troca": 0
   },
   {
@@ -1909,10 +1909,10 @@
     "nome": "Talento - Contra-Ataque Rápido",
     "categoria": "Talento",
     "numero": 135,
-    "dominio": 8,
+    "dominio": 6,
     "tipo_dominio": "Falange",
     "cor_dominio": "#9CA3AF",
-    "nivel_dominio": 8,
+    "nivel_dominio": 6,
     "custo_troca": 3
   },
   {
@@ -1942,10 +1942,10 @@
     "nome": "Talento - desprezar fraqueza",
     "categoria": "Talento",
     "numero": 263,
-    "dominio": 5,
+    "dominio": 7,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 5,
+    "nivel_dominio": 7,
     "custo_troca": 1
   },
   {
@@ -1986,10 +1986,10 @@
     "nome": "Talento - Dom da Lâmina",
     "categoria": "Talento",
     "numero": 116,
-    "dominio": 2,
+    "dominio": 7,
     "tipo_dominio": "Lâmina",
     "cor_dominio": "#DC2626",
-    "nivel_dominio": 2,
+    "nivel_dominio": 7,
     "custo_troca": 1
   },
   {
@@ -2052,10 +2052,10 @@
     "nome": "Talento - Estrangulamento",
     "categoria": "Talento",
     "numero": 192,
-    "dominio": 4,
+    "dominio": 3,
     "tipo_dominio": "Meia-noite",
     "cor_dominio": "#374151",
-    "nivel_dominio": 4,
+    "nivel_dominio": 3,
     "custo_troca": 0
   },
   {
@@ -2107,10 +2107,10 @@
     "nome": "Talento - Fúria",
     "categoria": "Talento",
     "numero": 115,
-    "dominio": 1,
+    "dominio": 6,
     "tipo_dominio": "Lâmina",
     "cor_dominio": "#DC2626",
-    "nivel_dominio": 1,
+    "nivel_dominio": 6,
     "custo_troca": 0
   },
   {
@@ -2151,10 +2151,10 @@
     "nome": "Talento - Golpe Inspirador",
     "categoria": "Talento",
     "numero": 260,
-    "dominio": 9,
+    "dominio": 5,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 9,
+    "nivel_dominio": 5,
     "custo_troca": 1
   },
   {
@@ -2162,10 +2162,10 @@
     "nome": "Talento - golpe pessoal",
     "categoria": "Talento",
     "numero": 134,
-    "dominio": 8,
+    "dominio": 5,
     "tipo_dominio": "Falange",
     "cor_dominio": "#9CA3AF",
-    "nivel_dominio": 8,
+    "nivel_dominio": 5,
     "custo_troca": 1
   },
   {
@@ -2173,10 +2173,10 @@
     "nome": "Talento - grito de guerra",
     "categoria": "Talento",
     "numero": 118,
-    "dominio": 5,
+    "dominio": 8,
     "tipo_dominio": "Lâmina",
     "cor_dominio": "#DC2626",
-    "nivel_dominio": 5,
+    "nivel_dominio": 8,
     "custo_troca": 0
   },
   {
@@ -2250,10 +2250,10 @@
     "nome": "Talento - Inspiração Crítica",
     "categoria": "Talento",
     "numero": 255,
-    "dominio": 1,
+    "dominio": 3,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 1,
+    "nivel_dominio": 3,
     "custo_troca": 1
   },
   {
@@ -2272,10 +2272,10 @@
     "nome": "Talento - Invencível",
     "categoria": "Talento",
     "numero": 269,
-    "dominio": 8,
+    "dominio": 10,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 8,
+    "nivel_dominio": 10,
     "custo_troca": 1
   },
   {
@@ -2305,10 +2305,10 @@
     "nome": "Talento - Líder Exemplar",
     "categoria": "Talento",
     "numero": 268,
-    "dominio": 5,
+    "dominio": 9,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 5,
+    "nivel_dominio": 9,
     "custo_troca": 1
   },
   {
@@ -2415,10 +2415,10 @@
     "nome": "Talento - Não o Suficiente",
     "categoria": "Talento",
     "numero": 104,
-    "dominio": 6,
+    "dominio": 1,
     "tipo_dominio": "Lâmina",
     "cor_dominio": "#DC2626",
-    "nivel_dominio": 6,
+    "nivel_dominio": 1,
     "custo_troca": 2
   },
   {
@@ -2470,10 +2470,10 @@
     "nome": "Talento - Presença Corajosa",
     "categoria": "Talento",
     "numero": 254,
-    "dominio": 1,
+    "dominio": 2,
     "tipo_dominio": "Valor",
     "cor_dominio": "#EA580C",
-    "nivel_dominio": 1,
+    "nivel_dominio": 2,
     "custo_troca": 0
   },
   {
@@ -2503,10 +2503,10 @@
     "nome": "Talento - Recuperação",
     "categoria": "Talento",
     "numero": 136,
-    "dominio": 4,
+    "dominio": 6,
     "tipo_dominio": "Falange",
     "cor_dominio": "#9CA3AF",
-    "nivel_dominio": 4,
+    "nivel_dominio": 6,
     "custo_troca": 1
   },
   {
@@ -2525,10 +2525,10 @@
     "nome": "Talento - Resistir",
     "categoria": "Talento",
     "numero": 129,
-    "dominio": 1,
+    "dominio": 3,
     "tipo_dominio": "Falange",
     "cor_dominio": "#9CA3AF",
-    "nivel_dominio": 1,
+    "nivel_dominio": 3,
     "custo_troca": 1
   },
   {
@@ -2613,10 +2613,10 @@
     "nome": "Talento - Um Passo à Frente",
     "categoria": "Talento",
     "numero": 125,
-    "dominio": 2,
+    "dominio": 1,
     "tipo_dominio": "Falange",
     "cor_dominio": "#9CA3AF",
-    "nivel_dominio": 2,
+    "nivel_dominio": 1,
     "custo_troca": 2
   },
   {
@@ -2646,10 +2646,10 @@
     "nome": "Talento - Versatilidade",
     "categoria": "Talento",
     "numero": 109,
-    "dominio": 1,
+    "dominio": 3,
     "tipo_dominio": "Lâmina",
     "cor_dominio": "#DC2626",
-    "nivel_dominio": 1,
+    "nivel_dominio": 3,
     "custo_troca": 1
   },
   {

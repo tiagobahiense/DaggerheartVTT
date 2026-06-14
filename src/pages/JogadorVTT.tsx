@@ -578,22 +578,6 @@ function InternalCardSystem({ character, allCards }: { character: Character, all
                     className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-white/10 group-hover:border-gold shadow-lg group-hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"
                     style={card.cor_dominio ? { borderColor: `${card.cor_dominio}66` } : undefined}
                   >
-                    {(card.nivel_dominio ?? card.dominio) != null && (
-                      <span
-                        className="absolute top-1 left-1 z-10 px-1.5 py-0.5 rounded text-[10px] font-bold leading-none text-white shadow"
-                        style={{ backgroundColor: card.cor_dominio ?? '#000000b3' }}
-                      >
-                        {card.nivel_dominio ?? card.dominio}
-                      </span>
-                    )}
-                    {card.custo_troca != null && (
-                      <span className="absolute top-1 right-1 z-10 px-1.5 py-0.5 rounded bg-black/80 border border-white/20 text-white/80 text-[9px] font-bold leading-none">
-                        â‡„{card.custo_troca}
-                      </span>
-                    )}
-                    <span className="absolute bottom-1 left-1 right-1 z-10 px-1 py-0.5 rounded bg-black/75 text-[8px] uppercase leading-none text-center truncate" style={{ color: card.cor_dominio ?? '#ffffff99' }}>
-                      {card.tipo_dominio ?? (card.categoria === 'Grimório' ? 'Grimório' : card.categoria)}
-                    </span>
                     <img src={card.caminho} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <p className="text-center text-xs text-white/40 mt-2 truncate w-full group-hover:text-white" title={card.nome}>{displayName}</p>
