@@ -22,7 +22,6 @@ import Tabletop from '../components/Tabletop';
 import TurnCounter from '../components/TurnCounter';
 import CombatTracker from '../components/CombatTracker';
 import MasterShield from '../components/MasterShield';
-import { PlayerSummaryPanel } from '../components/PlayerSummaryPanel';
 import { RestOptionsModal } from '../components/RestOptionsModal';
 import { DiceSystemModal } from '../components/dice/DiceSystemModal';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
@@ -852,12 +851,6 @@ useEffect(() => {
        
        {useCollapsedView ? <CollapsedPlayerList players={visibleCharacters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} /> : <PlayerList players={visibleCharacters} onSelectPlayer={(c) => { setSelectedChar(c); setIsSheetOpen(true); }} />}
 
-       <PlayerSummaryPanel
-         characters={visibleCharacters}
-         sessaoData={sessaoData}
-         onSelectCharacter={(c) => { setSelectedChar(c as Character); setIsSheetOpen(true); }}
-       />
-
        <SheetModal 
            character={selectedChar} 
            isOpen={isSheetOpen} 
@@ -893,7 +886,7 @@ useEffect(() => {
            <div className="flex gap-3 mb-2">
                <button onClick={() => setShowGroupManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-green-400 hover:text-green-300 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Grupos"><UsersThree size={24} /></button>
                <button onClick={() => setShowTabletopManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-gold hover:text-gold flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Mapas"><MapTrifold size={24} /></button>
-               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Gerenciar Cenários/NPCs"><ImageIcon size={24} /></button>
+               <button onClick={() => setShowSceneryManager(true)} className="w-12 h-12 rounded-full bg-black/60 border border-white/20 text-white hover:border-red-500 hover:text-red-400 flex items-center justify-center transition-colors shadow-lg" title="Cenários & NPCs"><ImageIcon size={24} /></button>
                
                {/* BOTÃO: RASTREADOR DE COMBATE */}
                <button 

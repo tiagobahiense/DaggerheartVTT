@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { doc, updateDoc } from "firebase/firestore";
-import { X, Image, Eye, EyeSlash, Trash, FloppyDisk } from '@phosphor-icons/react';
+import { X, Image, Eye, EyeSlash, Trash, FloppyDisk, User, Mountains } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
 
 interface SceneryData {
@@ -20,6 +20,64 @@ function legacyItemId(item: Pick<SceneryData, 'url' | 'name' | 'type'>): string 
 
 function ensureItemId(item: SceneryData): SceneryData {
     return item.id ? item : { ...item, id: legacyItemId(item) };
+}
+
+function ProjectionControlBar({
+  activeScenery,
+  activeNPC,
+  onToggleVisibility,
+  onStopProjection,
+}: {
+  activeScenery: SceneryData | null;
+  activeNPC: SceneryData | null;
+  onToggleVisibility: (type: 'SCENERY' | 'NPC') => void;
+  onStopProjection: (type: 'SCENERY' | 'NPC') => void;
+}) {
+  if (!activeScenery && !activeNPC) return null;
+
+  const rows: { type: 'SCENERY' | 'NPC'; item: SceneryData; icon: React.ReactNode; label: string }[] = [];
+  if (activeScenery) rows.push({ type: 'SCENERY', item: activeScenery, icon: <Mountains size={16} className="text-gold" />, label: 'Cenário' });
+  if (activeNPC) rows.push({ type: 'NPC', item: activeNPC, icon: <User size={16} className="text-gold" />, label: 'NPC' });
+
+  return (
+    <div className="fixed bottom-28 left-6 z-[1010] pointer-events-auto animate-slide-up">
+      <div className="bg-[#1a120b]/95 border border-gold/40 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden min-w-[280px] max-w-[360px]">
+        <div className="px-3 py-2 bg-black/50 border-b border-white/10">
+          <span className="text-[10px] uppercase tracking-widest text-gold font-bold">Projeções ativas</span>
+        </div>
+        <div className="p-2 space-y-2">
+          {rows.map(({ type, item, icon, label }) => (
+            <div key={type} className="flex items-center gap-2 bg-white/5 rounded-lg px-2 py-2 border border-white/10">
+              {icon}
+              <div className="flex-1 min-w-0">
+                <div className="text-[9px] uppercase text-white/40 leading-none">{label}</div>
+                <div className="text-white text-xs font-bold truncate">{item.name}</div>
+                <div className={`text-[9px] mt-0.5 ${item.visible ? 'text-green-400' : 'text-orange-300'}`}>
+                  {item.visible ? 'Visível aos jogadores' : 'Oculto dos jogadores'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onToggleVisibility(type)}
+                className="p-2 rounded-lg border border-white/20 bg-black/40 text-white hover:text-gold hover:border-gold transition-colors"
+                title={item.visible ? 'Ocultar dos jogadores' : 'Mostrar aos jogadores'}
+              >
+                {item.visible ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => onStopProjection(type)}
+                className="p-2 rounded-lg border border-red-500/40 bg-red-950/40 text-red-300 hover:bg-red-600 hover:text-white transition-colors"
+                title={`Remover ${label.toLowerCase()} da tela`}
+              >
+                <X size={18} weight="bold" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseManager }: any) {
@@ -95,40 +153,25 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
       });
   };
 
+  const isLive = (type: 'SCENERY' | 'NPC', item: SceneryData) => {
+      const active = type === 'SCENERY' ? activeScenery : activeNPC;
+      return active?.id === item.id || (active?.url === item.url && active?.name === item.name);
+  };
+
   const renderScenery = () => {
       if (!activeScenery) return null;
       if (!activeScenery.visible && !isMaster) return null;
 
       return (
         <div className="fixed inset-0 z-[50] bg-black animate-ken-burns pointer-events-none">
-            <img src={activeScenery.url} className="w-full h-full object-cover opacity-80" />
+            <img src={activeScenery.url} className="w-full h-full object-cover opacity-80" alt="" />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,#000000_100%)]"></div>
 
-            <div className="absolute bottom-20 w-full text-center p-4 animate-fade-in-up">
+            <div className="absolute bottom-20 w-full text-center p-4 animate-fade-in-up pointer-events-none">
                 <h2 className="font-rpg text-7xl text-white/90 uppercase tracking-[0.5em] drop-shadow-[0_10px_20px_black] mix-blend-overlay">
                     {activeScenery.name}
                 </h2>
             </div>
-            
-            {isMaster && (
-                <div className="fixed top-24 right-10 z-[2000] flex gap-2 pointer-events-auto">
-                    <button 
-                        onClick={() => handleToggleVisibility('SCENERY')} 
-                        className="p-3 bg-black/50 text-white hover:text-gold rounded-full border border-white/20 cursor-pointer flex items-center gap-2"
-                        title={activeScenery.visible ? "Ocultar dos jogadores" : "Mostrar aos jogadores"}
-                    >
-                        {activeScenery.visible ? <EyeSlash size={24} /> : <Eye size={24} />}
-                        <span className="text-xs font-bold">CENÁRIO</span>
-                    </button>
-                    <button 
-                        onClick={() => handleStopProjection('SCENERY')} 
-                        className="p-3 bg-black/50 text-white hover:text-red-500 rounded-full border border-white/20 cursor-pointer"
-                        title="Fechar Cenário"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
-            )}
         </div>
       );
   };
@@ -141,10 +184,11 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none animate-fade-in">
             <div className={`absolute inset-0 transition-opacity duration-1000 ${activeScenery ? 'bg-black/40' : 'bg-black/70 backdrop-blur-[2px]'}`}></div>
 
-            <div className="relative z-10 animate-scale-up duration-1000 flex flex-col items-center">
+            <div className="relative z-10 animate-scale-up duration-1000 flex flex-col items-center pointer-events-none">
                  <img 
                     src={activeNPC.url} 
                     className="max-h-[80vh] max-w-[80vw] object-contain drop-shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+                    alt={activeNPC.name}
                     style={{ 
                         maskImage: 'radial-gradient(ellipse at center, black 50%, transparent 100%)',
                         WebkitMaskImage: 'radial-gradient(ellipse at center, black 50%, transparent 100%)'
@@ -152,7 +196,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                  />
             </div>
 
-            <div className="relative -mt-10 z-20 w-full flex flex-col items-center animate-fade-in-up delay-500 px-4">
+            <div className="relative -mt-10 z-20 w-full flex flex-col items-center animate-fade-in-up delay-500 px-4 pointer-events-none">
                 <h2 className={`relative font-rpg text-gold uppercase tracking-[0.2em] drop-shadow-[0_4px_4px_rgba(0,0,0,1)] text-center w-full leading-tight z-10
                     ${activeNPC.name.length > 20 ? 'text-4xl' : activeNPC.name.length > 12 ? 'text-5xl' : 'text-6xl'}
                 `}>
@@ -167,44 +211,36 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                     </p>
                 )}
             </div>
-
-            {isMaster && (
-                <div className="absolute top-10 right-10 flex gap-2 pointer-events-auto z-[2000]">
-                    <button 
-                        onClick={() => handleToggleVisibility('NPC')} 
-                        className="p-3 bg-black/50 text-white hover:text-gold rounded-full border border-white/20 transition-all hover:scale-110 cursor-pointer flex items-center gap-2"
-                        title={activeNPC.visible ? "Ocultar dos jogadores" : "Mostrar aos jogadores"}
-                    >
-                        {activeNPC.visible ? <EyeSlash size={24} /> : <Eye size={24} />}
-                        <span className="text-xs font-bold">NPC</span>
-                    </button>
-                    <button 
-                        onClick={() => handleStopProjection('NPC')} 
-                        className="p-3 bg-black/50 text-white hover:text-red-500 rounded-full border border-white/20 transition-all hover:scale-110 cursor-pointer"
-                        title="Fechar NPC"
-                    >
-                        <X size={24} />
-                    </button>
-                </div>
-            )}
         </div>
       );
   };
+
+  const currentList = tab === 'SCENERY' ? savedSceneries : savedNPCs;
 
   return (
     <>
       {renderScenery()}
       {renderNPC()}
 
+      {isMaster && (
+        <ProjectionControlBar
+          activeScenery={activeScenery}
+          activeNPC={activeNPC}
+          onToggleVisibility={handleToggleVisibility}
+          onStopProjection={handleStopProjection}
+        />
+      )}
+
       {isMaster && showManager && (
         <div className="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm flex items-center justify-center" onClick={e => e.stopPropagation()}>
             <DraggableWindow 
-                title="Projetor de Mundos" 
+                title="Cenários & NPCs" 
                 headerIcon={<Image />} 
                 onClose={onCloseManager}
-                initialWidth="800px" 
-                initialHeight="600px"
+                initialWidth="820px" 
+                initialHeight="640px"
                 minimizedPosition="top-right"
+                zIndex={3000}
             >
                 <div className="flex flex-col h-full bg-[#1a120b]">
                     <div className="flex bg-black/40 p-2 gap-2 border-b border-white/10">
@@ -212,31 +248,87 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                         <button onClick={() => setTab('NPC')} className={`flex-1 py-2 font-bold font-rpg rounded transition-colors ${tab==='NPC' ? 'bg-gold text-black' : 'bg-white/5 text-white/40 hover:text-white'}`}>NPCs</button>
                     </div>
 
-                    <div className="flex-1 p-6 overflow-hidden flex flex-col">
-                        <div className="bg-white/5 p-4 rounded mb-6 border border-white/10">
+                    {(activeScenery || activeNPC) && (
+                      <div className="mx-4 mt-4 p-3 rounded-lg border border-gold/30 bg-gold/5">
+                        <div className="text-[10px] uppercase tracking-widest text-gold font-bold mb-2">No ar agora</div>
+                        <div className="flex flex-wrap gap-2">
+                          {activeScenery && (
+                            <div className="flex items-center gap-2 bg-black/40 rounded-lg px-2 py-1.5 border border-white/10">
+                              <Mountains size={14} className="text-gold shrink-0" />
+                              <span className="text-white text-xs font-bold truncate max-w-[140px]">{activeScenery.name}</span>
+                              <button onClick={() => handleStopProjection('SCENERY')} className="text-[10px] px-2 py-1 rounded bg-red-900/50 text-red-200 hover:bg-red-700 border border-red-500/30">Tirar do ar</button>
+                            </div>
+                          )}
+                          {activeNPC && (
+                            <div className="flex items-center gap-2 bg-black/40 rounded-lg px-2 py-1.5 border border-white/10">
+                              <User size={14} className="text-gold shrink-0" />
+                              <span className="text-white text-xs font-bold truncate max-w-[140px]">{activeNPC.name}</span>
+                              <button onClick={() => handleStopProjection('NPC')} className="text-[10px] px-2 py-1 rounded bg-red-900/50 text-red-200 hover:bg-red-700 border border-red-500/30">Tirar do ar</button>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[9px] text-white/40 mt-2">Use a barra no canto inferior esquerdo da tela para ocultar/mostrar ou remover sem abrir este painel.</p>
+                      </div>
+                    )}
+
+                    <div className="flex-1 p-4 overflow-hidden flex flex-col min-h-0">
+                        <div className="bg-white/5 p-4 rounded mb-4 border border-white/10 shrink-0">
+                            <div className="text-[10px] uppercase text-white/40 mb-2">Cadastrar {tab === 'SCENERY' ? 'cenário' : 'NPC'}</div>
                             <div className="flex gap-2 mb-2">
-                                <input value={inputUrl} onChange={e => setInputUrl(e.target.value)} placeholder="URL da Imagem..." className="flex-[2] bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
+                                <input value={inputUrl} onChange={e => setInputUrl(e.target.value)} placeholder="URL da imagem..." className="flex-[2] bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
                                 <input value={inputName} onChange={e => setInputName(e.target.value)} placeholder="Nome..." className="flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
                             </div>
                             <div className="flex gap-2">
-                                <input value={inputDesc} onChange={e => setInputDesc(e.target.value)} placeholder="Descrição (Opcional)..." className="flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
-                                <button onClick={handleSaveItem} className="px-4 bg-green-700 hover:bg-green-600 text-white font-bold rounded text-xs uppercase flex items-center gap-2"><FloppyDisk size={18} /> Salvar</button>
+                                <input value={inputDesc} onChange={e => setInputDesc(e.target.value)} placeholder="Descrição (opcional)..." className="flex-1 bg-black/50 border border-white/20 p-2 rounded text-white text-sm" />
+                                <button onClick={handleSaveItem} className="px-4 bg-green-700 hover:bg-green-600 text-white font-bold rounded text-xs uppercase flex items-center gap-2 shrink-0"><FloppyDisk size={18} /> Salvar</button>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto grid grid-cols-3 gap-4 custom-scrollbar content-start">
-                             {(tab === 'SCENERY' ? savedSceneries : savedNPCs).map((item) => (
-                                <div key={item.id} className="group relative aspect-video bg-black rounded border border-white/10 overflow-hidden hover:border-gold transition-all shadow-lg">
-                                    <img src={item.url} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                                    <div className="absolute bottom-0 w-full bg-black/80 p-1">
-                                        <p className="text-white font-bold text-xs truncate text-center">{item.name}</p>
+                        <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 gap-3 custom-scrollbar content-start min-h-0">
+                             {currentList.length === 0 && (
+                               <div className="col-span-full text-center text-white/30 py-8 text-sm">
+                                 Nenhum {tab === 'SCENERY' ? 'cenário' : 'NPC'} salvo. Cadastre acima ou projete pela URL.
+                               </div>
+                             )}
+                             {currentList.map((item) => {
+                               const live = isLive(tab, item);
+                               return (
+                                <div key={item.id} className={`relative bg-black rounded border overflow-hidden shadow-lg flex flex-col ${live ? 'border-gold ring-1 ring-gold/30' : 'border-white/10 hover:border-gold/50'} transition-all`}>
+                                    <div className="relative aspect-video">
+                                      <img src={item.url} className="w-full h-full object-cover" alt="" />
+                                      {live && (
+                                        <span className="absolute top-1 left-1 text-[8px] font-bold uppercase tracking-wider bg-gold text-black px-1.5 py-0.5 rounded">No ar</span>
+                                      )}
                                     </div>
-                                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 bg-black/60 transition-opacity backdrop-blur-sm">
-                                        <button onClick={() => handleProject(item)} className="p-2 bg-gold rounded-full text-black hover:scale-110 transition-transform" title="Projetar"><Eye size={20} /></button>
-                                        <button onClick={() => handleDeleteItem(item.id, tab)} className="p-2 bg-red-600 rounded-full text-white hover:scale-110 transition-transform" title="Excluir"><Trash size={20} /></button>
+                                    <div className="p-2 bg-black/80 border-t border-white/10">
+                                        <p className="text-white font-bold text-xs truncate text-center mb-2">{item.name}</p>
+                                        <div className="flex gap-1">
+                                          {live ? (
+                                            <button
+                                              onClick={() => handleStopProjection(tab)}
+                                              className="flex-1 py-1.5 rounded text-[10px] font-bold uppercase bg-red-900/60 text-red-200 border border-red-500/30 hover:bg-red-700 hover:text-white"
+                                            >
+                                              Tirar do ar
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={() => handleProject(item)}
+                                              className="flex-1 py-1.5 rounded text-[10px] font-bold uppercase bg-gold text-black hover:bg-yellow-400 flex items-center justify-center gap-1"
+                                            >
+                                              <Eye size={14} /> Projetar
+                                            </button>
+                                          )}
+                                          <button
+                                            onClick={() => handleDeleteItem(item.id, tab)}
+                                            className="p-1.5 rounded bg-white/5 text-white/50 hover:text-red-400 hover:bg-red-900/30 border border-white/10"
+                                            title="Excluir do banco"
+                                          >
+                                            <Trash size={16} />
+                                          </button>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
+                            );})}
                         </div>
                     </div>
                 </div>
