@@ -954,8 +954,8 @@ export default function JogadorVTT() {
           )}
       </div>
 
-      {/* BOTÕES DE DADO E COMBATE */}
-      <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto flex flex-col gap-3 items-center">
+      {/* BOTÃO DE COMBATE — canto superior esquerdo (abaixo da ficha) */}
+      <div className="absolute top-[4.75rem] left-4 md:top-[6.5rem] md:left-6 z-[60] pointer-events-auto">
         <button
           onClick={() => setShowCombatTracker(true)}
           className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500/50 shadow-lg flex items-center justify-center text-green-300 hover:scale-110 transition-transform"
@@ -963,6 +963,10 @@ export default function JogadorVTT() {
         >
           <Users className="w-5 h-5 md:w-6 md:h-6" weight="fill" />
         </button>
+      </div>
+
+      {/* BOTÃO DE DADOS */}
+      <div className="absolute bottom-24 right-4 md:bottom-36 md:right-8 z-[60] pointer-events-auto">
         <button onClick={() => setShowDiceRoller(true)} className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-gold to-yellow-800 border-2 border-white/30 shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:text-white group">
             <div className="group-hover:animate-spin"><Dna className="w-6 h-6 md:w-8 md:h-8" weight="bold" /></div>
         </button>
@@ -978,7 +982,7 @@ export default function JogadorVTT() {
       )}
 
       {character.class === "Druida" && (
-        <div className="absolute bottom-40 right-4 md:bottom-56 md:right-8 z-[40] pointer-events-auto">
+        <div className="absolute bottom-44 right-4 md:bottom-56 md:right-8 z-[60] pointer-events-auto">
             <button 
               onClick={() => setShowDruidModal(true)}
               className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-green-900 to-black border-2 border-green-500 text-green-400 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.6)] hover:scale-110 hover:rotate-12 transition-all group"
