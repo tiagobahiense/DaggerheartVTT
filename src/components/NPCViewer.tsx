@@ -22,6 +22,11 @@ function ensureItemId(item: SceneryData): SceneryData {
     return item.id ? item : { ...item, id: legacyItemId(item) };
 }
 
+/** Tabletop usa z-[980]/990 — cenário acima do mapa, NPC acima do cenário */
+const Z_SCENERY = 992;
+const Z_NPC = 994;
+const Z_PROJECTION_CONTROLS = 1010;
+
 function ProjectionControlBar({
   activeScenery,
   activeNPC,
@@ -40,7 +45,7 @@ function ProjectionControlBar({
   if (activeNPC) rows.push({ type: 'NPC', item: activeNPC, icon: <User size={16} className="text-gold" />, label: 'NPC' });
 
   return (
-    <div className="fixed bottom-28 left-6 z-[1010] pointer-events-auto animate-slide-up">
+    <div className="fixed bottom-28 left-6 pointer-events-auto animate-slide-up" style={{ zIndex: Z_PROJECTION_CONTROLS }}>
       <div className="bg-[#1a120b]/95 border border-gold/40 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden min-w-[280px] max-w-[360px]">
         <div className="px-3 py-2 bg-black/50 border-b border-white/10">
           <span className="text-[10px] uppercase tracking-widest text-gold font-bold">Projeções ativas</span>
@@ -163,7 +168,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
       if (!activeScenery.visible && !isMaster) return null;
 
       return (
-        <div className="fixed inset-0 z-[50] bg-black animate-ken-burns pointer-events-none">
+        <div className="fixed inset-0 bg-black animate-ken-burns pointer-events-none" style={{ zIndex: Z_SCENERY }}>
             <img src={activeScenery.url} className="w-full h-full object-cover opacity-80" alt="" />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,#000000_100%)]"></div>
 
@@ -181,7 +186,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
       if (!activeNPC.visible && !isMaster) return null;
 
       return (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none animate-fade-in">
+        <div className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none animate-fade-in" style={{ zIndex: Z_NPC }}>
             <div className={`absolute inset-0 transition-opacity duration-1000 ${activeScenery ? 'bg-black/40' : 'bg-black/70 backdrop-blur-[2px]'}`}></div>
 
             <div className="relative z-10 animate-scale-up duration-1000 flex flex-col items-center pointer-events-none">
