@@ -6,7 +6,7 @@ import {
   X, MapTrifold, Plus, Trash, 
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
   Ruler, Minus, FloppyDisk, Upload, GridFour,
-  PawPrint, PencilSimple, Sword
+  PawPrint, PencilSimple, Sword, Copy
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
 import { ConditionId } from '../types/sheetExtras';
@@ -79,10 +79,25 @@ interface SavedMap {
 }
 
 interface SavedEnemy {
+    id?: string;
     name: string;
     img: string;
     defaultSize: number;
     stats: EnemyStats;
+}
+
+function enemyKey(enemy: SavedEnemy): string {
+    return enemy.id ?? enemy.name;
+}
+
+function cloneEnemyName(base: string, existing: SavedEnemy[]): string {
+    let name = `${base} (Cópia)`;
+    let n = 2;
+    while (existing.some((e) => e.name === name)) {
+        name = `${base} (Cópia ${n})`;
+        n++;
+    }
+    return name;
 }
 
 interface TabletopCharacter {
@@ -294,6 +309,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
 
   const startNewEnemy = () => {
       setEditingEnemyBank({
+          id: crypto.randomUUID(),
           name: "Novo Inimigo",
           img: "",
           defaultSize: 1,
@@ -304,17 +320,36 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
   const saveEnemyToBank = async () => {
       if (!editingEnemyBank || !editingEnemyBank.name || !editingEnemyBank.img) return alert("Preencha nome e imagem.");
       
-      const existingIndex = savedEnemies.findIndex(e => e.name === editingEnemyBank.name); 
+      const enemyToSave: SavedEnemy = {
+          ...editingEnemyBank,
+          id: editingEnemyBank.id ?? crypto.randomUUID(),
+      };
       const newEnemiesList = [...savedEnemies];
+      const existingIndex = enemyToSave.id
+          ? newEnemiesList.findIndex((e) => e.id === enemyToSave.id)
+          : newEnemiesList.findIndex((e) => e.name === enemyToSave.name);
       
       if (existingIndex >= 0) {
-          newEnemiesList[existingIndex] = editingEnemyBank;
+          newEnemiesList[existingIndex] = enemyToSave;
       } else {
-          newEnemiesList.push(editingEnemyBank);
+          newEnemiesList.push(enemyToSave);
       }
 
       await updateDoc(doc(db, 'sessoes', sessaoData.id), { saved_enemies: newEnemiesList });
       setEditingEnemyBank(null);
+  };
+
+  const cloneEnemyInBank = async (enemy: SavedEnemy) => {
+      const clone: SavedEnemy = {
+          id: crypto.randomUUID(),
+          name: cloneEnemyName(enemy.name, savedEnemies),
+          img: enemy.img,
+          defaultSize: enemy.defaultSize || 1,
+          stats: JSON.parse(JSON.stringify(enemy.stats)),
+      };
+      const newEnemiesList = [...savedEnemies, clone];
+      await updateDoc(doc(db, 'sessoes', sessaoData.id), { saved_enemies: newEnemiesList });
+      setEditingEnemyBank(clone);
   };
 
   const spawnSavedEnemy = (enemy: SavedEnemy) => {
@@ -829,8 +864,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
-                                    {savedEnemies.map((enemy, i) => (
-                                        <div key={i} className="group relative bg-[#0a0a0a] border border-white/20 rounded-lg hover:border-gold transition-all flex flex-col overflow-hidden">
+                                    {savedEnemies.map((enemy) => (
+                                        <div key={enemyKey(enemy)} className="group relative bg-[#0a0a0a] border border-white/20 rounded-lg hover:border-gold transition-all flex flex-col overflow-hidden">
                                             <div className="relative aspect-square cursor-pointer overflow-hidden bg-black" onClick={() => spawnSavedEnemy(enemy)} title="Clique para Spawnar no Mapa">
                                                 <img src={enemy.img} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500" />
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 backdrop-blur-[2px] transition-opacity">
@@ -844,8 +879,9 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                                                     <span className="text-[9px] text-white/50 truncate">Dificuldade {enemy.stats?.difficulty || 10}</span>
                                                 </div>
                                                 <div className="flex gap-1">
-                                                    <button onClick={() => setEditingEnemyBank(enemy)} className="p-1.5 text-white/50 hover:text-blue-400 hover:bg-blue-900/30 rounded" title="Editar Ficha"><PencilSimple size={14} /></button>
-                                                    <button onClick={async () => { if(confirm("Remover do banco?")) { const newList = savedEnemies.filter(e => e.name !== enemy.name); await updateDoc(doc(db, 'sessoes', sessaoData.id), { saved_enemies: newList }); } }} className="p-1.5 text-white/50 hover:text-red-400 hover:bg-red-900/30 rounded" title="Excluir"><Trash size={14} /></button>
+                                                    <button onClick={() => cloneEnemyInBank(enemy)} className="p-1.5 text-white/50 hover:text-gold hover:bg-gold/10 rounded" title="Clonar"><Copy size={14} /></button>
+                                                    <button onClick={() => setEditingEnemyBank({ ...enemy, id: enemy.id ?? crypto.randomUUID() })} className="p-1.5 text-white/50 hover:text-blue-400 hover:bg-blue-900/30 rounded" title="Editar Ficha"><PencilSimple size={14} /></button>
+                                                    <button onClick={async () => { if(confirm("Remover do banco?")) { const key = enemyKey(enemy); const newList = savedEnemies.filter((e) => enemyKey(e) !== key); await updateDoc(doc(db, 'sessoes', sessaoData.id), { saved_enemies: newList }); } }} className="p-1.5 text-white/50 hover:text-red-400 hover:bg-red-900/30 rounded" title="Excluir"><Trash size={14} /></button>
                                                 </div>
                                             </div>
                                         </div>
