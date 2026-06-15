@@ -21,6 +21,7 @@ import { SheetMarkersWidget } from './sheet/SheetMarkersWidget';
 import { ConditionsDisplay } from './conditions/ConditionsPicker';
 import { DamageAssistantModal } from './sheet/DamageAssistantModal';
 import { sanitizeSheetMarkers } from '../lib/sheetMarkers';
+import { Z } from '../lib/zIndex';
 import { ConditionId, ISheetMarker } from '../types/sheetExtras';
 
 // --- COMPONENTE LOCAL PARA ITEM DE EXPERIÊNCIA ---
@@ -451,7 +452,7 @@ interface SheetModalProps {
   }
 
   return (
-    <div className="fixed inset-0 z-[3100] flex items-center justify-center bg-black/80 animate-fade-in p-2 md:p-4" onClick={onClose}>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/80 animate-fade-in p-2 md:p-4 pointer-events-auto" style={{ zIndex: Z.SHEET }} onClick={onClose}>
       <ImageUrlModal 
         isOpen={isImageModalOpen} 
         onClose={() => setIsImageModalOpen(false)} 

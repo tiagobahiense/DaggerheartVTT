@@ -17,6 +17,7 @@ import {
   BookOpen, ShieldCheck 
 } from '@phosphor-icons/react';
 import { SheetModal } from '../components/SheetModal';
+import { Z } from '../lib/zIndex';
 
 // --- IMPORTAÇÃO DOS SEUS COMPONENTES ---
 import SceneryViewer from '../components/NPCViewer'; 
@@ -112,7 +113,7 @@ const updateDruidTier = async (charId: string, currentTier: number, change: numb
 // ============================================================================
 const PlayerList = ({ players, onSelectPlayer }: { players: Character[], onSelectPlayer: (c: Character) => void }) => {
   return (
-    <div className="absolute top-6 left-6 flex flex-col gap-4 z-[900] animate-slide-right w-80 pointer-events-auto">
+    <div className="absolute top-6 left-6 flex flex-col gap-4 animate-slide-right w-80 pointer-events-auto" style={{ zIndex: Z.PLAYER_LIST }}>
       {players.map((char) => {
         const color1 = CLASS_COLORS[char.class] || '#4b5563';
         const color2 = ANCESTRY_COLORS[char.ancestry] || '#1f2937';
@@ -188,7 +189,7 @@ const CollapsedPlayerList = ({ players, onSelectPlayer }: { players: Character[]
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="absolute top-6 left-6 z-[900] animate-slide-right pointer-events-auto">
+        <div className="absolute top-6 left-6 animate-slide-right pointer-events-auto" style={{ zIndex: Z.PLAYER_LIST }}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-900 to-black border border-purple-500/50 rounded-xl shadow-xl hover:scale-105 transition-transform backdrop-blur-md"
@@ -340,7 +341,7 @@ const GroupManagerModal = ({
   const currentGroup = groups.find(g => g.id === selectedGroup);
 
   return (
-      <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" onClick={onClose}>
+      <div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in pointer-events-auto" style={{ zIndex: Z.MODAL }} onClick={onClose}>
           <div className="bg-[#1a120b] border border-gold/30 w-full max-w-4xl h-[600px] rounded-2xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
               
               {/* Header */}
@@ -462,7 +463,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[3000] bg-black/95 flex flex-col animate-fade-in" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/95 flex flex-col animate-fade-in pointer-events-auto" style={{ zIndex: Z.MODAL }} onClick={e => e.stopPropagation()}>
        {/* Header */}
        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#1a120b]">
           <h2 className="text-2xl font-rpg text-gold flex items-center gap-3"><Eye weight="fill"/> Monitoramento de Grimórios</h2>
@@ -515,7 +516,7 @@ const CardsMonitorModal = ({ isOpen, onClose, players }: { isOpen: boolean, onCl
 
        {/* Zoom da Carta */}
        {zoomedCard && (
-         <div className="fixed inset-0 z-[3100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setZoomedCard(null)}>
+         <div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-auto" style={{ zIndex: Z.CARD_ZOOM }} onClick={() => setZoomedCard(null)}>
             <div className="relative max-w-md w-full p-4 animate-scale-up">
                 <img src={zoomedCard.caminho} className="w-full rounded-xl shadow-2xl border border-gold/30" />
                 <div className="mt-4 bg-black/80 p-4 rounded-xl border border-white/20 text-center">
@@ -562,7 +563,7 @@ const DiceToast = () => {
     if (!visible || !lastRoll) return null;
 
     return (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[4000] animate-bounce-in">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 animate-bounce-in pointer-events-none" style={{ zIndex: Z.TOAST }}>
             <div className={`px-6 py-4 rounded-xl border-2 shadow-[0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md flex items-center gap-4 min-w-[300px] ${lastRoll.type === 'DUALITY' ? 'bg-black/90 border-gold' : 'bg-[#1a0b2e]/90 border-purple-500'}`}>
                 <div className="flex flex-col items-center border-r border-white/10 pr-4">
                     <span className="text-[10px] uppercase text-white/50 tracking-widest">Jogador</span>
@@ -829,7 +830,7 @@ useEffect(() => {
        {/* ESCUDO DO MESTRE - NOVO */}
        {showMasterShield && <MasterShield onClose={() => setShowMasterShield(false)} />}
 
-       <div className="absolute inset-0 z-[980] pointer-events-none">
+       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: Z.TABLETOP_SHELL }}>
              {sessaoData && <Tabletop sessaoData={sessaoData} isMaster={true} charactersData={characters} showManager={showTabletopManager} onCloseManager={() => setShowTabletopManager(false)} />}
        </div>
 
@@ -838,7 +839,7 @@ useEffect(() => {
 
        {/* ALERTA DE DRUIDA NO MESTRE */}
        {transformAlert && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4">
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none px-4" style={{ zIndex: Z.ALERT_BANNER }}>
             <div className="relative w-full max-w-5xl flex flex-col items-center justify-center text-center animate-fade-in-up">
                 <div className={`absolute inset-0 bg-gradient-to-r ${transformAlert.gradientClass || 'from-gray-800 to-black'} opacity-90 blur-xl h-40 top-1/2 -translate-y-1/2 rounded-full transform scale-x-110 -z-10`}></div>
                 <h2 className="text-3xl md:text-5xl font-rpg uppercase text-white drop-shadow-[0_4px_4px_rgba(0,0,0,1)] relative z-10 animate-slide-in-left">{transformAlert.charName}</h2>
@@ -881,7 +882,7 @@ useEffect(() => {
          />
        )}
 
-       <div className="absolute bottom-6 right-6 z-[1000] flex flex-col items-end gap-4 animate-slide-up pointer-events-auto">
+       <div className="absolute bottom-6 right-6 flex flex-col items-end gap-4 animate-slide-up pointer-events-auto" style={{ zIndex: Z.MASTER_TOOLBAR }}>
            <div className="flex gap-2 mb-2 bg-black/40 p-2 rounded-xl backdrop-blur-sm border border-white/10">
                <button onClick={() => setRestModalType('short')} className="flex items-center gap-2 px-4 py-2 bg-orange-900/40 border border-orange-500/30 rounded text-orange-200 text-xs hover:bg-orange-800 transition-colors uppercase font-bold tracking-wide"><Campfire size={18} /> Curto</button>
                <button onClick={() => setRestModalType('long')} className="flex items-center gap-2 px-4 py-2 bg-indigo-900/40 border border-indigo-500/30 rounded text-indigo-200 text-xs hover:bg-indigo-800 transition-colors uppercase font-bold tracking-wide"><MoonStars size={18} /> Longo</button>

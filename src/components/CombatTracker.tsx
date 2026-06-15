@@ -6,6 +6,7 @@ import {
   Eye, EyeSlash, XCircle, Users, Shield,
 } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
+import { Z } from '../lib/zIndex';
 import { ConditionsPicker, ConditionsDisplay } from './conditions/ConditionsPicker';
 import { findCharacterToken, getPrimaryAuraClass } from '../lib/tokenConditions';
 import { ConditionGlobalStyles } from './conditions/ConditionStyles';
@@ -86,7 +87,8 @@ function EnemySheetView({
 
   return (
     <div
-      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 pointer-events-auto"
+      style={{ zIndex: Z.MODAL }}
       onClick={onClose}
     >
       <div
@@ -284,7 +286,7 @@ export default function CombatTracker({
       initialWidth="500px"
       initialHeight="70vh"
       minimizedPosition="bottom-left"
-      zIndex={995}
+      zIndex={Z.COMBAT_TRACKER}
     >
       <div className="flex flex-col h-full bg-[#1a120b] overflow-hidden pointer-events-auto">
         <ConditionGlobalStyles />

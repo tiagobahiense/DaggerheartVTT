@@ -14,6 +14,7 @@ import { ConditionId } from '../types/sheetExtras';
 import { ConditionsPicker } from './conditions/ConditionsPicker';
 import { TokenConditionOverlay } from './conditions/TokenConditionOverlay';
 import { ConditionGlobalStyles } from './conditions/ConditionStyles';
+import { Z } from '../lib/zIndex';
 
 // --- INTERFACES COMPARTILHADAS ---
 interface Ability {
@@ -396,8 +397,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
           handleChange('abilities', newAbilities);
       };
 
-      return (
-          <div className="fixed inset-0 z-[10000001] bg-black/80 flex items-center justify-center p-4">
+      return createPortal(
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 pointer-events-auto" style={{ zIndex: Z.ENEMY_BANK_EDITOR }}>
               <div className="bg-[#1a120b] w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gold rounded-lg shadow-2xl p-4 custom-scrollbar">
                   <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
                       <h2 className="text-gold font-bold text-lg">Editor de Ficha (Banco)</h2>
@@ -465,7 +466,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                       <button onClick={saveEnemyToBank} className="px-6 py-2 bg-gold text-black font-bold rounded shadow-lg hover:bg-yellow-500 flex items-center gap-2"><FloppyDisk weight="fill" /> SALVAR NO BANCO</button>
                   </div>
               </div>
-          </div>
+          </div>,
+          document.body
       );
   };
 
@@ -693,7 +695,7 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                 headerIcon={<MapTrifold size={20} />}
                 initialWidth="95vw" initialHeight="85vh"
                 minimizedPosition="top-right"
-                zIndex={990}
+                zIndex={Z.TABLETOP_MAP}
             >
                 <div 
                     ref={containerRef}
@@ -780,8 +782,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         const editingConditions = editingTokenData?.conditions?.active || [];
                         return (
                         <div
-                            className="fixed z-[10000002] bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-72 max-h-[80vh] overflow-y-auto custom-scrollbar"
-                            style={{ left: editingToken.screenX, top: editingToken.screenY, width: TOKEN_EDITOR_WIDTH }}
+                            className="fixed bg-[#1a120b] border border-gold p-3 rounded-lg shadow-2xl animate-scale-up w-72 max-h-[80vh] overflow-y-auto custom-scrollbar pointer-events-auto"
+                            style={{ left: editingToken.screenX, top: editingToken.screenY, width: TOKEN_EDITOR_WIDTH, zIndex: Z.TOKEN_EDITOR }}
                             onMouseDown={(e) => e.stopPropagation()}
                         >
                             <div
@@ -825,8 +827,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         );
                     })(), document.body)}
 
-        {isMaster && showManager && (
-             <div className="fixed inset-0 z-[10000000] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+        {isMaster && showManager && createPortal(
+             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center pointer-events-auto" style={{ zIndex: Z.TABLETOP_MANAGER }} onClick={(e) => e.stopPropagation()}>
                  <div className="w-[900px] h-[700px] bg-[#1a120b] border border-gold/30 rounded-xl shadow-2xl flex flex-col p-4 animate-scale-up max-w-[95vw] max-h-[90vh]">
                      <div className="flex justify-between mb-4 border-b border-white/10 pb-2">
                          <div className="flex gap-4">
@@ -956,7 +958,8 @@ export default function Tabletop({ sessaoData, isMaster, charactersData, showMan
                         )}
                      </div>
                  </div>
-             </div>
+             </div>,
+             document.body
         )}
 
         {renderEnemyEditor()}

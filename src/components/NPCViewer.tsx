@@ -3,6 +3,7 @@ import { db } from '../lib/firebase';
 import { doc, updateDoc } from "firebase/firestore";
 import { X, Image, Eye, EyeSlash, Trash, FloppyDisk, User, Mountains } from '@phosphor-icons/react';
 import DraggableWindow from './DraggableWindow';
+import { Z } from '../lib/zIndex';
 
 interface SceneryData {
     id: string;
@@ -22,10 +23,7 @@ function ensureItemId(item: SceneryData): SceneryData {
     return item.id ? item : { ...item, id: legacyItemId(item) };
 }
 
-/** Tabletop usa z-[980]/990 — cenário acima do mapa, NPC acima do cenário */
-const Z_SCENERY = 992;
-const Z_NPC = 994;
-const Z_PROJECTION_CONTROLS = 1010;
+/** Ver src/lib/zIndex.ts — cenário acima do mapa, NPC acima do cenário */
 
 function ProjectionControlBar({
   activeScenery,
@@ -45,7 +43,7 @@ function ProjectionControlBar({
   if (activeNPC) rows.push({ type: 'NPC', item: activeNPC, icon: <User size={16} className="text-gold" />, label: 'NPC' });
 
   return (
-    <div className="fixed bottom-28 left-6 pointer-events-auto animate-slide-up" style={{ zIndex: Z_PROJECTION_CONTROLS }}>
+    <div className="fixed bottom-28 left-6 pointer-events-auto animate-slide-up" style={{ zIndex: Z.PROJECTION_CONTROLS }}>
       <div className="bg-[#1a120b]/95 border border-gold/40 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden min-w-[280px] max-w-[360px]">
         <div className="px-3 py-2 bg-black/50 border-b border-white/10">
           <span className="text-[10px] uppercase tracking-widest text-gold font-bold">Projeções ativas</span>
@@ -168,7 +166,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
       if (!activeScenery.visible && !isMaster) return null;
 
       return (
-        <div className="fixed inset-0 bg-black animate-ken-burns pointer-events-none" style={{ zIndex: Z_SCENERY }}>
+        <div className="fixed inset-0 bg-black animate-ken-burns pointer-events-none" style={{ zIndex: Z.SCENERY }}>
             <img src={activeScenery.url} className="w-full h-full object-cover opacity-80" alt="" />
             <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,#000000_100%)]"></div>
 
@@ -186,7 +184,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
       if (!activeNPC.visible && !isMaster) return null;
 
       return (
-        <div className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none animate-fade-in" style={{ zIndex: Z_NPC }}>
+        <div className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none animate-fade-in" style={{ zIndex: Z.NPC_OVERLAY }}>
             <div className={`absolute inset-0 transition-opacity duration-1000 ${activeScenery ? 'bg-black/40' : 'bg-black/70 backdrop-blur-[2px]'}`}></div>
 
             <div className="relative z-10 animate-scale-up duration-1000 flex flex-col items-center pointer-events-none">
@@ -237,7 +235,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
       )}
 
       {isMaster && showManager && (
-        <div className="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm flex items-center justify-center" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center pointer-events-auto" style={{ zIndex: Z.MODAL }} onClick={e => e.stopPropagation()}>
             <DraggableWindow 
                 title="Cenários & NPCs" 
                 headerIcon={<Image />} 
@@ -245,7 +243,7 @@ export default function NPCViewer({ sessaoData, isMaster, showManager, onCloseMa
                 initialWidth="min(820px, 95vw)" 
                 initialHeight="min(720px, 90dvh)"
                 minimizedPosition="top-right"
-                zIndex={3000}
+                zIndex={Z.MODAL}
             >
                 <div className="flex flex-col h-full min-h-0 w-full bg-[#1a120b] overflow-hidden">
                     <div className="flex shrink-0 bg-black/40 p-2 gap-2 border-b border-white/10">

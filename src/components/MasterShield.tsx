@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DraggableWindow from './DraggableWindow';
+import { Z } from '../lib/zIndex';
 import { SHIELD_RULES, ShieldRule } from '../data/shieldData';
 import { CaretLeft, ShieldCheck, MagnifyingGlass } from '@phosphor-icons/react';
 
@@ -19,7 +20,8 @@ export default function MasterShield({ onClose }: { onClose: () => void }) {
         onClose={onClose}
         initialWidth="900px"
         initialHeight="650px"
-        minimizedPosition="bottom-right" // Fica perto dos dados
+        minimizedPosition="bottom-right"
+        zIndex={Z.MASTER_SHIELD}
     >
         <div className="flex flex-col h-full bg-[#151019] text-white">
             
