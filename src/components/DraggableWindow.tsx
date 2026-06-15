@@ -97,7 +97,7 @@ export default function DraggableWindow({
   if (isMinimized) {
       return (
           <div 
-            className={`fixed ${minPosClass} bg-[#1a120b] border border-gold/50 rounded-lg shadow-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition-colors animate-scale-up`}
+            className={`fixed ${minPosClass} bg-[#1a120b] border border-gold/50 rounded-lg shadow-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition-colors animate-scale-up pointer-events-auto`}
             style={{ zIndex }}
             onClick={() => setIsMinimized(false)}
           >
@@ -111,7 +111,7 @@ export default function DraggableWindow({
   return (
       <div 
         ref={windowRef}
-        className="fixed bg-[#1a120b] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in max-w-[100vw] max-h-[100dvh]"
+        className="fixed bg-[#1a120b] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in max-w-[100vw] max-h-[100dvh] pointer-events-auto"
         style={isMaximized
           ? { zIndex, inset: 0, width: '100%', height: '100%' }
           : { zIndex, left: Math.max(0, position.x), top: Math.max(0, position.y), width: size.w, height: size.h }}

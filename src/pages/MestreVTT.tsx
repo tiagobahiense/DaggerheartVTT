@@ -830,9 +830,7 @@ useEffect(() => {
        {showMasterShield && <MasterShield onClose={() => setShowMasterShield(false)} />}
 
        <div className="absolute inset-0 z-[980] pointer-events-none">
-           <div className="w-full h-full pointer-events-auto">
              {sessaoData && <Tabletop sessaoData={sessaoData} isMaster={true} charactersData={characters} showManager={showTabletopManager} onCloseManager={() => setShowTabletopManager(false)} />}
-           </div>
        </div>
 
        <FearUseOverlay visible={fearAlertVisible} />
