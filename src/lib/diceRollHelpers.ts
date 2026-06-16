@@ -7,7 +7,13 @@ export const ADVANTAGE_D6_COLOR = '#22C55E';
 export const DISADVANTAGE_D6_COLOR = '#EF4444';
 
 export function extractDieValues(results: DieRollResult[]): number[] {
-  return results.map((die) => die.value);
+  return results.map((die) => resolveDieValue(die.value, die.sides));
+}
+
+function resolveDieValue(raw: number | undefined | null, sides?: number): number {
+  const max = sides && sides > 0 ? sides : 12;
+  if (typeof raw === 'number' && raw >= 1 && raw <= max) return raw;
+  return rollFallback(max);
 }
 
 export function buildDualityNotation(
@@ -36,9 +42,11 @@ export async function rollDualityPair(
 ): Promise<{ hope: number; fear: number; advRoll: number }> {
   try {
     const results = await requestDiceRoll(buildDualityNotation(advantage));
-    const hope = results[0]?.value ?? rollFallback(12);
-    const fear = results[1]?.value ?? rollFallback(12);
-    const advRoll = advantage !== 'none' ? (results[2]?.value ?? rollFallback(6)) : 0;
+    const hope = resolveDieValue(results[0]?.value, results[0]?.sides ?? 12);
+    const fear = resolveDieValue(results[1]?.value, results[1]?.sides ?? 12);
+    const advRoll = advantage !== 'none'
+      ? resolveDieValue(results[2]?.value, results[2]?.sides ?? 6)
+      : 0;
     return { hope, fear, advRoll };
   } catch (error) {
     console.warn('Rolagem 3D indisponível, usando fallback:', error);
@@ -52,7 +60,9 @@ export async function rollDualityPair(
 export async function rollStandardDice(count: number, sides: number): Promise<number[]> {
   try {
     const results = await requestDiceRoll(buildStandardNotation(count, sides));
-    return extractDieValues(results);
+    return results.map((die, index) =>
+      resolveDieValue(die.value, die.sides ?? sides)
+    );
   } catch (error) {
     console.warn('Rolagem 3D indisponível, usando fallback:', error);
     return Array.from({ length: count }, () => rollFallback(sides));
@@ -68,7 +78,7 @@ export async function rollDamageDice(
 
   try {
     const results = await requestDiceRoll({ qty: count, sides: dieSides });
-    const rolls = extractDieValues(results);
+    const rolls = results.map((die) => resolveDieValue(die.value, die.sides ?? dieSides));
 
     if (!isCritical) return rolls;
 
